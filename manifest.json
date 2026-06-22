@@ -1,0 +1,19 @@
+{
+  "name": "Challenge 11 Giorni",
+  "short_name": "Challenge11",
+  "description": "La tua challenge benessere di 11 giorni",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a2e1a",
+  "theme_color": "#1a2e1a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%232d5a27'/><text y='130' x='50%' text-anchor='middle' font-size='120'>🏆</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["health", "fitness"],
+  "lang": "it"
+}

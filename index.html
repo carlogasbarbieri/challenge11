@@ -1,0 +1,1665 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a2e1a">
+<title>Challenge</title>
+<link rel="manifest" href="manifest.json">
+<style>
+:root {
+  --green:#2ECC71; --green-dark:#27AE60; --green-light:#EAFAF1;
+  --gold:#F39C12; --gold-dark:#d68910; --gold-light:#FEF9E7;
+  --red:#E74C3C; --purple:#8E44AD;
+  --bg:#F8FFFE; --surface:#FFFFFF; --surface2:#F0FBF7;
+  --text:#1A2E1A; --text2:#4A6A4A; --text3:#7A9A7A;
+  --border:rgba(46,204,113,0.2); --border2:rgba(46,204,113,0.4);
+  --shadow:0 2px 12px rgba(0,0,0,0.08);
+  --radius:16px; --radius-sm:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.5;overflow-x:hidden}
+
+/* ANIMATIONS */
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+@keyframes glow{0%,100%{box-shadow:0 0 10px rgba(46,204,113,0.3)}50%{box-shadow:0 0 25px rgba(46,204,113,0.7)}}
+@keyframes slideIn{from{transform:translateX(-100%)}to{transform:translateX(0)}}
+@keyframes rankReveal{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+@keyframes trophyWiggle{0%,100%{transform:rotate(0deg)}25%{transform:rotate(-10deg)}75%{transform:rotate(10deg)}}
+
+.anim-fadeup{animation:fadeInUp 0.4s ease both}
+.anim-fadein{animation:fadeIn 0.3s ease both}
+.anim-bounce{animation:bounce 1s ease infinite}
+.anim-glow{animation:glow 2s ease infinite}
+
+/* SPLASH */
+#splashScreen{
+  position:fixed;inset:0;z-index:9999;
+  background:linear-gradient(160deg,#0d1f0d 0%,#1a2e1a 40%,#2d5a27 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:opacity 0.6s ease;
+}
+.splash-trophy{font-size:80px;animation:bounce 1.2s ease infinite}
+.splash-title{font-size:32px;font-weight:800;color:white;margin-top:16px;letter-spacing:-1px}
+.splash-title span{color:var(--green)}
+.splash-sub{font-size:15px;color:rgba(255,255,255,0.6);margin-top:6px}
+.splash-loader{
+  width:48px;height:4px;background:rgba(255,255,255,0.2);border-radius:2px;
+  margin-top:40px;overflow:hidden;
+}
+.splash-loader-bar{
+  height:100%;background:var(--green);border-radius:2px;
+  animation:slideIn 1s ease forwards;
+}
+
+/* PARTICLES */
+#particles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.particle{
+  position:absolute;width:6px;height:6px;border-radius:50%;
+  background:var(--green);opacity:0.15;
+  animation:confettiFall linear infinite;
+}
+
+/* HEADER */
+.app-header{
+  background:linear-gradient(135deg,#1a2e1a 0%,#2d5a27 100%);
+  color:white;padding:14px 18px 18px;position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 20px rgba(0,0,0,0.3);
+}
+.header-top{display:flex;justify-content:space-between;align-items:center}
+.app-logo{font-size:19px;font-weight:800;letter-spacing:-0.5px;display:flex;align-items:center;gap:6px}
+.app-logo-icon{font-size:22px;animation:trophyWiggle 3s ease infinite}
+.app-logo span{color:var(--green)}
+.user-badge{
+  background:rgba(255,255,255,0.15);border-radius:20px;
+  padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;
+  display:flex;align-items:center;gap:6px;transition:background 0.2s;
+}
+.user-badge:active{background:rgba(255,255,255,0.25)}
+
+/* PROGRESS BAR */
+.progress-section{margin-top:12px}
+.progress-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.progress-label{font-size:12px;opacity:0.75}
+.progress-stat{font-size:22px;font-weight:800;color:var(--green)}
+.progress-bar-wrap{
+  height:8px;background:rgba(255,255,255,0.15);border-radius:4px;overflow:hidden;margin-bottom:8px;
+}
+.progress-bar-fill{
+  height:100%;border-radius:4px;
+  background:linear-gradient(90deg,var(--green),#52e891);
+  transition:width 0.8s ease;
+  position:relative;overflow:hidden;
+}
+.progress-bar-fill::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent);
+  background-size:200% 100%;animation:shimmer 1.5s infinite;
+}
+.day-dots{display:flex;gap:3px;flex-wrap:wrap}
+.day-dot{
+  width:18px;height:18px;border-radius:50%;
+  background:rgba(255,255,255,0.15);font-size:8px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  color:rgba(255,255,255,0.5);transition:all 0.3s;
+}
+.day-dot.done{background:var(--green);color:white}
+.day-dot.today{background:var(--gold);color:white;animation:pulse 1.4s infinite}
+
+/* BOTTOM NAV */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;background:white;
+  border-top:1px solid var(--border);display:flex;z-index:100;
+  padding-bottom:env(safe-area-inset-bottom);
+  box-shadow:0 -2px 20px rgba(0,0,0,0.08);
+}
+.nav-item{
+  flex:1;padding:10px 4px 8px;display:flex;flex-direction:column;
+  align-items:center;gap:2px;cursor:pointer;border:none;background:none;
+  color:var(--text3);font-size:10px;font-weight:600;transition:color 0.2s;
+  position:relative;
+}
+.nav-item.active{color:var(--green)}
+.nav-icon{font-size:21px;line-height:1;transition:transform 0.2s}
+.nav-item.active .nav-icon{transform:scale(1.15)}
+.nav-badge{
+  position:absolute;top:6px;right:50%;margin-right:-18px;
+  background:var(--red);color:white;border-radius:10px;
+  font-size:9px;font-weight:800;min-width:16px;height:16px;
+  padding:0 3px;display:none;align-items:center;justify-content:center;
+}
+.nav-badge.show{display:flex}
+
+/* PAGES */
+.page{display:none;padding:14px;padding-bottom:82px;position:relative;z-index:1}
+.page.active{display:block;animation:fadeInUp 0.3s ease}
+
+/* CARDS */
+.card{
+  background:var(--surface);border-radius:var(--radius);
+  border:1px solid var(--border);padding:16px;margin-bottom:12px;
+  box-shadow:var(--shadow);
+}
+.card-title{
+  font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;
+  color:var(--text3);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;
+}
+
+/* PREMIO CARD */
+.prize-card{
+  background:linear-gradient(135deg,#1a2e1a,#2d5a27);
+  border-radius:var(--radius);padding:0;margin-bottom:12px;
+  overflow:hidden;position:relative;
+  box-shadow:0 8px 32px rgba(0,0,0,0.2);
+}
+.prize-card-inner{padding:20px}
+.prize-shimmer{
+  position:absolute;inset:0;
+  background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,0.06) 50%,transparent 60%);
+  background-size:200% 100%;animation:shimmer 3s infinite;
+}
+.prize-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.5);margin-bottom:6px}
+.prize-title{font-size:22px;font-weight:800;color:white;margin-bottom:6px}
+.prize-desc{font-size:14px;color:rgba(255,255,255,0.75);line-height:1.5}
+.prize-img{width:100%;max-height:200px;object-fit:cover;display:block}
+.prize-trophy{font-size:48px;text-align:center;margin-bottom:10px;animation:trophyWiggle 2.5s ease infinite}
+
+/* FEED */
+.post-card{
+  background:var(--surface);border-radius:var(--radius);
+  border:1px solid var(--border);margin-bottom:14px;overflow:hidden;
+  box-shadow:var(--shadow);animation:fadeInUp 0.35s ease both;
+}
+.post-header{display:flex;align-items:center;gap:10px;padding:12px 14px}
+.avatar{
+  width:38px;height:38px;border-radius:50%;
+  background:linear-gradient(135deg,var(--green),var(--green-dark));
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:13px;color:white;flex-shrink:0;
+}
+.avatar.captain{background:linear-gradient(135deg,var(--gold),#e67e22)}
+.post-meta{flex:1}
+.post-author{font-weight:700;font-size:14px}
+.post-info{font-size:12px;color:var(--text3)}
+.meal-badge{
+  background:var(--green-light);color:var(--green-dark);
+  font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;
+}
+.post-image{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:var(--surface2)}
+.post-image-ph{
+  width:100%;aspect-ratio:16/9;background:linear-gradient(135deg,var(--surface2),#e8f5e9);
+  display:flex;align-items:center;justify-content:center;font-size:48px;
+}
+.post-body{padding:12px 14px}
+.post-desc{font-size:14px;color:var(--text2);margin-bottom:10px}
+.reactions{display:flex;gap:8px}
+.react-btn{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:20px;padding:5px 12px;font-size:13px;cursor:pointer;
+  display:flex;align-items:center;gap:4px;transition:all 0.15s;
+}
+.react-btn:active{transform:scale(0.9)}
+
+/* CLASSIFICA */
+.rank-item{
+  display:flex;align-items:center;gap:12px;padding:12px 0;
+  border-bottom:1px solid var(--border);
+  animation:rankReveal 0.4s ease both;
+}
+.rank-item:last-child{border-bottom:none}
+.rank-pos{
+  width:28px;height:28px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:13px;flex-shrink:0;
+}
+.rank-pos.p1{background:linear-gradient(135deg,#FFD700,#FFA500);color:#5a3e00}
+.rank-pos.p2{background:linear-gradient(135deg,#C0C0C0,#A0A0A0);color:#333}
+.rank-pos.p3{background:linear-gradient(135deg,#CD7F32,#A0522D);color:white}
+.rank-pos.other{background:var(--surface2);color:var(--text3)}
+.rank-info{flex:1}
+.rank-name{font-weight:700;font-size:14px}
+.rank-sub{font-size:12px;color:var(--text3)}
+.rank-score{font-size:18px;font-weight:800;color:var(--green);text-align:right}
+.rank-score small{font-size:11px;font-weight:400;color:var(--text3);display:block}
+
+/* ACTIVITIES */
+.activity-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.act-card{
+  background:var(--surface);border:2px solid var(--border);
+  border-radius:var(--radius-sm);padding:14px 10px;text-align:center;
+  cursor:pointer;transition:all 0.25s;position:relative;overflow:hidden;
+}
+.act-card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,transparent,rgba(46,204,113,0.05));
+  opacity:0;transition:opacity 0.2s;
+}
+.act-card:active{transform:scale(0.96)}
+.act-card.done{border-color:var(--green);background:var(--green-light)}
+.act-card.done::before{opacity:1}
+.act-icon{font-size:30px;margin-bottom:5px;display:block}
+.act-name{font-size:12px;font-weight:700;color:var(--text)}
+.act-pts{font-size:11px;color:var(--gold);font-weight:700;margin-top:2px}
+.act-check{
+  position:absolute;top:6px;right:6px;
+  background:var(--green);color:white;border-radius:50%;
+  width:18px;height:18px;font-size:10px;
+  display:none;align-items:center;justify-content:center;font-weight:800;
+}
+.act-card.done .act-check{display:flex}
+
+/* TIPS */
+.tip-card{
+  background:linear-gradient(135deg,#f0fff4,#e8f5e9);
+  border-left:4px solid var(--green);border-radius:var(--radius-sm);
+  padding:14px 16px;margin-bottom:10px;animation:fadeInUp 0.3s ease both;
+}
+.tip-category{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--green-dark);margin-bottom:4px}
+.tip-text{font-size:14px;color:var(--text2);line-height:1.6}
+.tip-card.rule{background:linear-gradient(135deg,#fff9f0,#fff3e0);border-left-color:var(--gold)}
+.tip-card.rule .tip-category{color:var(--gold-dark)}
+.tip-card.warning{background:linear-gradient(135deg,#fff0f0,#fde8e8);border-left-color:var(--red)}
+.tip-card.warning .tip-category{color:var(--red)}
+
+/* PROFILO */
+.weight-display{text-align:center;padding:16px 0}
+.weight-big{font-size:54px;font-weight:800;color:var(--green);line-height:1}
+.weight-unit{font-size:18px;color:var(--text2)}
+.weight-delta{font-size:16px;font-weight:700;margin-top:6px}
+.weight-delta.loss{color:var(--green)}
+.weight-delta.gain{color:var(--red)}
+
+/* BUTTONS */
+.btn{
+  border:none;border-radius:var(--radius-sm);padding:14px 20px;
+  font-size:15px;font-weight:700;cursor:pointer;transition:all 0.15s;
+  width:100%;display:block;text-align:center;
+}
+.btn:active{transform:scale(0.98)}
+.btn-primary{background:var(--green);color:white}
+.btn-primary:hover{background:var(--green-dark)}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:white}
+.btn-outline{background:transparent;color:var(--green);border:2px solid var(--green)}
+.btn-sm{padding:8px 14px;font-size:13px;width:auto}
+
+/* FAB */
+.fab{
+  position:fixed;bottom:76px;right:18px;width:54px;height:54px;border-radius:50%;
+  background:linear-gradient(135deg,var(--green),var(--green-dark));
+  color:white;font-size:26px;border:none;cursor:pointer;
+  box-shadow:0 4px 20px rgba(46,204,113,0.5);
+  display:flex;align-items:center;justify-content:center;
+  z-index:99;transition:transform 0.2s;animation:glow 2s ease infinite;
+}
+.fab:active{transform:scale(0.9)}
+
+/* MODALS */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);
+  z-index:200;align-items:flex-end;justify-content:center;
+}
+.modal-overlay.open{display:flex;animation:fadeIn 0.2s ease}
+.modal{
+  background:white;border-radius:24px 24px 0 0;width:100%;max-width:600px;
+  padding:20px 20px calc(20px + env(safe-area-inset-bottom));
+  max-height:92vh;overflow-y:auto;animation:fadeInUp 0.3s ease;
+}
+.modal-handle{width:40px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 16px}
+.modal-title{font-size:18px;font-weight:800;margin-bottom:16px}
+
+/* FORMS */
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:13px;font-weight:700;color:var(--text2);margin-bottom:5px}
+.form-input{
+  width:100%;padding:12px 14px;border:1.5px solid var(--border2);
+  border-radius:var(--radius-sm);font-size:15px;background:var(--bg);
+  color:var(--text);transition:border-color 0.2s;-webkit-appearance:none;
+}
+.form-input:focus{outline:none;border-color:var(--green)}
+select.form-input{cursor:pointer}
+textarea.form-input{resize:vertical;min-height:72px}
+
+/* UPLOAD */
+.upload-area{
+  border:2px dashed var(--border2);border-radius:var(--radius-sm);
+  padding:24px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--surface2);
+}
+.upload-area:active{border-color:var(--green);background:var(--green-light)}
+.upload-preview{width:100%;border-radius:var(--radius-sm);aspect-ratio:4/3;object-fit:cover;display:none}
+
+/* STREAK */
+.streak-bar{
+  background:linear-gradient(135deg,#fff8e1,#fff3cd);border:1px solid rgba(243,156,18,0.3);
+  border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:12px;
+  display:flex;align-items:center;gap:10px;
+}
+.streak-fire{font-size:26px;animation:bounce 1.5s ease infinite}
+.streak-info{flex:1}
+.streak-num{font-size:20px;font-weight:800;color:var(--gold-dark)}
+.streak-label{font-size:12px;color:#7a6200}
+
+/* POINTS HERO */
+.points-hero{
+  background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+  border-radius:var(--radius);padding:20px;text-align:center;margin-bottom:14px;
+  position:relative;overflow:hidden;
+}
+.points-hero::after{
+  content:'⭐';position:absolute;right:-10px;top:-10px;font-size:80px;opacity:0.15;
+}
+.points-big{font-size:48px;font-weight:800;color:white;line-height:1}
+.points-label{font-size:13px;color:rgba(255,255,255,0.85);margin-top:4px}
+
+/* TAB */
+.tab-row{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;scrollbar-width:none}
+.tab-row::-webkit-scrollbar{display:none}
+.tab-btn{
+  padding:8px 16px;border-radius:20px;border:1.5px solid var(--border2);
+  background:transparent;font-size:13px;font-weight:700;cursor:pointer;
+  white-space:nowrap;color:var(--text2);transition:all 0.15s;
+}
+.tab-btn.active{background:var(--green);border-color:var(--green);color:white}
+
+/* TOAST */
+.toast{
+  position:fixed;top:80px;left:50%;transform:translateX(-50%) translateY(-80px);
+  background:#1a2e1a;color:white;padding:12px 20px;border-radius:24px;
+  font-size:14px;font-weight:600;z-index:999;transition:transform 0.3s;
+  white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.25);
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* CONFETTI */
+.confetti-piece{
+  position:fixed;width:10px;height:10px;border-radius:2px;
+  animation:confettiFall 3s ease forwards;pointer-events:none;z-index:9998;
+}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:40px 20px;color:var(--text3)}
+.empty-icon{font-size:48px;margin-bottom:10px}
+
+/* LOGIN */
+#loginPage{
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;padding:30px 22px;
+  background:linear-gradient(160deg,#0d1f0d 0%,#1a2e1a 50%,#2d5a27 100%);
+}
+.login-trophy{font-size:60px;animation:bounce 1.2s ease infinite;margin-bottom:10px}
+.login-title{font-size:30px;font-weight:800;color:white;text-align:center;margin-bottom:4px;letter-spacing:-1px}
+.login-title span{color:var(--green)}
+.login-sub{font-size:14px;color:rgba(255,255,255,0.65);text-align:center;margin-bottom:28px}
+.login-card{
+  background:white;border-radius:24px;padding:22px;
+  width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,0.35);
+}
+
+/* ADMIN */
+.admin-header{
+  background:linear-gradient(135deg,#1a2e1a,#2d5a27);color:white;
+  border-radius:var(--radius);padding:18px;margin-bottom:14px;text-align:center;
+}
+.user-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.user-row:last-child{border-bottom:none}
+
+/* CHALLENGE SELECTOR */
+.challenge-selector{
+  background:linear-gradient(135deg,#1a2e1a,#0d1f0d);border-radius:var(--radius);
+  padding:20px;margin-bottom:14px;text-align:center;
+}
+.challenge-selector h2{font-size:20px;font-weight:800;color:white;margin-bottom:14px}
+.challenge-pill{
+  background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.2);
+  border-radius:20px;padding:10px 16px;color:white;font-weight:700;font-size:14px;
+  cursor:pointer;display:inline-block;margin:4px;transition:all 0.2s;
+}
+.challenge-pill:active{background:rgba(46,204,113,0.3);border-color:var(--green)}
+.challenge-pill.active-ch{background:var(--green);border-color:var(--green)}
+
+/* FINE CHALLENGE OVERLAY */
+#endOverlay{
+  display:none;position:fixed;inset:0;z-index:500;
+  background:linear-gradient(160deg,#0d1f0d,#1a2e1a,#2d5a27);
+  flex-direction:column;align-items:center;justify-content:center;padding:30px;
+}
+#endOverlay.show{display:flex;animation:fadeIn 0.5s ease}
+.end-trophy{font-size:100px;animation:trophyWiggle 1.5s ease infinite}
+.end-title{font-size:28px;font-weight:800;color:white;text-align:center;margin-top:16px}
+.end-winner{font-size:20px;color:var(--gold);font-weight:800;margin-top:8px}
+.end-prize{font-size:15px;color:rgba(255,255,255,0.8);text-align:center;margin-top:10px;max-width:300px;line-height:1.6}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splashScreen">
+  <div class="splash-trophy">🏆</div>
+  <div class="splash-title">Challenge <span>Giorni</span></div>
+  <div class="splash-sub">Il tuo percorso inizia qui</div>
+  <div class="splash-loader"><div class="splash-loader-bar"></div></div>
+</div>
+
+<!-- PARTICLES BG -->
+<div id="particles"></div>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage" style="display:none">
+  <div class="login-trophy">🏆</div>
+  <h1 class="login-title">Challenge <span>Giorni</span></h1>
+  <p class="login-sub">Trasforma il tuo corpo.<br>Batti la tua squadra.</p>
+  <div class="login-card">
+    <div class="form-group">
+      <label class="form-label">Il tuo nome completo</label>
+      <input class="form-input" id="loginName" type="text" placeholder="Es: Marco Rossi">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Codice challenge</label>
+      <input class="form-input" id="loginCode" type="text" placeholder="Ricevuto dal coordinatore" style="text-transform:uppercase">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Peso iniziale (kg)</label>
+      <input class="form-input" id="loginWeight" type="number" placeholder="Es: 75.5" step="0.1">
+    </div>
+    <button class="btn btn-primary" onclick="doLogin()" style="margin-bottom:10px">Entra nella Challenge →</button>
+    <p style="text-align:center;font-size:12px;color:#999">
+      Già registrato? <span style="color:var(--green);cursor:pointer;font-weight:700" onclick="doLoginExisting()">Accedi</span>
+    </p>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp" style="display:none">
+
+  <header class="app-header">
+    <div class="header-top">
+      <div class="app-logo">
+        <span class="app-logo-icon">🏆</span>
+        Challenge <span id="headerDays">?</span>
+      </div>
+      <div class="user-badge" onclick="goToProfile()">
+        <span id="headerAvatar">👤</span>
+        <span id="headerName">-</span>
+      </div>
+    </div>
+    <div class="progress-section">
+      <div class="progress-row">
+        <div>
+          <div class="progress-label">Giorno</div>
+          <div class="progress-stat" id="currentDayNum">1</div>
+        </div>
+        <div class="day-dots" id="dayDots"></div>
+        <div style="text-align:right">
+          <div class="progress-label">Rimasti</div>
+          <div class="progress-stat" id="daysLeft">?</div>
+        </div>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- FEED -->
+  <div class="page active" id="pageFeed">
+    <div id="prizePreview"></div>
+    <div id="feedContainer">
+      <div class="empty-state">
+        <div class="empty-icon" style="animation:bounce 1.5s ease infinite">🌿</div>
+        <div class="empty-text">Nessun post ancora.<br>Posta il tuo primo pasto!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLASSIFICA -->
+  <div class="page" id="pageClassifica">
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchRankTab('individual',this)">Individuale</button>
+      <button class="tab-btn" onclick="switchRankTab('team',this)">Squadre</button>
+    </div>
+    <div id="rankIndividual"></div>
+    <div id="rankTeam" style="display:none"></div>
+    <div id="prizeClassifica" style="margin-top:8px"></div>
+  </div>
+
+  <!-- BONUS -->
+  <div class="page" id="pageBonus">
+    <div class="streak-bar">
+      <div class="streak-fire">🔥</div>
+      <div class="streak-info">
+        <div class="streak-num" id="streakNum">0</div>
+        <div class="streak-label" id="streakLabel">Giorni consecutivi di attività</div>
+      </div>
+    </div>
+    <div class="points-hero">
+      <div class="points-big" id="totalPoints">0</div>
+      <div class="points-label">Punti bonus accumulati</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Attività di oggi <span id="todayActCount" style="color:var(--green)"></span></div>
+      <div class="activity-grid" id="activityGrid"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Come si vince</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.8">
+        <div>📊 <strong>Classifica:</strong> % perdita peso (Day 1 → Day finale)</div>
+        <div>🏅 <strong>Punti bonus:</strong> moltiplicatore sulla classifica finale</div>
+        <div>📸 <strong>Ogni pasto postato:</strong> +1 punto</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIPS -->
+  <div class="page" id="pageTips">
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchTipsTab('tips',this)">Consigli</button>
+      <button class="tab-btn" onclick="switchTipsTab('rules',this)">Regole</button>
+    </div>
+    <div id="tipsList"></div>
+    <div id="rulesList" style="display:none"></div>
+  </div>
+
+  <!-- PROFILO -->
+  <div class="page" id="pageProfilo">
+    <div class="card" style="text-align:center">
+      <div class="avatar" id="profileAvatar" style="width:62px;height:62px;font-size:22px;margin:0 auto 10px">U</div>
+      <div style="font-size:20px;font-weight:800" id="profileName">-</div>
+      <div style="font-size:13px;color:var(--text3);margin-top:4px" id="profileTeam">-</div>
+      <div id="captainBadge" style="display:none;margin-top:8px;background:var(--gold-light);color:#7a5e00;font-size:12px;font-weight:700;padding:4px 14px;border-radius:12px;display:inline-block">👑 Capitano</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Il mio peso</div>
+      <div class="weight-display">
+        <div style="font-size:13px;color:var(--text3);margin-bottom:4px" id="weightStartLabel">Peso iniziale: -</div>
+        <div><span class="weight-big" id="weightCurrent">-</span><span class="weight-unit"> kg</span></div>
+        <div class="weight-delta" id="weightDelta"></div>
+      </div>
+      <button class="btn btn-outline" onclick="openWeightModal()">📊 Aggiorna peso oggi</button>
+    </div>
+    <div class="card">
+      <div class="card-title">I miei post oggi</div>
+      <div id="myPostsToday" style="color:var(--text3);font-size:14px">Nessun post ancora oggi.</div>
+    </div>
+    <button class="btn" style="background:var(--surface2);color:var(--text2);border:1px solid var(--border);margin-bottom:8px" onclick="doLogout()">Esci dall'account</button>
+  </div>
+
+  <!-- ADMIN -->
+  <div class="page" id="pageAdmin">
+    <div class="admin-header">
+      <div style="font-size:24px">⚙️</div>
+      <div style="font-size:18px;font-weight:800;margin-top:4px">Pannello Admin</div>
+      <div style="font-size:12px;opacity:0.7;margin-top:2px">Riservato a Carlo</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Challenge attiva / nuova</div>
+      <div id="challengeList" style="margin-bottom:12px"></div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <input class="form-input" id="newChallengeName" placeholder="Nome (es: Maggio 2025)" style="flex:1">
+        <button class="btn btn-primary btn-sm" onclick="createChallenge()">Crea</button>
+      </div>
+    </div>
+
+    <div class="card" id="adminConfigCard">
+      <div class="card-title">Configura challenge selezionata</div>
+      <div class="form-group">
+        <label class="form-label">Codice accesso partecipanti</label>
+        <input class="form-input" id="adminCode" placeholder="Es: MAGGIO25">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Durata (giorni)</label>
+        <input class="form-input" id="adminDuration" type="number" value="11" min="3" max="30">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data inizio</label>
+        <input class="form-input" id="adminStartDate" type="date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Premio — titolo</label>
+        <input class="form-input" id="adminPrizeTitle" placeholder="Es: Weekend SPA per 2 persone">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Premio — descrizione</label>
+        <textarea class="form-input" id="adminPrizeDesc" placeholder="Descrivi il premio nel dettaglio..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Premio — foto (opzionale)</label>
+        <div class="upload-area" onclick="document.getElementById('prizePhotoInput').click()" id="prizeUploadArea">
+          <div style="font-size:28px">🎁</div>
+          <div style="font-size:13px;color:var(--text3);margin-top:4px">Aggiungi foto del premio</div>
+        </div>
+        <input type="file" id="prizePhotoInput" accept="image/*" style="display:none" onchange="handlePrizePhoto(this)">
+      </div>
+      <button class="btn btn-primary" onclick="saveChallenge()">💾 Salva configurazione</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Squadre</div>
+      <div id="adminTeamsList"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <input class="form-input" id="newTeamName" placeholder="Nome squadra" style="flex:1">
+        <button class="btn btn-primary btn-sm" onclick="addTeam()">+</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Partecipanti <span id="adminUserCount" style="color:var(--green)"></span></div>
+      <div id="adminUsersList">
+        <div class="empty-state" style="padding:20px 0"><div class="empty-text">Nessun utente ancora.</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Consigli e Regole</div>
+      <div id="adminTipsList" style="margin-bottom:10px"></div>
+      <div class="form-group">
+        <label class="form-label">Tipo</label>
+        <select class="form-input" id="newTipType">
+          <option value="tips">Consiglio</option>
+          <option value="rules">Regola</option>
+          <option value="warning">Avvertenza</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Testo</label>
+        <textarea class="form-input" id="newTipText" placeholder="Scrivi il consiglio o la regola..." rows="3"></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="addTip()">Aggiungi</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Fine Challenge</div>
+      <button class="btn btn-gold" onclick="showEndChallenge()">🏆 Mostra podio finale</button>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="showPage('Feed',this)">
+      <span class="nav-icon">🏠</span>Feed
+    </button>
+    <button class="nav-item" onclick="showPage('Classifica',this)">
+      <span class="nav-icon">🏆</span>Classifica
+    </button>
+    <button class="nav-item" onclick="showPage('Bonus',this)">
+      <span class="nav-icon">⭐</span>Bonus
+      <span class="nav-badge" id="badgeBonus">!</span>
+    </button>
+    <button class="nav-item" onclick="showPage('Tips',this)">
+      <span class="nav-icon">💡</span>Tips
+      <span class="nav-badge" id="badgeTips">!</span>
+    </button>
+    <button class="nav-item" onclick="showPage('Profilo',this)">
+      <span class="nav-icon">👤</span>Profilo
+    </button>
+  </nav>
+
+  <button class="fab" onclick="openPostModal()" id="fabBtn">＋</button>
+</div>
+
+<!-- FINE CHALLENGE OVERLAY -->
+<div id="endOverlay">
+  <div class="end-trophy">🏆</div>
+  <div class="end-title">Challenge completata!</div>
+  <div class="end-winner" id="endWinner"></div>
+  <div style="font-size:14px;color:rgba(255,255,255,0.6);margin-top:6px" id="endWinnerScore"></div>
+  <div class="end-prize" id="endPrize"></div>
+  <button class="btn btn-primary" style="margin-top:24px;max-width:280px" onclick="document.getElementById('endOverlay').classList.remove('show')">Continua →</button>
+</div>
+
+<!-- MODALS -->
+
+<!-- POST -->
+<div class="modal-overlay" id="postModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📸 Posta il tuo pasto</div>
+    <div class="form-group">
+      <label class="form-label">Tipo di pasto</label>
+      <select class="form-input" id="postMealType">
+        <option value="colazione">🌅 Colazione</option>
+        <option value="spuntino_m">🍎 Spuntino mattina</option>
+        <option value="pranzo">☀️ Pranzo</option>
+        <option value="spuntino_p">🥤 Spuntino pomeriggio</option>
+        <option value="cena">🌙 Cena</option>
+        <option value="frullato">🥤 Frullato proteico</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Foto</label>
+      <div class="upload-area" onclick="document.getElementById('photoInput').click()">
+        <img class="upload-preview" id="photoPreview">
+        <div id="uploadPh"><div style="font-size:36px">📷</div><div style="font-size:13px;color:var(--text3);margin-top:4px">Tocca per aggiungere</div></div>
+      </div>
+      <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(this)">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descrizione</label>
+      <textarea class="form-input" id="postDesc" rows="2" placeholder="Es: Frullato F1 + aloe mango..."></textarea>
+    </div>
+    <button class="btn btn-primary" onclick="submitPost()">Posta ✓</button>
+    <button class="btn" style="background:none;color:var(--text3);margin-top:8px" onclick="closeModal('postModal')">Annulla</button>
+  </div>
+</div>
+
+<!-- PESO -->
+<div class="modal-overlay" id="weightModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📊 Aggiorna peso</div>
+    <div class="form-group">
+      <label class="form-label">Peso attuale (kg)</label>
+      <input class="form-input" id="newWeight" type="number" step="0.1" placeholder="Es: 73.2" style="font-size:28px;text-align:center;font-weight:800">
+    </div>
+    <div style="font-size:13px;color:var(--text3);text-align:center;margin-bottom:14px">Pesa mattina, a stomaco vuoto</div>
+    <button class="btn btn-primary" onclick="saveWeight()">Salva ✓</button>
+    <button class="btn" style="background:none;color:var(--text3);margin-top:8px" onclick="closeModal('weightModal')">Annulla</button>
+  </div>
+</div>
+
+<!-- ACTIVITY -->
+<div class="modal-overlay" id="activityModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="activityModalTitle">Conferma attività</div>
+    <div style="font-size:15px;color:var(--text2);margin-bottom:16px" id="activityModalDesc"></div>
+    <div class="form-group">
+      <label class="form-label">Prova foto (opzionale)</label>
+      <div class="upload-area" onclick="document.getElementById('actPhotoInput').click()" style="padding:18px">
+        <div style="font-size:24px">📷</div>
+        <div style="font-size:13px;color:var(--text3)">Allega una prova</div>
+      </div>
+      <input type="file" id="actPhotoInput" accept="image/*" capture="environment" style="display:none">
+    </div>
+    <button class="btn btn-primary" onclick="confirmActivity()">Confermo ✓</button>
+    <button class="btn" style="background:none;color:var(--text3);margin-top:8px" onclick="closeModal('activityModal')">Annulla</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getDatabase,ref,set,get,push,onValue,update,remove } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
+// ============================================================
+// INSERISCI QUI LE TUE CREDENZIALI FIREBASE
+// ============================================================
+const firebaseConfig = {
+  apiKey: "INSERISCI_API_KEY",
+  authDomain: "INSERISCI_AUTH_DOMAIN",
+  databaseURL: "INSERISCI_DATABASE_URL",
+  projectId: "INSERISCI_PROJECT_ID",
+  storageBucket: "INSERISCI_STORAGE_BUCKET",
+  messagingSenderId: "INSERISCI_SENDER_ID",
+  appId: "INSERISCI_APP_ID"
+};
+
+try {
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  Object.assign(window,{_db:db,_ref:ref,_set:set,_get:get,_push:push,_update:update,_remove:remove,_onValue:onValue,_firebaseReady:true});
+} catch(e) {
+  window._firebaseReady = false;
+  console.warn('Firebase non configurato — modalità demo');
+}
+window.initApp();
+</script>
+
+<script>
+// ============================================================
+// CONFIG & STATE
+// ============================================================
+const ADMIN_CODE = 'CARLOADMIN';
+const ACTIVITIES = [
+  {id:'detox',   name:'Giornata Detox',  icon:'🌿', pts:5,  desc:'Completa la giornata detox con i prodotti indicati'},
+  {id:'workout', name:'Allenamento',      icon:'💪', pts:3,  desc:'Allenati almeno 30 minuti (qualsiasi attività)'},
+  {id:'hom',     name:'Partecipa HOM',   icon:'🎯', pts:10, desc:'Partecipa all\'Herbalife Opportunity Meeting'},
+  {id:'water',   name:'2L Acqua',         icon:'💧', pts:2,  desc:'Bevi almeno 2 litri d\'acqua oggi'},
+  {id:'allmeals',name:'Tutti i Pasti',    icon:'📸', pts:4,  desc:'Posta tutti e 3 i pasti principali oggi'},
+  {id:'steps',   name:'8.000 Passi',      icon:'🚶', pts:2,  desc:'Raggiungi 8.000 passi oggi'},
+];
+const MEAL_LABELS = {colazione:'🌅 Colazione',spuntino_m:'🍎 Spuntino',pranzo:'☀️ Pranzo',spuntino_p:'🥤 Spuntino pm',cena:'🌙 Cena',frullato:'🥤 Frullato'};
+
+let currentUser  = JSON.parse(localStorage.getItem('c11_user')||'null');
+let activeChallengeId = localStorage.getItem('c11_activeChallenge')||null;
+let challengeConfig = {};
+let posts=[], users=[], teams=[], tips=[], challenges=[];
+let currentActivityId=null, photoDataUrl=null, prizePhotoDataUrl=null;
+
+// ============================================================
+// SPLASH & INIT
+// ============================================================
+window.initApp = function(){
+  setTimeout(()=>{
+    const s=document.getElementById('splashScreen');
+    s.style.opacity='0';
+    setTimeout(()=>{s.style.display='none';bootApp();},600);
+  },1400);
+};
+
+function bootApp(){
+  createParticles();
+  if(currentUser){
+    showMainApp();
+    loadData();
+  } else {
+    document.getElementById('loginPage').style.display='flex';
+  }
+}
+
+function createParticles(){
+  const c=document.getElementById('particles');
+  const colors=['#2ECC71','#27AE60','#F39C12','#52e891'];
+  for(let i=0;i<18;i++){
+    const p=document.createElement('div');
+    p.className='particle';
+    p.style.cssText=`left:${Math.random()*100}%;top:-20px;background:${colors[i%4]};
+      animation-duration:${8+Math.random()*12}s;animation-delay:${Math.random()*10}s;
+      width:${4+Math.random()*8}px;height:${4+Math.random()*8}px;opacity:${0.1+Math.random()*0.15}`;
+    c.appendChild(p);
+  }
+}
+
+// ============================================================
+// LOGIN
+// ============================================================
+window.doLogin = async function(){
+  const name=document.getElementById('loginName').value.trim();
+  const code=document.getElementById('loginCode').value.trim().toUpperCase();
+  const weight=parseFloat(document.getElementById('loginWeight').value);
+  if(!name||!code||!weight){showToast('Compila tutti i campi');return;}
+
+  const isAdm=code===ADMIN_CODE;
+  if(!isAdm){
+    const ch=await findChallengeByCode(code);
+    if(!ch){showToast('Codice non valido');return;}
+    activeChallengeId=ch.id;
+    challengeConfig=ch;
+    localStorage.setItem('c11_activeChallenge',activeChallengeId);
+  }
+
+  const uid='u_'+name.replace(/\s+/g,'').toLowerCase()+'_'+Date.now();
+  currentUser={id:uid,name,weightStart:weight,weightCurrent:weight,
+    team:null,role:isAdm?'admin':'member',bonusPoints:0,challengeId:activeChallengeId,joinedAt:Date.now()};
+  localStorage.setItem('c11_user',JSON.stringify(currentUser));
+  if(window._firebaseReady) await window._set(window._ref(window._db,'users/'+uid),currentUser);
+  document.getElementById('loginPage').style.display='none';
+  showMainApp();
+  loadData();
+  showToast('Benvenuto/a '+name.split(' ')[0]+'! 💪');
+  launchConfetti();
+};
+
+window.doLoginExisting=function(){
+  const name=prompt('Il tuo nome esatto:');
+  if(!name)return;
+  if(!window._firebaseReady){showToast('Modalità demo');return;}
+  window._get(window._ref(window._db,'users')).then(snap=>{
+    let found=null;
+    snap.forEach(c=>{if(c.val().name.toLowerCase()===name.toLowerCase())found={id:c.key,...c.val()};});
+    if(found){
+      currentUser=found;
+      activeChallengeId=found.challengeId||null;
+      localStorage.setItem('c11_user',JSON.stringify(currentUser));
+      localStorage.setItem('c11_activeChallenge',activeChallengeId||'');
+      document.getElementById('loginPage').style.display='none';
+      showMainApp();loadData();showToast('Bentornato/a '+found.name.split(' ')[0]+'!');
+    } else showToast('Utente non trovato');
+  });
+};
+
+window.doLogout=function(){
+  if(!confirm('Vuoi davvero uscire?'))return;
+  localStorage.clear();location.reload();
+};
+
+// ============================================================
+// CHALLENGE MANAGEMENT
+// ============================================================
+async function findChallengeByCode(code){
+  if(!window._firebaseReady){
+    // Demo
+    return challengeConfig.code===code?{id:'demo',...challengeConfig}:null;
+  }
+  const snap=await window._get(window._ref(window._db,'challenges'));
+  let found=null;
+  snap.forEach(c=>{if(c.val().code===code)found={id:c.key,...c.val()};});
+  return found;
+}
+
+window.createChallenge=async function(){
+  const name=document.getElementById('newChallengeName').value.trim();
+  if(!name){showToast('Inserisci un nome');return;}
+  const ch={name,code:'',duration:11,startDate:'',prize:{title:'',desc:'',photoUrl:''},createdAt:Date.now(),tips:[],rules:[]};
+  if(window._firebaseReady){
+    const r=await window._push(window._ref(window._db,'challenges'),ch);
+    activeChallengeId=r.key;
+  } else {
+    activeChallengeId='ch_'+Date.now();
+    challenges.push({id:activeChallengeId,...ch});
+  }
+  localStorage.setItem('c11_activeChallenge',activeChallengeId);
+  showToast('Challenge "'+name+'" creata!');
+  loadChallenges();
+};
+
+window.saveChallenge=async function(){
+  if(!activeChallengeId){showToast('Crea prima una challenge');return;}
+  const cfg={
+    code:document.getElementById('adminCode').value.trim().toUpperCase(),
+    duration:parseInt(document.getElementById('adminDuration').value)||11,
+    startDate:document.getElementById('adminStartDate').value,
+    prize:{
+      title:document.getElementById('adminPrizeTitle').value.trim(),
+      desc:document.getElementById('adminPrizeDesc').value.trim(),
+      photoUrl:prizePhotoDataUrl||challengeConfig.prize?.photoUrl||''
+    }
+  };
+  challengeConfig={...challengeConfig,...cfg};
+  if(window._firebaseReady){
+    await window._update(window._ref(window._db,'challenges/'+activeChallengeId),cfg);
+  }
+  showToast('Salvato! ✓');
+  renderDayDots();
+  renderPrize();
+};
+
+function loadChallenges(){
+  if(!window._firebaseReady){renderAdminChallenges();return;}
+  window._onValue(window._ref(window._db,'challenges'),snap=>{
+    challenges=[];
+    snap.forEach(c=>challenges.push({id:c.key,...c.val()}));
+    renderAdminChallenges();
+    // Load active challenge config
+    if(activeChallengeId){
+      const active=challenges.find(c=>c.id===activeChallengeId);
+      if(active){
+        challengeConfig=active;
+        renderDayDots();
+        renderPrize();
+        document.getElementById('headerDays').textContent=active.duration||11;
+        document.getElementById('splashTitle') && (document.getElementById('splashTitle').textContent='Challenge '+active.duration);
+        // Prefill admin form
+        document.getElementById('adminCode').value=active.code||'';
+        document.getElementById('adminDuration').value=active.duration||11;
+        document.getElementById('adminStartDate').value=active.startDate||'';
+        document.getElementById('adminPrizeTitle').value=active.prize?.title||'';
+        document.getElementById('adminPrizeDesc').value=active.prize?.desc||'';
+      }
+    }
+  });
+}
+
+function renderAdminChallenges(){
+  const c=document.getElementById('challengeList');
+  if(!challenges.length){c.innerHTML='<div style="font-size:13px;color:var(--text3)">Nessuna challenge ancora.</div>';return;}
+  c.innerHTML=challenges.map(ch=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="font-weight:700">${ch.name} <small style="color:var(--text3)">[${ch.code||'no codice'}]</small></span>
+      <button class="btn btn-primary btn-sm" style="${activeChallengeId===ch.id?'background:var(--gold)':''}"
+        onclick="selectChallenge('${ch.id}')">
+        ${activeChallengeId===ch.id?'✓ Attiva':'Seleziona'}
+      </button>
+    </div>`).join('');
+}
+
+window.selectChallenge=function(id){
+  activeChallengeId=id;
+  localStorage.setItem('c11_activeChallenge',id);
+  const active=challenges.find(c=>c.id===id);
+  if(active){
+    challengeConfig=active;
+    document.getElementById('adminCode').value=active.code||'';
+    document.getElementById('adminDuration').value=active.duration||11;
+    document.getElementById('adminStartDate').value=active.startDate||'';
+    document.getElementById('adminPrizeTitle').value=active.prize?.title||'';
+    document.getElementById('adminPrizeDesc').value=active.prize?.desc||'';
+  }
+  renderAdminChallenges();
+  renderDayDots();
+  showToast('Challenge selezionata!');
+};
+
+// ============================================================
+// SHOW MAIN APP
+// ============================================================
+function showMainApp(){
+  document.getElementById('mainApp').style.display='block';
+  document.getElementById('headerName').textContent=(currentUser.name||'').split(' ')[0];
+  document.getElementById('headerAvatar').textContent=getInitials(currentUser.name);
+  updateProfile();
+  renderActivities();
+  renderDayDots();
+}
+
+function loadData(){
+  if(!window._firebaseReady){loadDemoData();return;}
+  loadChallenges();
+  window._onValue(window._ref(window._db,'posts'),snap=>{
+    posts=[];
+    snap.forEach(c=>posts.push({id:c.key,...c.val()}));
+    posts=posts.filter(p=>!activeChallengeId||p.challengeId===activeChallengeId||!p.challengeId);
+    posts.sort((a,b)=>b.timestamp-a.timestamp);
+    renderFeed();updateProfile();
+  });
+  window._onValue(window._ref(window._db,'users'),snap=>{
+    users=[];
+    snap.forEach(c=>users.push({id:c.key,...c.val()}));
+    users=users.filter(u=>!activeChallengeId||u.challengeId===activeChallengeId||u.role==='admin');
+    renderRanking();
+    if(isAdmin())renderAdminUsers();
+  });
+  window._onValue(window._ref(window._db,'teams'),snap=>{
+    teams=[];
+    snap.forEach(c=>teams.push({id:c.key,...c.val()}));
+    teams=teams.filter(t=>!activeChallengeId||t.challengeId===activeChallengeId);
+    if(isAdmin())renderAdminTeams();
+  });
+  window._onValue(window._ref(window._db,'tips'),snap=>{
+    tips=[];
+    snap.forEach(c=>tips.push({id:c.key,...c.val()}));
+    tips=tips.filter(t=>!activeChallengeId||t.challengeId===activeChallengeId);
+    renderTips();
+    updateTipsBadge();
+  });
+}
+
+function loadDemoData(){
+  challengeConfig={name:'Demo Challenge',code:'DEMO11',duration:11,startDate:new Date(Date.now()-3*86400000).toISOString().split('T')[0],prize:{title:'Weekend SPA per 2 persone',desc:'Un weekend di relax in un esclusivo resort toscano, colazione inclusa.',photoUrl:''}};
+  users=[
+    {id:'1',name:'Marco Rossi',team:'Aquile',weightStart:85,weightCurrent:83.2,role:'captain',bonusPoints:15,challengeId:'demo'},
+    {id:'2',name:'Sara Bianchi',team:'Leoni',weightStart:68,weightCurrent:66.8,bonusPoints:12,challengeId:'demo'},
+    {id:'3',name:'Luca Verde',team:'Aquile',weightStart:92,weightCurrent:90.1,bonusPoints:8,challengeId:'demo'},
+    {id:'4',name:'Anna Neri',team:'Leoni',weightStart:75,weightCurrent:74.2,bonusPoints:20,challengeId:'demo'},
+  ];
+  teams=[{id:'t1',name:'Aquile',challengeId:'demo'},{id:'t2',name:'Leoni',challengeId:'demo'}];
+  posts=[
+    {id:'p1',userId:'1',userName:'Marco Rossi',team:'Aquile',mealType:'colazione',desc:'Frullato Formula 1 Cookies and Cream + tè verde',timestamp:Date.now()-3600000,reactions:{strong:3,fire:5,heart:2},challengeId:'demo'},
+    {id:'p2',userId:'2',userName:'Sara Bianchi',team:'Leoni',mealType:'pranzo',desc:'Insalata di pollo con verdure + frullato pomeridiano',timestamp:Date.now()-7200000,reactions:{strong:1,fire:2,heart:4},challengeId:'demo'},
+  ];
+  tips=[
+    {id:'tip1',type:'tips',text:'Bevi almeno 2 litri d\'acqua al giorno. L\'idratazione è fondamentale per ottimizzare i risultati.',challengeId:'demo'},
+    {id:'tip2',type:'tips',text:'Prepara i pasti in anticipo la sera prima. Riduce le scelte impulsive e ti fa risparmiare tempo.',challengeId:'demo'},
+    {id:'tip3',type:'rules',text:'Il peso va rilevato ogni mattina, a stomaco vuoto, prima di fare colazione.',challengeId:'demo'},
+    {id:'tip4',type:'rules',text:'Ogni pasto va postato entro 30 minuti dal consumo per essere valido.',challengeId:'demo'},
+    {id:'tip5',type:'warning',text:'In caso di dubbi sulla propria salute, consulta sempre il medico prima di iniziare la challenge.',challengeId:'demo'},
+  ];
+  document.getElementById('headerDays').textContent=challengeConfig.duration;
+  renderFeed();renderRanking();renderTips();updateProfile();renderDayDots();renderPrize();
+  if(isAdmin()){renderAdminUsers();renderAdminTeams();}
+  updateTipsBadge();
+}
+
+// ============================================================
+// NAV
+// ============================================================
+window.showPage=function(name,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page'+name).classList.add('active');
+  btn.classList.add('active');
+  document.getElementById('fabBtn').style.display=(name==='Feed')?'flex':'none';
+  if(name==='Classifica')renderRanking();
+  if(name==='Profilo')updateProfile();
+  if(name==='Bonus')renderActivities();
+  if(name==='Tips'){renderTips();document.getElementById('badgeTips').classList.remove('show');}
+};
+
+window.goToProfile=function(){
+  window._adminTaps=(window._adminTaps||0)+1;
+  clearTimeout(window._adminT);
+  window._adminT=setTimeout(()=>window._adminTaps=0,2000);
+  if(window._adminTaps>=5||isAdmin()){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+    document.getElementById('pageAdmin').classList.add('active');
+    document.getElementById('fabBtn').style.display='none';
+    loadChallenges();renderAdminUsers();renderAdminTeams();renderAdminTips();return;
+  }
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pageProfilo').classList.add('active');
+  document.querySelectorAll('.nav-item')[4].classList.add('active');
+  document.getElementById('fabBtn').style.display='none';
+  updateProfile();
+};
+
+// ============================================================
+// PRIZE RENDER
+// ============================================================
+function renderPrize(){
+  const prize=challengeConfig?.prize;
+  if(!prize||!prize.title)return;
+  const html=`
+  <div class="prize-card anim-fadeup" style="margin-bottom:14px">
+    <div class="prize-shimmer"></div>
+    ${prize.photoUrl?`<img class="prize-img" src="${prize.photoUrl}" alt="Premio">`:
+      `<div style="padding:20px 20px 0;text-align:center"><div class="prize-trophy">🏆</div></div>`}
+    <div class="prize-card-inner">
+      <div class="prize-label">🎁 Premio per il vincitore</div>
+      <div class="prize-title">${prize.title}</div>
+      ${prize.desc?`<div class="prize-desc">${prize.desc}</div>`:''}
+    </div>
+  </div>`;
+  document.getElementById('prizePreview').innerHTML=html;
+  document.getElementById('prizeClassifica').innerHTML=html;
+}
+
+// ============================================================
+// FEED
+// ============================================================
+function renderFeed(){
+  const c=document.getElementById('feedContainer');
+  if(!posts.length){
+    c.innerHTML=`<div class="empty-state"><div class="empty-icon" style="animation:bounce 1.5s ease infinite">🌿</div><div class="empty-text">Nessun post ancora.<br>Posta il tuo primo pasto!</div></div>`;
+    return;
+  }
+  c.innerHTML=posts.map((post,i)=>{
+    const u=users.find(u=>u.id===post.userId);
+    const isCap=u?.role==='captain';
+    return `
+    <div class="post-card" style="animation-delay:${i*0.06}s">
+      <div class="post-header">
+        <div class="avatar ${isCap?'captain':''}">${getInitials(post.userName)}</div>
+        <div class="post-meta">
+          <div class="post-author">${post.userName}${isCap?' 👑':''}</div>
+          <div class="post-info">${post.team||'—'} · ${formatTime(post.timestamp)}</div>
+        </div>
+        <div class="meal-badge">${MEAL_LABELS[post.mealType]||post.mealType}</div>
+      </div>
+      ${post.photoUrl?`<img class="post-image" src="${post.photoUrl}" loading="lazy">`:`<div class="post-image-ph">${post.mealType==='frullato'?'🥤':'🍽️'}</div>`}
+      <div class="post-body">
+        ${post.desc?`<div class="post-desc">${post.desc}</div>`:''}
+        <div class="reactions">
+          <button class="react-btn" onclick="react('${post.id}','strong')">💪 <span id="r_${post.id}_strong">${post.reactions?.strong||0}</span></button>
+          <button class="react-btn" onclick="react('${post.id}','fire')">🔥 <span id="r_${post.id}_fire">${post.reactions?.fire||0}</span></button>
+          <button class="react-btn" onclick="react('${post.id}','heart')">❤️ <span id="r_${post.id}_heart">${post.reactions?.heart||0}</span></button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.react=async function(postId,key){
+  const post=posts.find(p=>p.id===postId);
+  if(!post)return;
+  if(!post.reactions)post.reactions={};
+  post.reactions[key]=(post.reactions[key]||0)+1;
+  const el=document.getElementById(`r_${postId}_${key}`);
+  if(el){el.textContent=post.reactions[key];el.parentElement.style.transform='scale(1.2)';setTimeout(()=>el.parentElement.style.transform='',200);}
+  if(window._firebaseReady) await window._update(window._ref(window._db,'posts/'+postId+'/reactions'),post.reactions);
+};
+
+// ============================================================
+// POST PASTO
+// ============================================================
+window.openPostModal=function(){
+  photoDataUrl=null;
+  document.getElementById('photoPreview').style.display='none';
+  document.getElementById('uploadPh').style.display='block';
+  document.getElementById('postDesc').value='';
+  document.getElementById('postModal').classList.add('open');
+};
+
+window.handlePhoto=function(input){
+  const file=input.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    photoDataUrl=e.target.result;
+    const p=document.getElementById('photoPreview');
+    p.src=photoDataUrl;p.style.display='block';
+    document.getElementById('uploadPh').style.display='none';
+  };
+  r.readAsDataURL(file);
+};
+
+// Comprime immagine via Canvas → base64 JPEG piccolo (~50KB max)
+async function compressImage(dataUrl, maxW=600, quality=0.55){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      const scale=Math.min(1,maxW/img.width);
+      const canvas=document.createElement('canvas');
+      canvas.width=Math.round(img.width*scale);
+      canvas.height=Math.round(img.height*scale);
+      canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+      resolve(canvas.toDataURL('image/jpeg',quality));
+    };
+    img.src=dataUrl;
+  });
+}
+
+window.submitPost=async function(){
+  if(!currentUser)return;
+  const mealType=document.getElementById('postMealType').value;
+  const desc=document.getElementById('postDesc').value.trim();
+  let compressedPhoto=null;
+  if(photoDataUrl){
+    try{ compressedPhoto=await compressImage(photoDataUrl); }
+    catch(e){ compressedPhoto=photoDataUrl; }
+  }
+  const post={userId:currentUser.id,userName:currentUser.name,team:currentUser.team||'—',
+    mealType,desc,timestamp:Date.now(),reactions:{strong:0,fire:0,heart:0},
+    photoUrl:compressedPhoto,challengeId:activeChallengeId||'demo'};
+  closeModal('postModal');
+  showToast('Post inviato! +1 punto 🌿');
+  if(window._firebaseReady){
+    const nr=window._push(window._ref(window._db,'posts'));
+    await window._set(nr,post);
+    const newPts=(currentUser.bonusPoints||0)+1;
+    currentUser.bonusPoints=newPts;
+    localStorage.setItem('c11_user',JSON.stringify(currentUser));
+    await window._update(window._ref(window._db,'users/'+currentUser.id),{bonusPoints:newPts});
+  } else {
+    post.id='demo_'+Date.now();
+    posts.unshift(post);renderFeed();
+  }
+};
+
+// ============================================================
+// CLASSIFICA
+// ============================================================
+function calcLoss(u){
+  if(!u.weightStart||!u.weightCurrent)return 0;
+  return((u.weightStart-u.weightCurrent)/u.weightStart*100);
+}
+function calcScore(u){return calcLoss(u)+(u.bonusPoints||0)*0.1;}
+
+function renderRanking(){
+  const sorted=[...users].sort((a,b)=>calcScore(b)-calcScore(a));
+  const c=document.getElementById('rankIndividual');
+  if(!sorted.length){c.innerHTML=`<div class="empty-state"><div class="empty-icon">🏆</div><div class="empty-text">Nessun partecipante ancora.</div></div>`;return;}
+  c.innerHTML=sorted.map((u,i)=>{
+    const loss=calcLoss(u);
+    const pc=i===0?'p1':i===1?'p2':i===2?'p3':'other';
+    const isMe=u.id===currentUser?.id;
+    return `<div class="rank-item" style="${isMe?'background:var(--green-light);border-radius:10px;padding:12px 10px;margin:0 -4px;':''}animation-delay:${i*0.08}s">
+      <div class="rank-pos ${pc}">${i+1}</div>
+      <div class="avatar" style="width:34px;height:34px;font-size:12px;flex-shrink:0;${u.role==='captain'?'background:linear-gradient(135deg,var(--gold),#e67e22);':''}">${getInitials(u.name)}</div>
+      <div class="rank-info">
+        <div class="rank-name">${u.name}${isMe?' (tu)':''}${u.role==='captain'?' 👑':''}</div>
+        <div class="rank-sub">${u.team||'—'} · ${u.bonusPoints||0} punti bonus</div>
+      </div>
+      <div class="rank-score">${loss>0?'-'+loss.toFixed(1)+'%':loss.toFixed(1)+'%'}<small>${loss>0?'perso':'variazione'}</small></div>
+    </div>`;
+  }).join('');
+  renderTeamRank();
+}
+
+function renderTeamRank(){
+  const ts={};
+  users.forEach(u=>{
+    const t=u.team||'—';
+    if(!ts[t])ts[t]={members:0,totalLoss:0,totalBonus:0};
+    ts[t].members++;ts[t].totalLoss+=calcLoss(u);ts[t].totalBonus+=(u.bonusPoints||0);
+  });
+  const sorted=Object.entries(ts).sort((a,b)=>{
+    const sa=a[1].totalLoss/a[1].members+a[1].totalBonus*0.05;
+    const sb=b[1].totalLoss/b[1].members+b[1].totalBonus*0.05;
+    return sb-sa;
+  });
+  const icons=['🥇','🥈','🥉','4️⃣','5️⃣'];
+  const c=document.getElementById('rankTeam');
+  c.innerHTML=sorted.map(([name,data],i)=>{
+    const avg=data.totalLoss/data.members;
+    const isMyTeam=name===currentUser?.team;
+    return `<div class="card" style="${isMyTeam?'border-color:var(--green);':''}animation-delay:${i*0.1}s">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:32px">${icons[i]||'🏅'}</div>
+        <div style="flex:1">
+          <div style="font-weight:800;font-size:16px">${name}${isMyTeam?' (tua)':''}</div>
+          <div style="font-size:12px;color:var(--text3)">${data.members} membri · ${data.totalBonus} punti bonus</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:20px;font-weight:800;color:var(--green)">${avg>0?'-'+avg.toFixed(1):avg.toFixed(1)}%</div>
+          <div style="font-size:11px;color:var(--text3)">media</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.switchRankTab=function(tab,btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('rankIndividual').style.display=tab==='individual'?'block':'none';
+  document.getElementById('rankTeam').style.display=tab==='team'?'block':'none';
+};
+
+// ============================================================
+// ACTIVITIES
+// ============================================================
+function renderActivities(){
+  const today=getTodayKey();
+  const done=JSON.parse(localStorage.getItem('c11_act_'+today)||'[]');
+  const doneCount=done.length;
+  document.getElementById('todayActCount').textContent=doneCount?`${doneCount}/${ACTIVITIES.length} completate`:'';
+  document.getElementById('activityGrid').innerHTML=ACTIVITIES.map(act=>`
+    <div class="act-card ${done.includes(act.id)?'done':''}" onclick="openActivity('${act.id}')">
+      <div class="act-check">✓</div>
+      <span class="act-icon">${act.icon}</span>
+      <div class="act-name">${act.name}</div>
+      <div class="act-pts">+${act.pts} punti</div>
+    </div>`).join('');
+  const streak=calcStreak();
+  document.getElementById('streakNum').textContent=streak;
+  document.getElementById('totalPoints').textContent=currentUser?.bonusPoints||0;
+  // Badge bonus
+  const undone=ACTIVITIES.length-doneCount;
+  const badge=document.getElementById('badgeBonus');
+  if(undone>0&&undone<ACTIVITIES.length){badge.textContent=undone;badge.classList.add('show');}
+  else badge.classList.remove('show');
+}
+
+window.openActivity=function(id){
+  const today=getTodayKey();
+  const done=JSON.parse(localStorage.getItem('c11_act_'+today)||'[]');
+  if(done.includes(id)){showToast('Già completata oggi!');return;}
+  const act=ACTIVITIES.find(a=>a.id===id);
+  currentActivityId=id;
+  document.getElementById('activityModalTitle').textContent=act.icon+' '+act.name;
+  document.getElementById('activityModalDesc').textContent=act.desc+` (+${act.pts} punti)`;
+  document.getElementById('activityModal').classList.add('open');
+};
+
+window.confirmActivity=async function(){
+  if(!currentActivityId)return;
+  const today=getTodayKey();
+  const act=ACTIVITIES.find(a=>a.id===currentActivityId);
+  const done=JSON.parse(localStorage.getItem('c11_act_'+today)||'[]');
+  done.push(currentActivityId);
+  localStorage.setItem('c11_act_'+today,JSON.stringify(done));
+  currentUser.bonusPoints=(currentUser.bonusPoints||0)+act.pts;
+  localStorage.setItem('c11_user',JSON.stringify(currentUser));
+  if(window._firebaseReady) await window._update(window._ref(window._db,'users/'+currentUser.id),{bonusPoints:currentUser.bonusPoints});
+  closeModal('activityModal');
+  showToast(`+${act.pts} punti! ${act.icon}`);
+  launchConfetti(6);
+  renderActivities();
+  currentActivityId=null;
+};
+
+// ============================================================
+// TIPS & RULES
+// ============================================================
+function renderTips(){
+  const tipsList=tips.filter(t=>t.type==='tips');
+  const rulesList=tips.filter(t=>t.type==='rules'||t.type==='warning');
+  const typeClass={tips:'',rules:'rule',warning:'warning'};
+  const typeLabel={tips:'💡 Consiglio',rules:'📋 Regola',warning:'⚠️ Attenzione'};
+
+  const render=(arr)=>arr.length
+    ?arr.map((t,i)=>`<div class="tip-card ${typeClass[t.type]||''}" style="animation-delay:${i*0.06}s">
+        <div class="tip-category">${typeLabel[t.type]||'💡'}</div>
+        <div class="tip-text">${t.text}</div>
+      </div>`).join('')
+    :`<div class="empty-state" style="padding:30px 0"><div class="empty-icon">📭</div><div class="empty-text">Nessun contenuto ancora.</div></div>`;
+
+  document.getElementById('tipsList').innerHTML=render(tipsList);
+  document.getElementById('rulesList').innerHTML=render(rulesList);
+}
+
+window.switchTipsTab=function(tab,btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tipsList').style.display=tab==='tips'?'block':'none';
+  document.getElementById('rulesList').style.display=tab==='rules'?'block':'none';
+};
+
+function updateTipsBadge(){
+  const seen=localStorage.getItem('c11_tipsSeen')||'0';
+  const badge=document.getElementById('badgeTips');
+  if(tips.length>parseInt(seen)){badge.classList.add('show');}
+  else badge.classList.remove('show');
+  localStorage.setItem('c11_tipsSeen',tips.length.toString());
+}
+
+// ADMIN TIPS
+window.addTip=async function(){
+  const type=document.getElementById('newTipType').value;
+  const text=document.getElementById('newTipText').value.trim();
+  if(!text){showToast('Scrivi il testo');return;}
+  const tip={type,text,challengeId:activeChallengeId||'demo',createdAt:Date.now()};
+  if(window._firebaseReady){await window._push(window._ref(window._db,'tips'),tip);}
+  else{tips.push({id:'t'+Date.now(),...tip});renderTips();}
+  document.getElementById('newTipText').value='';
+  showToast('Aggiunto!');
+  renderAdminTips();
+};
+
+function renderAdminTips(){
+  const c=document.getElementById('adminTipsList');
+  const myTips=tips.filter(t=>!activeChallengeId||t.challengeId===activeChallengeId);
+  if(!myTips.length){c.innerHTML='<div style="font-size:13px;color:var(--text3)">Nessun contenuto ancora.</div>';return;}
+  c.innerHTML=myTips.map(t=>`
+    <div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1;font-size:13px;color:var(--text2)">[${t.type}] ${t.text}</div>
+      <button style="border:none;background:none;color:var(--red);font-size:18px;cursor:pointer;padding:0 2px" onclick="deleteTip('${t.id}')">×</button>
+    </div>`).join('');
+}
+
+window.deleteTip=async function(id){
+  if(!confirm('Elimina?'))return;
+  if(window._firebaseReady) await window._remove(window._ref(window._db,'tips/'+id));
+  else{tips=tips.filter(t=>t.id!==id);renderTips();renderAdminTips();}
+};
+
+// ============================================================
+// PROFILO & PESO
+// ============================================================
+function updateProfile(){
+  if(!currentUser)return;
+  const init=getInitials(currentUser.name);
+  document.getElementById('profileAvatar').textContent=init;
+  document.getElementById('profileName').textContent=currentUser.name;
+  document.getElementById('profileTeam').textContent=currentUser.team?'👥 '+currentUser.team:'Squadra non assegnata';
+  const cb=document.getElementById('captainBadge');
+  cb.style.display=currentUser.role==='captain'?'inline-block':'none';
+  const start=currentUser.weightStart||0;
+  const cur=currentUser.weightCurrent||start;
+  const delta=cur-start;
+  document.getElementById('weightStartLabel').textContent=`Peso iniziale: ${start} kg`;
+  document.getElementById('weightCurrent').textContent=cur.toFixed(1);
+  const de=document.getElementById('weightDelta');
+  if(delta<0){de.textContent=`▼ ${Math.abs(delta).toFixed(1)} kg persi`;de.className='weight-delta loss';}
+  else if(delta>0){de.textContent=`▲ ${delta.toFixed(1)} kg guadagnati`;de.className='weight-delta gain';}
+  else{de.textContent='Peso invariato';de.className='weight-delta';}
+  const today=new Date().toDateString();
+  const mine=posts.filter(p=>p.userId===currentUser.id&&new Date(p.timestamp).toDateString()===today);
+  document.getElementById('myPostsToday').innerHTML=mine.length
+    ?mine.map(p=>`<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:14px">${MEAL_LABELS[p.mealType]||p.mealType} · ${formatTime(p.timestamp)}</div>`).join('')
+    :'<div style="color:var(--text3);font-size:14px">Nessun post ancora oggi.</div>';
+}
+
+window.openWeightModal=function(){
+  document.getElementById('newWeight').value=currentUser?.weightCurrent||'';
+  document.getElementById('weightModal').classList.add('open');
+};
+
+window.saveWeight=async function(){
+  const w=parseFloat(document.getElementById('newWeight').value);
+  if(!w||w<30||w>300){showToast('Peso non valido');return;}
+  currentUser.weightCurrent=w;
+  localStorage.setItem('c11_user',JSON.stringify(currentUser));
+  if(window._firebaseReady) await window._update(window._ref(window._db,'users/'+currentUser.id),{weightCurrent:w});
+  closeModal('weightModal');
+  updateProfile();renderRanking();
+  showToast('Peso aggiornato! 💪');
+};
+
+// ============================================================
+// ADMIN
+// ============================================================
+function isAdmin(){return currentUser?.role==='admin';}
+
+window.addTeam=async function(){
+  const name=document.getElementById('newTeamName').value.trim();
+  if(!name)return;
+  const team={name,challengeId:activeChallengeId||'demo',createdAt:Date.now()};
+  if(window._firebaseReady) await window._push(window._ref(window._db,'teams'),team);
+  else{teams.push({id:'t'+Date.now(),...team});renderAdminTeams();}
+  document.getElementById('newTeamName').value='';
+  showToast('Squadra aggiunta!');
+};
+
+function renderAdminTeams(){
+  const c=document.getElementById('adminTeamsList');
+  if(!teams.length){c.innerHTML='<div style="font-size:13px;color:var(--text3)">Nessuna squadra.</div>';return;}
+  c.innerHTML=teams.map(t=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
+      <span style="font-weight:700">👥 ${t.name}</span>
+      <span style="font-size:12px;color:var(--text3)">${users.filter(u=>u.team===t.name).length} membri</span>
+    </div>`).join('');
+}
+
+function renderAdminUsers(){
+  const c=document.getElementById('adminUsersList');
+  document.getElementById('adminUserCount').textContent=users.filter(u=>u.role!=='admin').length;
+  const filtered=users.filter(u=>u.role!=='admin');
+  if(!filtered.length){c.innerHTML='<div style="font-size:13px;color:var(--text3)">Nessun utente ancora.</div>';return;}
+  c.innerHTML=filtered.map(u=>`
+    <div class="user-row">
+      <div class="avatar" style="width:30px;height:30px;font-size:10px;flex-shrink:0">${getInitials(u.name)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.name}</div>
+        <div style="font-size:11px;color:var(--text3)">${u.weightStart}kg→${u.weightCurrent}kg · ${calcLoss(u).toFixed(1)}% · ${u.bonusPoints||0}pt</div>
+      </div>
+      <select style="font-size:11px;padding:4px;border:1px solid var(--border2);border-radius:6px;background:white;max-width:90px" onchange="assignTeam('${u.id}',this.value)">
+        <option value="">—squadra—</option>
+        ${teams.map(t=>`<option value="${t.name}" ${u.team===t.name?'selected':''}>${t.name}</option>`).join('')}
+      </select>
+      <select style="font-size:11px;padding:4px;border:1px solid var(--border2);border-radius:6px;background:white;margin-left:4px" onchange="assignRole('${u.id}',this.value)">
+        <option value="member" ${!u.role||u.role==='member'?'selected':''}>Membro</option>
+        <option value="captain" ${u.role==='captain'?'selected':''}>Capitano</option>
+      </select>
+    </div>`).join('');
+}
+
+window.assignTeam=async function(uid,team){
+  const u=users.find(u=>u.id===uid);if(u)u.team=team;
+  if(uid===currentUser?.id){currentUser.team=team;localStorage.setItem('c11_user',JSON.stringify(currentUser));}
+  if(window._firebaseReady) await window._update(window._ref(window._db,'users/'+uid),{team});
+  showToast('Squadra assegnata!');
+};
+
+window.assignRole=async function(uid,role){
+  const u=users.find(u=>u.id===uid);if(u)u.role=role;
+  if(window._firebaseReady) await window._update(window._ref(window._db,'users/'+uid),{role});
+  showToast('Ruolo aggiornato!');
+};
+
+window.handlePrizePhoto=function(input){
+  const file=input.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=async e=>{
+    try{ prizePhotoDataUrl=await compressImage(e.target.result,800,0.65); }
+    catch(err){ prizePhotoDataUrl=e.target.result; }
+    document.getElementById('prizeUploadArea').innerHTML=`<img src="${prizePhotoDataUrl}" style="width:100%;border-radius:var(--radius-sm);max-height:180px;object-fit:cover">`;
+  };
+  r.readAsDataURL(file);
+};
+
+// ============================================================
+// FINE CHALLENGE
+// ============================================================
+window.showEndChallenge=function(){
+  const sorted=[...users].sort((a,b)=>calcScore(b)-calcScore(a));
+  const winner=sorted[0];
+  if(!winner){showToast('Nessun partecipante');return;}
+  document.getElementById('endWinner').textContent='🥇 '+winner.name;
+  document.getElementById('endWinnerScore').textContent='-'+calcLoss(winner).toFixed(2)+'% · '+winner.bonusPoints+' punti bonus';
+  const prize=challengeConfig?.prize;
+  document.getElementById('endPrize').innerHTML=prize?.title?`🎁 <strong>${prize.title}</strong><br><span style="font-size:13px">${prize.desc||''}</span>`:'';
+  document.getElementById('endOverlay').classList.add('show');
+  launchConfetti(30);
+};
+
+// ============================================================
+// UTILS
+// ============================================================
+function renderDayDots(){
+  const dur=parseInt(challengeConfig?.duration)||11;
+  document.getElementById('headerDays').textContent=dur;
+  const start=challengeConfig?.startDate?new Date(challengeConfig.startDate):null;
+  const today=new Date();
+  let cur=1;
+  if(start){const diff=Math.floor((today-start)/86400000);cur=Math.max(1,Math.min(dur,diff+1));}
+  document.getElementById('currentDayNum').textContent=cur;
+  document.getElementById('daysLeft').textContent=Math.max(0,dur-cur);
+  const pct=Math.round((cur/dur)*100);
+  document.getElementById('progressFill').style.width=pct+'%';
+  const c=document.getElementById('dayDots');
+  c.innerHTML=Array.from({length:dur},(_,i)=>{
+    const d=i+1;
+    const cls=d<cur?'done':d===cur?'today':'';
+    return `<div class="day-dot ${cls}" title="Giorno ${d}">${d}</div>`;
+  }).join('');
+}
+
+function getTodayKey(){return new Date().toISOString().split('T')[0];}
+
+function calcStreak(){
+  let s=0;const today=new Date();
+  for(let i=0;i<30;i++){
+    const d=new Date(today);d.setDate(d.getDate()-i);
+    const k=d.toISOString().split('T')[0];
+    if(JSON.parse(localStorage.getItem('c11_act_'+k)||'[]').length>0)s++;else break;
+  }
+  return s;
+}
+
+function formatTime(ts){
+  const d=new Date(ts),today=new Date();
+  if(d.toDateString()===today.toDateString())return d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+  return d.toLocaleDateString('it-IT',{day:'numeric',month:'short'});
+}
+
+function getInitials(name){
+  if(!name)return '?';
+  return name.split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+function launchConfetti(n=15){
+  const colors=['#2ECC71','#F39C12','#E74C3C','#8E44AD','#3498DB','#27AE60','#FFD700'];
+  for(let i=0;i<n;i++){
+    const el=document.createElement('div');
+    el.className='confetti-piece';
+    el.style.cssText=`left:${Math.random()*100}vw;top:-20px;background:${colors[Math.floor(Math.random()*colors.length)]};
+      border-radius:${Math.random()>0.5?'50%':'2px'};
+      width:${6+Math.random()*10}px;height:${6+Math.random()*10}px;
+      animation-duration:${2+Math.random()*2}s;animation-delay:${Math.random()*0.8}s`;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),4000);
+  }
+}
+
+window.closeModal=function(id){document.getElementById(id).classList.remove('open');};
+
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});
+});
+
+if(!window._firebaseReady) window.initApp=function(){
+  setTimeout(()=>{
+    const s=document.getElementById('splashScreen');
+    s.style.opacity='0';setTimeout(()=>{s.style.display='none';bootApp();},600);
+  },1400);
+};
+</script>
+</body>
+</html>
