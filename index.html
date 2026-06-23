@@ -40,6 +40,40 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .anim-bounce{animation:bounce 1s ease infinite}
 .anim-glow{animation:glow 2s ease infinite}
 
+/* BETA SCREEN */
+#betaScreen{
+  position:fixed;inset:0;z-index:9998;
+  background:linear-gradient(160deg,#0d1f0d 0%,#1a2e1a 50%,#2d5a27 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:30px 24px;
+}
+.beta-badge{
+  background:var(--gold);color:#5a3e00;
+  font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;
+  padding:5px 14px;border-radius:20px;margin-bottom:20px;
+}
+.beta-logo{font-size:60px;margin-bottom:12px;animation:bounce 1.2s ease infinite}
+.beta-title{font-size:26px;font-weight:800;color:white;text-align:center;margin-bottom:6px;letter-spacing:-0.5px}
+.beta-sub{font-size:14px;color:rgba(255,255,255,0.65);text-align:center;margin-bottom:28px;line-height:1.6}
+.beta-card{
+  background:white;border-radius:20px;padding:22px;
+  width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,0.35);
+  text-align:center;
+}
+.beta-card-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px}
+.beta-card-sub{font-size:13px;color:var(--text3);margin-bottom:16px;line-height:1.5}
+.beta-disclaimer{
+  font-size:11px;color:rgba(255,255,255,0.45);text-align:center;
+  margin-top:20px;max-width:300px;line-height:1.6;
+}
+.beta-tag{
+  display:inline-block;background:rgba(255,255,255,0.1);
+  border:1px solid rgba(255,255,255,0.2);border-radius:8px;
+  padding:8px 16px;color:rgba(255,255,255,0.8);
+  font-size:13px;font-weight:600;margin-bottom:20px;
+  font-family:monospace;letter-spacing:0.5px;
+}
+
 /* SPLASH */
 #splashScreen{
   position:fixed;inset:0;z-index:9999;
@@ -439,6 +473,27 @@ textarea.form-input{resize:vertical;min-height:72px}
 </head>
 <body>
 
+<!-- BETA ACCESS SCREEN -->
+<div id="betaScreen" style="display:none">
+  <div class="beta-badge">🔒 Accesso Beta Riservato</div>
+  <div class="beta-logo">🏆</div>
+  <h1 class="beta-title">Challenge App</h1>
+  <p class="beta-sub">Piattaforma di gestione challenge<br>benessere per team Herbalife</p>
+  <div class="beta-tag" id="betaAccessTag">BETA-XXXXXX</div>
+  <div class="beta-card">
+    <div class="beta-card-title">Inserisci il codice beta</div>
+    <div class="beta-card-sub">Ricevuto direttamente da Carlo Barbieri.<br>Accesso riservato ai team leader selezionati.</div>
+    <input class="form-input" id="betaCodeInput" type="text" placeholder="Es: BETA-AB1234" style="text-transform:uppercase;text-align:center;font-size:18px;font-weight:700;letter-spacing:1px;margin-bottom:12px">
+    <button class="btn btn-primary" onclick="checkBetaCode()">Accedi →</button>
+    <div id="betaError" style="color:var(--red);font-size:13px;margin-top:10px;display:none">Codice non valido. Contatta Carlo Barbieri.</div>
+  </div>
+  <div class="beta-disclaimer">
+    Accesso fornito nell'ambito di un programma beta riservato.<br>
+    La piattaforma è proprietà di Carlo Barbieri.<br>
+    È vietata la condivisione non autorizzata.
+  </div>
+</div>
+
 <!-- SPLASH -->
 <div id="splashScreen">
   <div class="splash-trophy">🏆</div>
@@ -819,6 +874,19 @@ window.initApp();
 // CONFIG & STATE
 // ============================================================
 const ADMIN_CODE = 'CARLOADMIN';
+
+// ============================================================
+// CODICI BETA — aggiungi qui i codici per ogni team leader
+// Formato: 'CODICE': { nome: 'Nome Team Leader', mercato: 'Italia' }
+// ============================================================
+const BETA_CODES = {
+  'BETA-CARLO1': { nome: 'Carlo Barbieri', mercato: 'Admin' },
+  // Aggiungi qui i codici dei team leader beta:
+  // 'BETA-AB1234': { nome: 'Nome Cognome', mercato: 'Italia' },
+  // 'BETA-CD5678': { nome: 'Nome Cognome', mercato: 'Spagna' },
+};
+const BETA_BYPASS = false; // metti true per disattivare la schermata beta
+
 const ACTIVITIES = [
   {id:'detox',   name:'Giornata Detox',  icon:'🌿', pts:5,  desc:'Completa la giornata detox con i prodotti indicati'},
   {id:'workout', name:'Allenamento',      icon:'💪', pts:3,  desc:'Allenati almeno 30 minuti (qualsiasi attività)'},
@@ -848,13 +916,53 @@ window.initApp = function(){
 
 function bootApp(){
   createParticles();
-  if(currentUser){
-    showMainApp();
-    loadData();
+  // Controlla se l'accesso beta è già stato verificato
+  const betaOk = localStorage.getItem('c11_betaOk');
+  if(BETA_BYPASS || betaOk){
+    if(currentUser){ showMainApp(); loadData(); }
+    else { document.getElementById('loginPage').style.display='flex'; }
   } else {
-    document.getElementById('loginPage').style.display='flex';
+    // Mostra schermata beta
+    const bs=document.getElementById('betaScreen');
+    bs.style.display='flex';
+    // Mostra un ID univoco del dispositivo per tracciabilità
+    const deviceId = localStorage.getItem('c11_deviceId') || 'DEV-'+Math.random().toString(36).substr(2,6).toUpperCase();
+    localStorage.setItem('c11_deviceId', deviceId);
+    document.getElementById('betaAccessTag').textContent = deviceId;
   }
 }
+
+window.checkBetaCode = function(){
+  const code = document.getElementById('betaCodeInput').value.trim().toUpperCase();
+  const errEl = document.getElementById('betaError');
+  if(BETA_CODES[code]){
+    const tl = BETA_CODES[code];
+    localStorage.setItem('c11_betaOk', '1');
+    localStorage.setItem('c11_betaTL', JSON.stringify(tl));
+    // Log accesso su Firebase
+    if(window._firebaseReady){
+      window._push(window._ref(window._db,'beta_access'),{
+        code, nome: tl.nome, mercato: tl.mercato,
+        deviceId: localStorage.getItem('c11_deviceId'),
+        timestamp: Date.now(),
+        ua: navigator.userAgent.substring(0,100)
+      });
+    }
+    document.getElementById('betaScreen').style.display='none';
+    if(currentUser){ showMainApp(); loadData(); }
+    else { document.getElementById('loginPage').style.display='flex'; }
+  } else {
+    errEl.style.display='block';
+    document.getElementById('betaCodeInput').style.borderColor='var(--red)';
+    // Log tentativo fallito
+    if(window._firebaseReady){
+      window._push(window._ref(window._db,'beta_failed'),{
+        code, timestamp: Date.now(),
+        deviceId: localStorage.getItem('c11_deviceId')
+      });
+    }
+  }
+};
 
 function createParticles(){
   const c=document.getElementById('particles');
