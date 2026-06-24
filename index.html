@@ -1251,7 +1251,7 @@ function loadData(){
   window._onValue(window._ref(window._db,'tips'),snap=>{
     tips=[];
     snap.forEach(c=>tips.push({id:c.key,...c.val()}));
-    tips=tips.filter(t=>!activeChallengeId||t.challengeId===activeChallengeId);
+    // Tips visibili a tutti — non filtrate per challenge
     renderTips();
     updateTipsBadge();
   });
