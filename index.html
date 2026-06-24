@@ -720,11 +720,16 @@ textarea.form-input{resize:vertical;min-height:72px}
           <option value="tips">Consiglio</option>
           <option value="rules">Regola</option>
           <option value="warning">Avvertenza</option>
+          <option value="video">Video</option>
         </select>
       </div>
       <div class="form-group">
         <label class="form-label">Testo</label>
         <textarea class="form-input" id="newTipText" placeholder="Scrivi il consiglio o la regola..." rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Link video YouTube (opzionale)</label>
+        <input class="form-input" id="newTipVideo" placeholder="Es: https://youtube.com/watch?v=...">
       </div>
       <button class="btn btn-primary" onclick="addTip()">Aggiungi</button>
     </div>
@@ -786,6 +791,18 @@ textarea.form-input{resize:vertical;min-height:72px}
         <option value="cena">🌙 Cena</option>
         <option value="frullato">🥤 Frullato proteico</option>
       </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Quando?</label>
+      <div style="display:flex;gap:8px">
+        <button id="postTimeNow" class="btn btn-primary btn-sm" style="flex:1" onclick="setPostTime('now')">Adesso</button>
+        <button id="postTimeLate" class="btn btn-outline btn-sm" style="flex:1" onclick="setPostTime('late')">Recupero pasto</button>
+      </div>
+      <div id="lateTimeRow" style="display:none;margin-top:10px">
+        <label class="form-label">Orario del pasto</label>
+        <input class="form-input" id="postLateTime" type="time">
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">📌 Apparirà come "post recuperato" nel feed</div>
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label">Foto</label>
@@ -1147,6 +1164,67 @@ function showMainApp(){
   updateProfile();
   renderActivities();
   renderDayDots();
+  setupNotifications();
+}
+
+// ============================================================
+// NOTIFICHE PUSH
+// ============================================================
+function setupNotifications(){
+  if(!('Notification' in window)||!('serviceWorker' in navigator))return;
+  if(Notification.permission==='default'){
+    setTimeout(()=>{
+      if(confirm('Vuoi ricevere promemoria giornalieri per i pasti e le attività? Ti aiuterà a non dimenticare nulla durante la challenge.')){
+        Notification.requestPermission().then(perm=>{
+          if(perm==='granted'){
+            showToast('Notifiche attivate! 🔔');
+            scheduleNotifications();
+          }
+        });
+      }
+    }, 3000);
+  } else if(Notification.permission==='granted'){
+    scheduleNotifications();
+  }
+}
+
+function scheduleNotifications(){
+  // Usa localStorage per evitare notifiche duplicate nello stesso giorno
+  const today=getTodayKey();
+  const notifSent=localStorage.getItem('c11_notif_'+today);
+  if(notifSent)return;
+
+  const now=new Date();
+  const hour=now.getHours();
+
+  // Promemoria mattina (8:00) - colazione
+  if(hour<8){
+    const ms=(new Date().setHours(8,0,0,0))-Date.now();
+    setTimeout(()=>sendNotif('🌅 Buongiorno!','Hai fatto colazione? Ricordati di postarla nella challenge!'),ms);
+  }
+  // Promemoria pranzo (13:00)
+  if(hour<13){
+    const ms=(new Date().setHours(13,0,0,0))-Date.now();
+    setTimeout(()=>sendNotif('☀️ È ora di pranzo!','Posta il tuo pasto e guadagna punti 💪'),ms);
+  }
+  // Promemoria sera (20:00) - recap
+  if(hour<20){
+    const ms=(new Date().setHours(20,0,0,0))-Date.now();
+    setTimeout(()=>{
+      const todayPosts=posts.filter(p=>p.userId===currentUser?.id&&new Date(p.timestamp).toDateString()===new Date().toDateString());
+      if(todayPosts.length<3){
+        sendNotif('🌙 Come è andata oggi?','Hai ancora pasti da postare. Non perdere i tuoi punti!');
+      }
+    },ms);
+  }
+
+  localStorage.setItem('c11_notif_'+today,'1');
+}
+
+function sendNotif(title, body){
+  if(Notification.permission==='granted'){
+    new Notification(title,{body,icon:'https://challenge.movimentoesalute.eu/icon.png',badge:'https://challenge.movimentoesalute.eu/icon.png'});
+  }
 }
 
 function loadData(){
@@ -1280,7 +1358,7 @@ function renderFeed(){
         <div class="avatar ${isCap?'captain':''}">${getInitials(post.userName)}</div>
         <div class="post-meta">
           <div class="post-author">${post.userName}${isCap?' 👑':''}</div>
-          <div class="post-info">${post.team||'—'} · ${formatTime(post.timestamp)}</div>
+          <div class="post-info">${post.team||'—'} · ${formatTime(post.timestamp)}${post.isLate?' · <span style="color:var(--gold);font-size:11px;font-weight:700">📌 recuperato</span>':''}</div>
         </div>
         <div class="meal-badge">${MEAL_LABELS[post.mealType]||post.mealType}</div>
       </div>
@@ -1310,11 +1388,27 @@ window.react=async function(postId,key){
 // ============================================================
 // POST PASTO
 // ============================================================
+let postIsLate = false;
+
+window.setPostTime=function(mode){
+  postIsLate = mode==='late';
+  document.getElementById('postTimeNow').className='btn btn-sm '+(postIsLate?'btn-outline':'btn-primary');
+  document.getElementById('postTimeLate').className='btn btn-sm '+(postIsLate?'btn-primary':'btn-outline');
+  document.getElementById('lateTimeRow').style.display=postIsLate?'block':'none';
+};
+
 window.openPostModal=function(){
   photoDataUrl=null;
+  postIsLate=false;
   document.getElementById('photoPreview').style.display='none';
   document.getElementById('uploadPh').style.display='block';
   document.getElementById('postDesc').value='';
+  document.getElementById('lateTimeRow').style.display='none';
+  document.getElementById('postTimeNow').className='btn btn-primary btn-sm';
+  document.getElementById('postTimeLate').className='btn btn-outline btn-sm';
+  // Imposta orario corrente nel campo recupero
+  const now=new Date();
+  document.getElementById('postLateTime').value=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   document.getElementById('postModal').classList.add('open');
 };
 
@@ -1355,11 +1449,23 @@ window.submitPost=async function(){
     try{ compressedPhoto=await compressImage(photoDataUrl); }
     catch(e){ compressedPhoto=photoDataUrl; }
   }
+  // Gestione orario: adesso o recupero
+  let timestamp=Date.now();
+  let isLate=false;
+  if(postIsLate){
+    const lateTime=document.getElementById('postLateTime').value;
+    if(lateTime){
+      const [h,m]=lateTime.split(':');
+      const d=new Date();d.setHours(parseInt(h),parseInt(m),0,0);
+      timestamp=d.getTime();
+      isLate=true;
+    }
+  }
   const post={userId:currentUser.id,userName:currentUser.name,team:currentUser.team||'—',
-    mealType,desc,timestamp:Date.now(),reactions:{strong:0,fire:0,heart:0},
+    mealType,desc,timestamp,isLate,reactions:{strong:0,fire:0,heart:0},
     photoUrl:compressedPhoto,challengeId:activeChallengeId||'demo'};
   closeModal('postModal');
-  showToast('Post inviato! +1 punto 🌿');
+  showToast(isLate?'Post recuperato! 📌':'Post inviato! +1 punto 🌿');
   if(window._firebaseReady){
     const nr=window._push(window._ref(window._db,'posts'));
     await window._set(nr,post);
@@ -1499,17 +1605,35 @@ window.confirmActivity=async function(){
 // ============================================================
 // TIPS & RULES
 // ============================================================
+function getYouTubeId(url){
+  if(!url)return null;
+  const m=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+  return m?m[1]:null;
+}
+
 function renderTips(){
-  const tipsList=tips.filter(t=>t.type==='tips');
+  const tipsList=tips.filter(t=>t.type==='tips'||t.type==='video');
   const rulesList=tips.filter(t=>t.type==='rules'||t.type==='warning');
-  const typeClass={tips:'',rules:'rule',warning:'warning'};
-  const typeLabel={tips:'💡 Consiglio',rules:'📋 Regola',warning:'⚠️ Attenzione'};
+  const typeClass={tips:'',rules:'rule',warning:'warning',video:''};
+  const typeLabel={tips:'💡 Consiglio',rules:'📋 Regola',warning:'⚠️ Attenzione',video:'🎬 Video'};
+
+  const renderCard=(t,i)=>{
+    const ytId=t.videoUrl?getYouTubeId(t.videoUrl):null;
+    const videoHtml=ytId?`
+      <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px;margin-top:10px">
+        <iframe src="https://www.youtube.com/embed/${ytId}" frameborder="0" allowfullscreen
+          style="position:absolute;top:0;left:0;width:100%;height:100%;border-radius:8px"></iframe>
+      </div>`:
+      (t.videoUrl?`<a href="${t.videoUrl}" target="_blank" style="display:block;margin-top:8px;color:var(--green);font-size:13px;font-weight:700">▶ Guarda il video →</a>`:'');
+    return `<div class="tip-card ${typeClass[t.type]||''}" style="animation-delay:${i*0.06}s">
+      <div class="tip-category">${typeLabel[t.type]||'💡'}</div>
+      ${t.text?`<div class="tip-text">${t.text}</div>`:''}
+      ${videoHtml}
+    </div>`;
+  };
 
   const render=(arr)=>arr.length
-    ?arr.map((t,i)=>`<div class="tip-card ${typeClass[t.type]||''}" style="animation-delay:${i*0.06}s">
-        <div class="tip-category">${typeLabel[t.type]||'💡'}</div>
-        <div class="tip-text">${t.text}</div>
-      </div>`).join('')
+    ?arr.map((t,i)=>renderCard(t,i)).join('')
     :`<div class="empty-state" style="padding:30px 0"><div class="empty-icon">📭</div><div class="empty-text">Nessun contenuto ancora.</div></div>`;
 
   document.getElementById('tipsList').innerHTML=render(tipsList);
@@ -1535,11 +1659,13 @@ function updateTipsBadge(){
 window.addTip=async function(){
   const type=document.getElementById('newTipType').value;
   const text=document.getElementById('newTipText').value.trim();
-  if(!text){showToast('Scrivi il testo');return;}
-  const tip={type,text,challengeId:activeChallengeId||'demo',createdAt:Date.now()};
+  const videoUrl=document.getElementById('newTipVideo').value.trim();
+  if(!text&&!videoUrl){showToast('Scrivi il testo o inserisci un link video');return;}
+  const tip={type,text,videoUrl:videoUrl||'',challengeId:activeChallengeId||'demo',createdAt:Date.now()};
   if(window._firebaseReady){await window._push(window._ref(window._db,'tips'),tip);}
   else{tips.push({id:'t'+Date.now(),...tip});renderTips();}
   document.getElementById('newTipText').value='';
+  document.getElementById('newTipVideo').value='';
   showToast('Aggiunto!');
   renderAdminTips();
 };
