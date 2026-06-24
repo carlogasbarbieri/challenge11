@@ -1077,6 +1077,9 @@ window.createChallenge=async function(){
 
 window.saveChallenge=async function(){
   if(!activeChallengeId){showToast('Crea prima una challenge');return;}
+  // Usa foto salvata localmente se non ne è stata caricata una nuova
+  const savedPrizePhoto=localStorage.getItem('c11_prizePhoto_'+activeChallengeId)||'';
+  const photoUrl=prizePhotoDataUrl||challengeConfig.prize?.photoUrl||savedPrizePhoto;
   const cfg={
     code:document.getElementById('adminCode').value.trim().toUpperCase(),
     duration:parseInt(document.getElementById('adminDuration').value)||11,
@@ -1084,9 +1087,11 @@ window.saveChallenge=async function(){
     prize:{
       title:document.getElementById('adminPrizeTitle').value.trim(),
       desc:document.getElementById('adminPrizeDesc').value.trim(),
-      photoUrl:prizePhotoDataUrl||challengeConfig.prize?.photoUrl||''
+      photoUrl:photoUrl
     }
   };
+  // Salva foto premio in localStorage come backup
+  if(photoUrl) localStorage.setItem('c11_prizePhoto_'+activeChallengeId, photoUrl);
   challengeConfig={...challengeConfig,...cfg};
   if(window._firebaseReady){
     await window._update(window._ref(window._db,'challenges/'+activeChallengeId),cfg);
@@ -1225,9 +1230,45 @@ function sendNotif(title, body){
   }
 }
 
-function loadData(){
+async function loadData(){
   if(!window._firebaseReady){loadDemoData();return;}
-  loadChallenges();
+
+  // 1. Prima carica la challenge attiva e aspetta
+  if(activeChallengeId){
+    try{
+      const snap=await window._get(window._ref(window._db,'challenges/'+activeChallengeId));
+      if(snap.exists()){
+        challengeConfig={id:activeChallengeId,...snap.val()};
+        renderDayDots();
+        renderPrize();
+        document.getElementById('headerDays').textContent=challengeConfig.duration||11;
+      }
+    }catch(e){console.warn('Errore caricamento challenge',e);}
+  }
+
+  // 2. Poi carica tutto il resto in real-time
+  window._onValue(window._ref(window._db,'challenges'),snap=>{
+    challenges=[];
+    snap.forEach(c=>challenges.push({id:c.key,...c.val()}));
+    if(isAdmin())renderAdminChallenges();
+    // Aggiorna config se cambiata
+    if(activeChallengeId){
+      const active=challenges.find(c=>c.id===activeChallengeId);
+      if(active){
+        challengeConfig=active;
+        renderDayDots();
+        renderPrize();
+        if(isAdmin()){
+          document.getElementById('adminCode').value=active.code||'';
+          document.getElementById('adminDuration').value=active.duration||11;
+          document.getElementById('adminStartDate').value=active.startDate||'';
+          document.getElementById('adminPrizeTitle').value=active.prize?.title||'';
+          document.getElementById('adminPrizeDesc').value=active.prize?.desc||'';
+        }
+      }
+    }
+  });
+
   window._onValue(window._ref(window._db,'posts'),snap=>{
     posts=[];
     snap.forEach(c=>posts.push({id:c.key,...c.val()}));
@@ -1235,6 +1276,7 @@ function loadData(){
     posts.sort((a,b)=>b.timestamp-a.timestamp);
     renderFeed();updateProfile();
   });
+
   window._onValue(window._ref(window._db,'users'),snap=>{
     users=[];
     snap.forEach(c=>users.push({id:c.key,...c.val()}));
@@ -1242,16 +1284,17 @@ function loadData(){
     renderRanking();
     if(isAdmin())renderAdminUsers();
   });
+
   window._onValue(window._ref(window._db,'teams'),snap=>{
     teams=[];
     snap.forEach(c=>teams.push({id:c.key,...c.val()}));
     teams=teams.filter(t=>!activeChallengeId||t.challengeId===activeChallengeId);
     if(isAdmin())renderAdminTeams();
   });
+
   window._onValue(window._ref(window._db,'tips'),snap=>{
     tips=[];
     snap.forEach(c=>tips.push({id:c.key,...c.val()}));
-    // Tips visibili a tutti — non filtrate per challenge
     renderTips();
     updateTipsBadge();
   });
