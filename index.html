@@ -1734,13 +1734,23 @@ window.saveWeight=async function(){
 function isAdmin(){return currentUser?.role==='admin';}
 
 window.addTeam=async function(){
-  const name=document.getElementById('newTeamName').value.trim();
+  const input=document.getElementById('newTeamName');
+  const name=input.value.trim();
   if(!name)return;
   const team={name,challengeId:activeChallengeId||'demo',createdAt:Date.now()};
-  if(window._firebaseReady) await window._push(window._ref(window._db,'teams'),team);
-  else{teams.push({id:'t'+Date.now(),...team});renderAdminTeams();}
-  document.getElementById('newTeamName').value='';
-  showToast('Squadra aggiunta!');
+  if(window._firebaseReady){
+    await window._push(window._ref(window._db,'teams'),team);
+    // Aggiunge localmente subito senza aspettare il listener
+    if(!teams.find(t=>t.name===name&&t.challengeId===team.challengeId)){
+      teams.push({id:'t'+Date.now(),...team});
+    }
+  } else {
+    teams.push({id:'t'+Date.now(),...team});
+  }
+  input.value='';
+  input.focus();
+  renderAdminTeams();
+  showToast('Squadra "'+name+'" aggiunta!');
 };
 
 function renderAdminTeams(){
