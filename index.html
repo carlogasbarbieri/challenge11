@@ -1660,11 +1660,16 @@ window.addTip=async function(){
   const videoUrl=document.getElementById('newTipVideo').value.trim();
   if(!text&&!videoUrl){showToast('Scrivi il testo o inserisci un link video');return;}
   const tip={type,text,videoUrl:videoUrl||'',challengeId:activeChallengeId||'demo',createdAt:Date.now()};
-  if(window._firebaseReady){await window._push(window._ref(window._db,'tips'),tip);}
-  else{tips.push({id:'t'+Date.now(),...tip});renderTips();}
+  if(window._firebaseReady){
+    await window._push(window._ref(window._db,'tips'),tip);
+    tips.push({id:'tip'+Date.now(),...tip});
+  } else {
+    tips.push({id:'t'+Date.now(),...tip});
+  }
   document.getElementById('newTipText').value='';
   document.getElementById('newTipVideo').value='';
   showToast('Aggiunto!');
+  renderTips();
   renderAdminTips();
 };
 
