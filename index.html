@@ -40,6 +40,40 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .anim-bounce{animation:bounce 1s ease infinite}
 .anim-glow{animation:glow 2s ease infinite}
 
+/* BETA SCREEN */
+#betaScreen{
+  position:fixed;inset:0;z-index:9998;
+  background:linear-gradient(160deg,#0d1f0d 0%,#1a2e1a 50%,#2d5a27 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:30px 24px;
+}
+.beta-badge{
+  background:var(--gold);color:#5a3e00;
+  font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;
+  padding:5px 14px;border-radius:20px;margin-bottom:20px;
+}
+.beta-logo{font-size:60px;margin-bottom:12px;animation:bounce 1.2s ease infinite}
+.beta-title{font-size:26px;font-weight:800;color:white;text-align:center;margin-bottom:6px;letter-spacing:-0.5px}
+.beta-sub{font-size:14px;color:rgba(255,255,255,0.65);text-align:center;margin-bottom:28px;line-height:1.6}
+.beta-card{
+  background:white;border-radius:20px;padding:22px;
+  width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,0.35);
+  text-align:center;
+}
+.beta-card-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px}
+.beta-card-sub{font-size:13px;color:var(--text3);margin-bottom:16px;line-height:1.5}
+.beta-disclaimer{
+  font-size:11px;color:rgba(255,255,255,0.45);text-align:center;
+  margin-top:20px;max-width:300px;line-height:1.6;
+}
+.beta-tag{
+  display:inline-block;background:rgba(255,255,255,0.1);
+  border:1px solid rgba(255,255,255,0.2);border-radius:8px;
+  padding:8px 16px;color:rgba(255,255,255,0.8);
+  font-size:13px;font-weight:600;margin-bottom:20px;
+  font-family:monospace;letter-spacing:0.5px;
+}
+
 /* SPLASH */
 #splashScreen{
   position:fixed;inset:0;z-index:9999;
@@ -424,6 +458,60 @@ textarea.form-input{resize:vertical;min-height:72px}
 .challenge-pill:active{background:rgba(46,204,113,0.3);border-color:var(--green)}
 .challenge-pill.active-ch{background:var(--green);border-color:var(--green)}
 
+/* PODIUM */
+.podium{
+  display:flex;align-items:flex-end;justify-content:center;gap:8px;
+  padding:20px 8px 0;margin-bottom:4px;
+}
+.podium-spot{
+  flex:1;max-width:110px;display:flex;flex-direction:column;align-items:center;
+  animation:fadeInUp 0.5s ease both;
+}
+.podium-spot.first{animation-delay:0.1s;z-index:2}
+.podium-avatar-wrap{position:relative;margin-bottom:6px}
+.podium-medal{position:absolute;bottom:-4px;right:-4px;font-size:20px;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.3))}
+.podium-spot.first .podium-avatar-wrap .avatar{border:3px solid #FFD700;box-shadow:0 0 20px rgba(255,215,0,0.5)}
+.podium-name{font-size:12px;font-weight:700;text-align:center;line-height:1.2;margin-bottom:2px}
+.podium-score{font-size:13px;font-weight:800;color:var(--green);margin-bottom:8px}
+.podium-base{
+  width:100%;border-radius:8px 8px 0 0;display:flex;align-items:flex-start;
+  justify-content:center;padding-top:8px;position:relative;
+  animation:podiumRise 0.6s ease both;
+}
+.podium-spot.first .podium-base{animation-delay:0.15s}
+@keyframes podiumRise{from{height:0!important;opacity:0}to{opacity:1}}
+.podium-pos-num{font-size:24px;font-weight:900;color:rgba(255,255,255,0.9)}
+
+/* OVERTAKE BANNER */
+.overtake-banner{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.5);
+  background:linear-gradient(135deg,var(--green),var(--green-dark));
+  color:white;border-radius:24px;padding:28px 40px;text-align:center;
+  z-index:9997;opacity:0;transition:all 0.4s cubic-bezier(0.2,0.8,0.2,1.2);
+  box-shadow:0 20px 60px rgba(46,204,113,0.5);pointer-events:none;
+}
+.overtake-banner.show{transform:translate(-50%,-50%) scale(1);opacity:1}
+.overtake-icon{font-size:48px;animation:bounce 0.6s ease infinite}
+.overtake-text{font-size:26px;font-weight:900;margin-top:8px;letter-spacing:-0.5px}
+.overtake-sub{font-size:14px;opacity:0.9;margin-top:4px}
+
+/* ONBOARDING */
+#onboarding{
+  position:fixed;inset:0;z-index:9996;background:linear-gradient(160deg,#0d1f0d,#1a2e1a,#2d5a27);
+  display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px 30px;
+}
+#onboarding.show{display:flex;animation:fadeIn 0.4s ease}
+.onb-slide{text-align:center;max-width:340px;animation:fadeInUp 0.5s ease}
+.onb-icon{font-size:72px;margin-bottom:24px;animation:bounce 2s ease infinite}
+.onb-title{font-size:26px;font-weight:800;color:white;margin-bottom:12px;letter-spacing:-0.5px}
+.onb-text{font-size:15px;color:rgba(255,255,255,0.7);line-height:1.7;margin-bottom:40px}
+.onb-dots{display:flex;gap:8px;justify-content:center;margin-bottom:28px}
+.onb-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.25);transition:all 0.3s}
+.onb-dot.active{background:var(--green);width:24px;border-radius:4px}
+.onb-btn{background:var(--green);color:white;border:none;border-radius:12px;padding:15px 40px;font-size:16px;font-weight:700;cursor:pointer;transition:transform 0.15s}
+.onb-btn:active{transform:scale(0.96)}
+.onb-skip{background:none;border:none;color:rgba(255,255,255,0.4);font-size:13px;margin-top:16px;cursor:pointer}
+
 /* FINE CHALLENGE OVERLAY */
 #endOverlay{
   display:none;position:fixed;inset:0;z-index:500;
@@ -439,6 +527,27 @@ textarea.form-input{resize:vertical;min-height:72px}
 </head>
 <body>
 
+<!-- BETA ACCESS SCREEN -->
+<div id="betaScreen" style="display:none">
+  <div class="beta-badge">🔒 Accesso Beta Riservato</div>
+  <div class="beta-logo">🏆</div>
+  <h1 class="beta-title">Challenge App</h1>
+  <p class="beta-sub">Piattaforma di gestione challenge<br>benessere per team Herbalife</p>
+  <div class="beta-tag" id="betaAccessTag">BETA-XXXXXX</div>
+  <div class="beta-card">
+    <div class="beta-card-title">Inserisci il codice beta</div>
+    <div class="beta-card-sub">Ricevuto direttamente da Carlo Barbieri.<br>Accesso riservato ai team leader selezionati.</div>
+    <input class="form-input" id="betaCodeInput" type="text" placeholder="Es: BETA-AB1234" style="text-transform:uppercase;text-align:center;font-size:18px;font-weight:700;letter-spacing:1px;margin-bottom:12px">
+    <button class="btn btn-primary" onclick="checkBetaCode()">Accedi →</button>
+    <div id="betaError" style="color:var(--red);font-size:13px;margin-top:10px;display:none">Codice non valido. Contatta Carlo Barbieri.</div>
+  </div>
+  <div class="beta-disclaimer">
+    Accesso fornito nell'ambito di un programma beta riservato.<br>
+    La piattaforma è proprietà di Carlo Barbieri.<br>
+    È vietata la condivisione non autorizzata.
+  </div>
+</div>
+
 <!-- SPLASH -->
 <div id="splashScreen">
   <div class="splash-trophy">🏆</div>
@@ -449,6 +558,22 @@ textarea.form-input{resize:vertical;min-height:72px}
 
 <!-- PARTICLES BG -->
 <div id="particles"></div>
+
+<!-- ONBOARDING -->
+<div id="onboarding">
+  <div class="onb-slide" id="onbSlide">
+    <div class="onb-icon" id="onbIcon">📸</div>
+    <div class="onb-title" id="onbTitle">Posta i tuoi pasti</div>
+    <div class="onb-text" id="onbText">Ogni giorno fotografa i tuoi pasti e frullati. Ogni post ti fa guadagnare punti e ispira la tua squadra!</div>
+  </div>
+  <div class="onb-dots">
+    <div class="onb-dot active" id="onbDot0"></div>
+    <div class="onb-dot" id="onbDot1"></div>
+    <div class="onb-dot" id="onbDot2"></div>
+  </div>
+  <button class="onb-btn" id="onbBtn" onclick="nextOnboarding()">Avanti →</button>
+  <button class="onb-skip" onclick="finishOnboarding()">Salta</button>
+</div>
 
 <!-- LOGIN PAGE -->
 <div id="loginPage" style="display:none">
@@ -467,6 +592,7 @@ textarea.form-input{resize:vertical;min-height:72px}
     <div class="form-group">
       <label class="form-label">Peso iniziale (kg)</label>
       <input class="form-input" id="loginWeight" type="number" placeholder="Es: 75.5" step="0.1">
+      <div style="font-size:11px;color:var(--text3);margin-top:5px;line-height:1.5">🔒 Il tuo peso resta privato. Agli altri mostriamo solo la percentuale di progresso.</div>
     </div>
     <button class="btn btn-primary" onclick="doLogin()" style="margin-bottom:10px">Entra nella Challenge →</button>
     <p style="text-align:center;font-size:12px;color:#999">
@@ -569,18 +695,23 @@ textarea.form-input{resize:vertical;min-height:72px}
   <!-- PROFILO -->
   <div class="page" id="pageProfilo">
     <div class="card" style="text-align:center">
-      <div class="avatar" id="profileAvatar" style="width:62px;height:62px;font-size:22px;margin:0 auto 10px">U</div>
+      <div style="position:relative;width:82px;margin:0 auto 10px">
+        <div class="avatar" id="profileAvatar" style="width:82px;height:82px;font-size:28px;overflow:hidden">U</div>
+        <div onclick="document.getElementById('avatarInput').click()" style="position:absolute;bottom:0;right:0;width:28px;height:28px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.2)">📷</div>
+        <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="handleAvatar(this)">
+      </div>
       <div style="font-size:20px;font-weight:800" id="profileName">-</div>
       <div style="font-size:13px;color:var(--text3);margin-top:4px" id="profileTeam">-</div>
       <div id="captainBadge" style="display:none;margin-top:8px;background:var(--gold-light);color:#7a5e00;font-size:12px;font-weight:700;padding:4px 14px;border-radius:12px;display:inline-block">👑 Capitano</div>
     </div>
     <div class="card">
-      <div class="card-title">Il mio peso</div>
+      <div class="card-title">Il mio peso <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text3)">🔒 privato</span></div>
       <div class="weight-display">
         <div style="font-size:13px;color:var(--text3);margin-bottom:4px" id="weightStartLabel">Peso iniziale: -</div>
         <div><span class="weight-big" id="weightCurrent">-</span><span class="weight-unit"> kg</span></div>
         <div class="weight-delta" id="weightDelta"></div>
       </div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:10px">Il tuo peso non è mai visibile agli altri.<br>In classifica appare solo la percentuale di variazione.</div>
       <button class="btn btn-outline" onclick="openWeightModal()">📊 Aggiorna peso oggi</button>
     </div>
     <div class="card">
@@ -713,10 +844,17 @@ textarea.form-input{resize:vertical;min-height:72px}
 <div id="endOverlay">
   <div class="end-trophy">🏆</div>
   <div class="end-title">Challenge completata!</div>
+  <div id="endPodium" style="margin:20px 0"></div>
   <div class="end-winner" id="endWinner"></div>
   <div style="font-size:14px;color:rgba(255,255,255,0.6);margin-top:6px" id="endWinnerScore"></div>
   <div class="end-prize" id="endPrize"></div>
   <button class="btn btn-primary" style="margin-top:24px;max-width:280px" onclick="document.getElementById('endOverlay').classList.remove('show')">Continua →</button>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="lightbox" onclick="closeLightbox()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;align-items:center;justify-content:center;padding:20px;cursor:pointer">
+  <img id="lightboxImg" style="max-width:100%;max-height:90vh;border-radius:12px;object-fit:contain">
+  <div style="position:absolute;top:20px;right:24px;color:white;font-size:32px;font-weight:300">×</div>
 </div>
 
 <!-- MODALS -->
@@ -836,7 +974,16 @@ window.initApp();
 // CONFIG & STATE
 // ============================================================
 const ADMIN_CODE = 'CARLOADMIN';
-const ADMIN_NAME = 'Carlo Barbieri'; // Solo questo nome può fare i 5 tap
+
+// ============================================================
+// CODICI BETA — aggiungi qui i codici per ogni team leader
+// Formato: 'CODICE': { nome: 'Nome Team Leader', mercato: 'Italia' }
+// ============================================================
+const BETA_CODES = {
+  'BETA-CARLO1': { nome: 'Carlo Barbieri', mercato: 'Admin' },
+  'BETA-FRAN01': { nome: 'Francesco', mercato: 'Italia' },
+};
+const BETA_BYPASS = false; // metti true per disattivare la schermata beta
 
 const ACTIVITIES = [
   {id:'detox',   name:'Giornata Detox',  icon:'🌿', pts:5,  desc:'Completa la giornata detox con i prodotti indicati'},
@@ -867,9 +1014,53 @@ window.initApp = function(){
 
 function bootApp(){
   createParticles();
-  if(currentUser){ showMainApp(); loadData(); }
-  else { document.getElementById('loginPage').style.display='flex'; }
+  // Controlla se l'accesso beta è già stato verificato
+  const betaOk = localStorage.getItem('c11_betaOk');
+  if(BETA_BYPASS || betaOk){
+    if(currentUser){ showMainApp(); loadData(); }
+    else { document.getElementById('loginPage').style.display='flex'; }
+  } else {
+    // Mostra schermata beta
+    const bs=document.getElementById('betaScreen');
+    bs.style.display='flex';
+    // Mostra un ID univoco del dispositivo per tracciabilità
+    const deviceId = localStorage.getItem('c11_deviceId') || 'DEV-'+Math.random().toString(36).substr(2,6).toUpperCase();
+    localStorage.setItem('c11_deviceId', deviceId);
+    document.getElementById('betaAccessTag').textContent = deviceId;
+  }
 }
+
+window.checkBetaCode = function(){
+  const code = document.getElementById('betaCodeInput').value.trim().toUpperCase();
+  const errEl = document.getElementById('betaError');
+  if(BETA_CODES[code]){
+    const tl = BETA_CODES[code];
+    localStorage.setItem('c11_betaOk', '1');
+    localStorage.setItem('c11_betaTL', JSON.stringify(tl));
+    // Log accesso su Firebase
+    if(window._firebaseReady){
+      window._push(window._ref(window._db,'beta_access'),{
+        code, nome: tl.nome, mercato: tl.mercato,
+        deviceId: localStorage.getItem('c11_deviceId'),
+        timestamp: Date.now(),
+        ua: navigator.userAgent.substring(0,100)
+      });
+    }
+    document.getElementById('betaScreen').style.display='none';
+    if(currentUser){ showMainApp(); loadData(); }
+    else { document.getElementById('loginPage').style.display='flex'; }
+  } else {
+    errEl.style.display='block';
+    document.getElementById('betaCodeInput').style.borderColor='var(--red)';
+    // Log tentativo fallito
+    if(window._firebaseReady){
+      window._push(window._ref(window._db,'beta_failed'),{
+        code, timestamp: Date.now(),
+        deviceId: localStorage.getItem('c11_deviceId')
+      });
+    }
+  }
+};
 
 function createParticles(){
   const c=document.getElementById('particles');
@@ -893,14 +1084,14 @@ window.doLogin = async function(){
   const weight=parseFloat(document.getElementById('loginWeight').value);
   if(!name||!code||!weight){showToast('Compila tutti i campi');return;}
 
-  // Carlo Barbieri è sempre admin, tutti gli altri sono membri
-  const isAdm = name.toLowerCase() === ADMIN_NAME.toLowerCase();
-
-  const ch=await findChallengeByCode(code);
-  if(!ch){showToast('Codice challenge non valido');return;}
-  activeChallengeId=ch.id;
-  challengeConfig=ch;
-  localStorage.setItem('c11_activeChallenge',activeChallengeId);
+  const isAdm=code===ADMIN_CODE;
+  if(!isAdm){
+    const ch=await findChallengeByCode(code);
+    if(!ch){showToast('Codice non valido');return;}
+    activeChallengeId=ch.id;
+    challengeConfig=ch;
+    localStorage.setItem('c11_activeChallenge',activeChallengeId);
+  }
 
   const uid='u_'+name.replace(/\s+/g,'').toLowerCase()+'_'+Date.now();
   currentUser={id:uid,name,weightStart:weight,weightCurrent:weight,
@@ -912,6 +1103,51 @@ window.doLogin = async function(){
   loadData();
   showToast('Benvenuto/a '+name.split(' ')[0]+'! 💪');
   launchConfetti();
+  // Mostra onboarding solo la prima volta
+  if(!localStorage.getItem('c11_onboardingDone')){
+    setTimeout(()=>startOnboarding(),800);
+  }
+};
+
+// ============================================================
+// ONBOARDING
+// ============================================================
+const ONB_SLIDES=[
+  {icon:'📸',title:'Posta i tuoi pasti',text:'Ogni giorno fotografa i tuoi pasti e frullati. Ogni post ti fa guadagnare punti e ispira la tua squadra!'},
+  {icon:'⭐',title:'Completa le attività',text:'Detox, allenamento, HOM, acqua... Ogni attività bonus completata ti fa scalare la classifica.'},
+  {icon:'🏆',title:'Scala la classifica',text:'Vince chi perde più peso in percentuale. Il tuo peso resta privato — gli altri vedono solo i tuoi progressi!'},
+];
+let _onbIndex=0;
+
+function startOnboarding(){
+  _onbIndex=0;
+  renderOnbSlide();
+  document.getElementById('onboarding').classList.add('show');
+}
+
+function renderOnbSlide(){
+  const s=ONB_SLIDES[_onbIndex];
+  document.getElementById('onbIcon').textContent=s.icon;
+  document.getElementById('onbTitle').textContent=s.title;
+  document.getElementById('onbText').textContent=s.text;
+  for(let i=0;i<3;i++){
+    document.getElementById('onbDot'+i).className='onb-dot'+(i===_onbIndex?' active':'');
+  }
+  document.getElementById('onbBtn').textContent=_onbIndex===2?'Inizia! 🚀':'Avanti →';
+  // Re-trigger animation
+  const slide=document.getElementById('onbSlide');
+  slide.style.animation='none';slide.offsetHeight;slide.style.animation='';
+}
+
+window.nextOnboarding=function(){
+  if(_onbIndex<2){_onbIndex++;renderOnbSlide();}
+  else finishOnboarding();
+};
+
+window.finishOnboarding=function(){
+  localStorage.setItem('c11_onboardingDone','1');
+  document.getElementById('onboarding').classList.remove('show');
+  launchConfetti(10);
 };
 
 window.doLoginExisting=function(){
@@ -1017,23 +1253,14 @@ function loadChallenges(){
 function renderAdminChallenges(){
   const c=document.getElementById('challengeList');
   if(!challenges.length){c.innerHTML='<div style="font-size:13px;color:var(--text3)">Nessuna challenge ancora.</div>';return;}
-  c.innerHTML=challenges.map(ch=>{
-    const isActive=activeChallengeId===ch.id;
-    const partCount=users.filter(u=>u.challengeId===ch.id&&u.role!=='admin').length;
-    return `
-    <div style="background:${isActive?'var(--green-light)':'var(--surface2)'};border:1.5px solid ${isActive?'var(--green)':'var(--border)'};border-radius:10px;padding:12px;margin-bottom:8px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-        <span style="font-weight:800;font-size:14px">${ch.name}</span>
-        <button class="btn btn-primary btn-sm" style="padding:6px 12px;${isActive?'background:var(--gold)':''}"
-          onclick="selectChallenge('${ch.id}')">
-          ${isActive?'✓ Attiva':'Seleziona'}
-        </button>
-      </div>
-      <div style="font-size:12px;color:var(--text3)">
-        Codice: <strong>${ch.code||'—'}</strong> · ${ch.duration||11} giorni · ${partCount} partecipanti
-      </div>
-    </div>`;
-  }).join('');
+  c.innerHTML=challenges.map(ch=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="font-weight:700">${ch.name} <small style="color:var(--text3)">[${ch.code||'no codice'}]</small></span>
+      <button class="btn btn-primary btn-sm" style="${activeChallengeId===ch.id?'background:var(--gold)':''}"
+        onclick="selectChallenge('${ch.id}')">
+        ${activeChallengeId===ch.id?'✓ Attiva':'Seleziona'}
+      </button>
+    </div>`).join('');
 }
 
 window.selectChallenge=function(id){
@@ -1059,7 +1286,9 @@ window.selectChallenge=function(id){
 function showMainApp(){
   document.getElementById('mainApp').style.display='block';
   document.getElementById('headerName').textContent=(currentUser.name||'').split(' ')[0];
-  document.getElementById('headerAvatar').textContent=getInitials(currentUser.name);
+  const hAv=document.getElementById('headerAvatar');
+  if(currentUser.photo){hAv.innerHTML=`<img src="${currentUser.photo}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;vertical-align:middle">`;}
+  else{hAv.textContent=getInitials(currentUser.name);}
   updateProfile();
   renderActivities();
   renderDayDots();
@@ -1200,23 +1429,15 @@ window.showPage=function(name,btn){
 };
 
 window.goToProfile=function(){
-  const canBeAdmin = currentUser?.name?.toLowerCase() === ADMIN_NAME.toLowerCase();
-  if(canBeAdmin){
-    window._adminTaps=(window._adminTaps||0)+1;
-    clearTimeout(window._adminT);
-    window._adminT=setTimeout(()=>window._adminTaps=0,2000);
-    if(window._adminTaps>=5){
-      if(currentUser.role!=='admin'){
-        currentUser.role='admin';
-        localStorage.setItem('c11_user',JSON.stringify(currentUser));
-        if(window._firebaseReady) window._update(window._ref(window._db,'users/'+currentUser.id),{role:'admin'});
-      }
-      document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
-      document.getElementById('pageAdmin').classList.add('active');
-      document.getElementById('fabBtn').style.display='none';
-      loadChallenges();renderAdminUsers();renderAdminTeams();renderAdminTips();return;
-    }
+  window._adminTaps=(window._adminTaps||0)+1;
+  clearTimeout(window._adminT);
+  window._adminT=setTimeout(()=>window._adminTaps=0,2000);
+  if(window._adminTaps>=5||isAdmin()){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+    document.getElementById('pageAdmin').classList.add('active');
+    document.getElementById('fabBtn').style.display='none';
+    loadChallenges();renderAdminUsers();renderAdminTeams();renderAdminTips();return;
   }
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
@@ -1262,14 +1483,14 @@ function renderFeed(){
     return `
     <div class="post-card" style="animation-delay:${i*0.06}s">
       <div class="post-header">
-        <div class="avatar ${isCap?'captain':''}">${getInitials(post.userName)}</div>
+        ${avatarHtml(u||{name:post.userName},38,isCap?'captain':'')}
         <div class="post-meta">
           <div class="post-author">${post.userName}${isCap?' 👑':''}</div>
           <div class="post-info">${post.team||'—'} · ${formatTime(post.timestamp)}${post.isLate?' · <span style="color:var(--gold);font-size:11px;font-weight:700">📌 recuperato</span>':''}</div>
         </div>
         <div class="meal-badge">${MEAL_LABELS[post.mealType]||post.mealType}</div>
       </div>
-      ${post.photoUrl?`<img class="post-image" src="${post.photoUrl}" loading="lazy">`:`<div class="post-image-ph">${post.mealType==='frullato'?'🥤':'🍽️'}</div>`}
+      ${post.photoUrl?`<img class="post-image" src="${post.photoUrl}" loading="lazy" onclick="openLightbox('${post.id}')">`:`<div class="post-image-ph">${post.mealType==='frullato'?'🥤':'🍽️'}</div>`}
       <div class="post-body">
         ${post.desc?`<div class="post-desc">${post.desc}</div>`:''}
         <div class="reactions">
@@ -1332,7 +1553,7 @@ window.handlePhoto=function(input){
 };
 
 // Comprime immagine via Canvas → base64 JPEG piccolo (~50KB max)
-async function compressImage(dataUrl, maxW=600, quality=0.55){
+async function compressImage(dataUrl, maxW=900, quality=0.72){
   return new Promise(resolve=>{
     const img=new Image();
     img.onload=()=>{
@@ -1340,8 +1561,32 @@ async function compressImage(dataUrl, maxW=600, quality=0.55){
       const canvas=document.createElement('canvas');
       canvas.width=Math.round(img.width*scale);
       canvas.height=Math.round(img.height*scale);
-      canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+      const ctx=canvas.getContext('2d');
+      ctx.imageSmoothingEnabled=true;
+      ctx.imageSmoothingQuality='high';
+      ctx.drawImage(img,0,0,canvas.width,canvas.height);
       resolve(canvas.toDataURL('image/jpeg',quality));
+    };
+    img.src=dataUrl;
+  });
+}
+
+// Compressione quadrata per foto profilo (piccola, ~15KB)
+async function compressAvatar(dataUrl){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      const size=200;
+      const canvas=document.createElement('canvas');
+      canvas.width=size;canvas.height=size;
+      const ctx=canvas.getContext('2d');
+      ctx.imageSmoothingEnabled=true;
+      ctx.imageSmoothingQuality='high';
+      // Crop quadrato centrato
+      const min=Math.min(img.width,img.height);
+      const sx=(img.width-min)/2, sy=(img.height-min)/2;
+      ctx.drawImage(img,sx,sy,min,min,0,0,size,size);
+      resolve(canvas.toDataURL('image/jpeg',0.7));
     };
     img.src=dataUrl;
   });
@@ -1395,17 +1640,41 @@ function calcLoss(u){
 }
 function calcScore(u){return calcLoss(u)+(u.bonusPoints||0)*0.1;}
 
+let _lastRankOrder = []; // per rilevare i sorpassi
+
 function renderRanking(){
   const sorted=[...users].sort((a,b)=>calcScore(b)-calcScore(a));
   const c=document.getElementById('rankIndividual');
   if(!sorted.length){c.innerHTML=`<div class="empty-state"><div class="empty-icon">🏆</div><div class="empty-text">Nessun partecipante ancora.</div></div>`;return;}
-  c.innerHTML=sorted.map((u,i)=>{
+
+  // Rileva se l'utente corrente ha superato qualcuno
+  const myOldPos=_lastRankOrder.indexOf(currentUser?.id);
+  const myNewPos=sorted.findIndex(u=>u.id===currentUser?.id);
+  if(myOldPos>=0 && myNewPos>=0 && myNewPos<myOldPos){
+    // Sorpasso! Animazione celebrativa
+    setTimeout(()=>triggerOvertake(myNewPos+1),300);
+  }
+  _lastRankOrder=sorted.map(u=>u.id);
+
+  // PODIO TOP 3
+  let podiumHtml='';
+  if(sorted.length>=2){
+    const top3=sorted.slice(0,3);
+    podiumHtml=`<div class="podium">
+      ${top3[1]?podiumSpot(top3[1],2):'<div class="podium-spot"></div>'}
+      ${top3[0]?podiumSpot(top3[0],1):''}
+      ${top3[2]?podiumSpot(top3[2],3):'<div class="podium-spot"></div>'}
+    </div>`;
+  }
+
+  // LISTA COMPLETA
+  const listHtml=sorted.map((u,i)=>{
     const loss=calcLoss(u);
     const pc=i===0?'p1':i===1?'p2':i===2?'p3':'other';
     const isMe=u.id===currentUser?.id;
-    return `<div class="rank-item" style="${isMe?'background:var(--green-light);border-radius:10px;padding:12px 10px;margin:0 -4px;':''}animation-delay:${i*0.08}s">
+    return `<div class="rank-item" style="${isMe?'background:var(--green-light);border-radius:10px;padding:12px 10px;margin:0 -4px;':''}animation-delay:${i*0.05}s">
       <div class="rank-pos ${pc}">${i+1}</div>
-      <div class="avatar" style="width:34px;height:34px;font-size:12px;flex-shrink:0;${u.role==='captain'?'background:linear-gradient(135deg,var(--gold),#e67e22);':''}">${getInitials(u.name)}</div>
+      ${avatarHtml(u,34)}
       <div class="rank-info">
         <div class="rank-name">${u.name}${isMe?' (tu)':''}${u.role==='captain'?' 👑':''}</div>
         <div class="rank-sub">${u.team||'—'} · ${u.bonusPoints||0} punti bonus</div>
@@ -1413,7 +1682,38 @@ function renderRanking(){
       <div class="rank-score">${loss>0?'-'+loss.toFixed(1)+'%':loss.toFixed(1)+'%'}<small>${loss>0?'perso':'variazione'}</small></div>
     </div>`;
   }).join('');
+
+  c.innerHTML=podiumHtml+`<div class="card" style="margin-top:12px">${listHtml}</div>`;
   renderTeamRank();
+}
+
+function podiumSpot(u,pos){
+  const heights={1:'100px',2:'75px',3:'60px'};
+  const colors={1:'linear-gradient(180deg,#FFD700,#FFA500)',2:'linear-gradient(180deg,#C0C0C0,#A0A0A0)',3:'linear-gradient(180deg,#CD7F32,#A0522D)'};
+  const medals={1:'🥇',2:'🥈',3:'🥉'};
+  const loss=calcLoss(u);
+  const isMe=u.id===currentUser?.id;
+  return `<div class="podium-spot ${pos===1?'first':''}">
+    <div class="podium-avatar-wrap">
+      ${avatarHtml(u,pos===1?56:46)}
+      <div class="podium-medal">${medals[pos]}</div>
+    </div>
+    <div class="podium-name">${u.name.split(' ')[0]}${isMe?' (tu)':''}</div>
+    <div class="podium-score">${loss>0?'-'+loss.toFixed(1):loss.toFixed(1)}%</div>
+    <div class="podium-base" style="height:${heights[pos]};background:${colors[pos]}">
+      <span class="podium-pos-num">${pos}</span>
+    </div>
+  </div>`;
+}
+
+function triggerOvertake(newPos){
+  launchConfetti(20);
+  const banner=document.createElement('div');
+  banner.className='overtake-banner';
+  banner.innerHTML=`<div class="overtake-icon">🚀</div><div class="overtake-text">Sorpasso!</div><div class="overtake-sub">Sei salito alla posizione ${newPos}</div>`;
+  document.body.appendChild(banner);
+  setTimeout(()=>banner.classList.add('show'),50);
+  setTimeout(()=>{banner.classList.remove('show');setTimeout(()=>banner.remove(),400);},2600);
 }
 
 function renderTeamRank(){
@@ -1599,8 +1899,12 @@ window.deleteTip=async function(id){
 // ============================================================
 function updateProfile(){
   if(!currentUser)return;
-  const init=getInitials(currentUser.name);
-  document.getElementById('profileAvatar').textContent=init;
+  const av=document.getElementById('profileAvatar');
+  if(currentUser.photo){
+    av.innerHTML=`<img src="${currentUser.photo}" style="width:100%;height:100%;object-fit:cover">`;
+  } else {
+    av.textContent=getInitials(currentUser.name);
+  }
   document.getElementById('profileName').textContent=currentUser.name;
   document.getElementById('profileTeam').textContent=currentUser.team?'👥 '+currentUser.team:'Squadra non assegnata';
   const cb=document.getElementById('captainBadge');
@@ -1619,6 +1923,35 @@ function updateProfile(){
   document.getElementById('myPostsToday').innerHTML=mine.length
     ?mine.map(p=>`<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:14px">${MEAL_LABELS[p.mealType]||p.mealType} · ${formatTime(p.timestamp)}</div>`).join('')
     :'<div style="color:var(--text3);font-size:14px">Nessun post ancora oggi.</div>';
+}
+
+window.handleAvatar=function(input){
+  const file=input.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=async e=>{
+    try{
+      const compressed=await compressAvatar(e.target.result);
+      currentUser.photo=compressed;
+      localStorage.setItem('c11_user',JSON.stringify(currentUser));
+      if(window._firebaseReady) await window._update(window._ref(window._db,'users/'+currentUser.id),{photo:compressed});
+      updateProfile();
+      renderFeed();
+      renderRanking();
+      showToast('Foto profilo aggiornata! 📸');
+    }catch(err){showToast('Errore caricamento foto');}
+  };
+  r.readAsDataURL(file);
+};
+
+// Helper: restituisce avatar (foto o iniziali) per un utente
+function avatarHtml(user, size, extraClass){
+  const cls=extraClass||'';
+  if(user&&user.photo){
+    return `<div class="avatar ${cls}" style="width:${size}px;height:${size}px;overflow:hidden"><img src="${user.photo}" style="width:100%;height:100%;object-fit:cover"></div>`;
+  }
+  const initials=getInitials(user?.name||user?.userName||'?');
+  const capStyle=(user&&user.role==='captain')?'background:linear-gradient(135deg,var(--gold),#e67e22);':'';
+  return `<div class="avatar ${cls}" style="width:${size}px;height:${size}px;font-size:${size*0.36}px;${capStyle}">${initials}</div>`;
 }
 
 window.openWeightModal=function(){
@@ -1712,16 +2045,42 @@ window.handlePrizePhoto=function(input){
 // ============================================================
 // FINE CHALLENGE
 // ============================================================
+window.openLightbox=function(postId){
+  const post=posts.find(p=>p.id===postId);
+  if(!post||!post.photoUrl)return;
+  document.getElementById('lightboxImg').src=post.photoUrl;
+  const lb=document.getElementById('lightbox');
+  lb.style.display='flex';
+  lb.style.animation='fadeIn 0.2s ease';
+};
+window.closeLightbox=function(){
+  document.getElementById('lightbox').style.display='none';
+};
+
 window.showEndChallenge=function(){
-  const sorted=[...users].sort((a,b)=>calcScore(b)-calcScore(a));
+  const sorted=[...users].filter(u=>u.role!=='admin'||calcLoss(u)!==0).sort((a,b)=>calcScore(b)-calcScore(a));
   const winner=sorted[0];
   if(!winner){showToast('Nessun partecipante');return;}
-  document.getElementById('endWinner').textContent='🥇 '+winner.name;
-  document.getElementById('endWinnerScore').textContent='-'+calcLoss(winner).toFixed(2)+'% · '+winner.bonusPoints+' punti bonus';
+  // Podio fotografico top 3
+  const top3=sorted.slice(0,3);
+  const medals=['🥇','🥈','🥉'];
+  document.getElementById('endPodium').innerHTML=`<div style="display:flex;justify-content:center;gap:16px;align-items:flex-end">
+    ${top3.map((u,i)=>`
+      <div style="text-align:center;animation:fadeInUp 0.5s ease both;animation-delay:${i*0.15}s">
+        <div style="position:relative;display:inline-block">
+          ${avatarHtml(u,i===0?70:54)}
+          <div style="position:absolute;bottom:-6px;right:-6px;font-size:${i===0?26:20}px">${medals[i]}</div>
+        </div>
+        <div style="color:white;font-size:13px;font-weight:700;margin-top:8px">${u.name.split(' ')[0]}</div>
+        <div style="color:var(--green);font-size:12px;font-weight:800">-${calcLoss(u).toFixed(1)}%</div>
+      </div>`).join('')}
+  </div>`;
+  document.getElementById('endWinner').textContent='🎉 '+winner.name;
+  document.getElementById('endWinnerScore').textContent='-'+calcLoss(winner).toFixed(2)+'% perso · '+winner.bonusPoints+' punti bonus';
   const prize=challengeConfig?.prize;
   document.getElementById('endPrize').innerHTML=prize?.title?`🎁 <strong>${prize.title}</strong><br><span style="font-size:13px">${prize.desc||''}</span>`:'';
   document.getElementById('endOverlay').classList.add('show');
-  launchConfetti(30);
+  launchConfetti(40);
 };
 
 // ============================================================
@@ -1794,13 +2153,6 @@ window.closeModal=function(id){document.getElementById(id).classList.remove('ope
 document.querySelectorAll('.modal-overlay').forEach(o=>{
   o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});
 });
-
-if(!window._firebaseReady) window.initApp=function(){
-  setTimeout(()=>{
-    const s=document.getElementById('splashScreen');
-    s.style.opacity='0';setTimeout(()=>{s.style.display='none';bootApp();},600);
-  },1400);
-};
 </script>
 </body>
 </html>
