@@ -539,6 +539,12 @@ textarea.form-input{resize:vertical;min-height:72px}
       <input class="form-input" id="loginWeight" type="number" placeholder="Es: 75.5" step="0.1">
       <div style="font-size:11px;color:var(--text3);margin-top:5px;line-height:1.5">🔒 Il tuo peso resta privato. Agli altri mostriamo solo la percentuale di progresso.</div>
     </div>
+    <div class="form-group" style="display:flex;align-items:flex-start;gap:10px;background:var(--surface2);border-radius:10px;padding:12px 14px">
+      <input type="checkbox" id="loginPrivacy" style="margin-top:2px;width:18px;height:18px;flex-shrink:0;accent-color:var(--green)">
+      <label for="loginPrivacy" style="font-size:12px;color:var(--text2);line-height:1.6;cursor:pointer">
+        Acconsento a condividere il mio nome, la percentuale di progresso e le foto dei pasti con gli altri partecipanti della challenge, secondo quanto necessario al funzionamento dell'app.
+      </label>
+    </div>
     <button class="btn btn-primary" onclick="doLogin()" style="margin-bottom:10px">Entra nella Challenge →</button>
     <p style="text-align:center;font-size:12px;color:#999">
       Già registrato? <span style="color:var(--green);cursor:pointer;font-weight:700" onclick="doLoginExisting()">Accedi</span>
@@ -649,6 +655,27 @@ textarea.form-input{resize:vertical;min-height:72px}
       <div style="font-size:13px;color:var(--text3);margin-top:4px" id="profileTeam">-</div>
       <div id="captainBadge" style="display:none;margin-top:8px;background:var(--gold-light);color:#7a5e00;font-size:12px;font-weight:700;padding:4px 14px;border-radius:12px;display:inline-block">👑 Capitano</div>
     </div>
+    <div class="card" id="adminJoinCard" style="display:none;border-color:rgba(46,204,113,0.4);background:var(--green-light)">
+      <div class="card-title">👑 Partecipa a una challenge</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6">
+        Sei loggato come amministratore. Se vuoi partecipare anche tu a una challenge come utente normale, inserisci qui il codice e il tuo peso.
+      </div>
+      <div class="form-group">
+        <label class="form-label">Codice challenge</label>
+        <input class="form-input" id="adminJoinCode" placeholder="Es: LUGLIOROCKET" style="text-transform:uppercase">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Il tuo peso (kg)</label>
+        <input class="form-input" id="adminJoinWeight" type="number" step="0.1" placeholder="Es: 80.5">
+      </div>
+      <button class="btn btn-primary" onclick="adminJoinChallenge()">Partecipa a questa challenge →</button>
+    </div>
+    <div class="card" id="adminActiveCard" style="display:none;border-color:rgba(243,156,18,0.4);background:var(--gold-light)">
+      <div class="card-title">🏃 Stai partecipando a</div>
+      <div style="font-size:15px;font-weight:800;color:var(--text)" id="adminActiveChallengeName">-</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:2px" id="adminActiveChallengeCode">-</div>
+      <button class="btn btn-outline" style="margin-top:12px" onclick="adminLeaveChallenge()">Esci da questa partecipazione</button>
+    </div>
     <div class="card">
       <div class="card-title">Il mio peso <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text3)">🔒 privato</span></div>
       <div class="weight-display">
@@ -758,6 +785,16 @@ textarea.form-input{resize:vertical;min-height:72px}
     <div class="card">
       <div class="card-title">Fine Challenge</div>
       <button class="btn btn-gold" onclick="showEndChallenge()">🏆 Mostra podio finale</button>
+      <button class="btn btn-outline" style="margin-top:10px" onclick="exportChallengeSummary()">📄 Scarica riepilogo (nomi, pesi, punti)</button>
+    </div>
+
+    <div class="card" style="border-color:rgba(231,76,60,0.3)">
+      <div class="card-title" style="color:var(--red)">⚠️ Zona pericolosa</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.6">
+        Elimina definitivamente la challenge selezionata e tutti i suoi dati: partecipanti, squadre, post, classifica. Questa azione non si può annullare.<br><br>
+        <strong>Consiglio:</strong> scarica prima il riepilogo qui sopra.
+      </div>
+      <button class="btn btn-danger" onclick="deleteChallengeStep1()">🗑️ Elimina questa challenge</button>
     </div>
   </div>
 
@@ -918,7 +955,9 @@ window.initApp();
 // ============================================================
 // CONFIG & STATE
 // ============================================================
-const ADMIN_NAME = 'Carlo Barbieri'; // Solo questo nome accede al pannello admin
+const ADMIN_NAME = 'Carlo Barbieri'; // Nome pubblico dell'admin
+const ADMIN_SECRET = '2291991'; // Codice segreto — cambia questo se vuoi
+const ADMIN_LOGIN_PATTERN = (ADMIN_NAME + ' ' + ADMIN_SECRET).toLowerCase();
 
 const ACTIVITIES = [
   {id:'detox',   name:'Giornata Detox',  icon:'🌿', pts:5,  desc:'Completa la giornata detox con i prodotti indicati'},
@@ -970,15 +1009,35 @@ function createParticles(){
 // LOGIN
 // ============================================================
 window.doLogin = async function(){
-  const name=document.getElementById('loginName').value.trim();
+  const rawName=document.getElementById('loginName').value.trim();
   const code=document.getElementById('loginCode').value.trim().toUpperCase();
   const weight=parseFloat(document.getElementById('loginWeight').value);
-  if(!name||!code||!weight){showToast('Compila tutti i campi');return;}
+  const privacyOk=document.getElementById('loginPrivacy').checked;
 
-  // Carlo Barbieri è sempre admin, tutti gli altri sono membri
-  const isAdm = name.toLowerCase() === ADMIN_NAME.toLowerCase();
+  // ============================================================
+  // INGRESSO ADMIN DIRETTO: "Carlo Barbieri 2291991"
+  // Nessun codice challenge, nessun peso richiesti
+  // ============================================================
+  if(rawName.toLowerCase()===ADMIN_LOGIN_PATTERN){
+    const uid='admin_carlo';
+    currentUser={id:uid,name:ADMIN_NAME,role:'admin',bonusPoints:0,
+      weightStart:null,weightCurrent:null,team:null,challengeId:null,joinedAt:Date.now()};
+    localStorage.setItem('c11_user',JSON.stringify(currentUser));
+    if(window._firebaseReady) await window._set(window._ref(window._db,'users/'+uid),currentUser);
+    document.getElementById('loginPage').style.display='none';
+    showMainApp();
+    loadData();
+    showToast('Bentornato, Carlo 👑');
+    return;
+  }
 
-  // Serve sempre un codice challenge valido
+  // ============================================================
+  // LOGIN NORMALE — richiede codice challenge e peso
+  // ============================================================
+  if(!rawName||!code||!weight){showToast('Compila tutti i campi');return;}
+  if(!privacyOk){showToast('Devi accettare le condizioni sulla privacy per continuare');return;}
+
+  const name=rawName;
   const ch=await findChallengeByCode(code);
   if(!ch){showToast('Codice challenge non valido');return;}
   activeChallengeId=ch.id;
@@ -987,7 +1046,7 @@ window.doLogin = async function(){
 
   const uid='u_'+name.replace(/\s+/g,'').toLowerCase()+'_'+Date.now();
   currentUser={id:uid,name,weightStart:weight,weightCurrent:weight,
-    team:null,role:isAdm?'admin':'member',bonusPoints:0,challengeId:activeChallengeId,joinedAt:Date.now()};
+    team:null,role:'member',bonusPoints:0,challengeId:activeChallengeId,joinedAt:Date.now()};
   localStorage.setItem('c11_user',JSON.stringify(currentUser));
   if(window._firebaseReady) await window._set(window._ref(window._db,'users/'+uid),currentUser);
   document.getElementById('loginPage').style.display='none';
@@ -1253,27 +1312,29 @@ function loadData(){
   window._onValue(window._ref(window._db,'posts'),snap=>{
     posts=[];
     snap.forEach(c=>posts.push({id:c.key,...c.val()}));
-    posts=posts.filter(p=>!activeChallengeId||p.challengeId===activeChallengeId||!p.challengeId);
+    // Se non c'è challenge attiva (es. admin non ancora iscritto), non mostrare post
+    posts=activeChallengeId?posts.filter(p=>p.challengeId===activeChallengeId):[];
     posts.sort((a,b)=>b.timestamp-a.timestamp);
     renderFeed();updateProfile();
   });
   window._onValue(window._ref(window._db,'users'),snap=>{
     users=[];
     snap.forEach(c=>users.push({id:c.key,...c.val()}));
-    users=users.filter(u=>!activeChallengeId||u.challengeId===activeChallengeId||u.role==='admin');
+    // In classifica: solo utenti della challenge attiva (l'admin stesso non compare se non partecipa)
+    users=activeChallengeId?users.filter(u=>u.challengeId===activeChallengeId):[];
     renderRanking();
     if(isAdmin())renderAdminUsers();
   });
   window._onValue(window._ref(window._db,'teams'),snap=>{
     teams=[];
     snap.forEach(c=>teams.push({id:c.key,...c.val()}));
-    teams=teams.filter(t=>!activeChallengeId||t.challengeId===activeChallengeId);
+    teams=activeChallengeId?teams.filter(t=>t.challengeId===activeChallengeId):[];
     if(isAdmin())renderAdminTeams();
   });
   window._onValue(window._ref(window._db,'tips'),snap=>{
     tips=[];
     snap.forEach(c=>tips.push({id:c.key,...c.val()}));
-    tips=tips.filter(t=>!activeChallengeId||t.challengeId===activeChallengeId);
+    tips=activeChallengeId?tips.filter(t=>t.challengeId===activeChallengeId):[];
     renderTips();
     updateTipsBadge();
   });
@@ -1809,21 +1870,88 @@ function updateProfile(){
   document.getElementById('profileTeam').textContent=currentUser.team?'👥 '+currentUser.team:'Squadra non assegnata';
   const cb=document.getElementById('captainBadge');
   cb.style.display=currentUser.role==='captain'?'inline-block':'none';
-  const start=currentUser.weightStart||0;
-  const cur=currentUser.weightCurrent||start;
-  const delta=cur-start;
-  document.getElementById('weightStartLabel').textContent=`Peso iniziale: ${start} kg`;
-  document.getElementById('weightCurrent').textContent=cur.toFixed(1);
-  const de=document.getElementById('weightDelta');
-  if(delta<0){de.textContent=`▼ ${Math.abs(delta).toFixed(1)} kg persi`;de.className='weight-delta loss';}
-  else if(delta>0){de.textContent=`▲ ${delta.toFixed(1)} kg guadagnati`;de.className='weight-delta gain';}
-  else{de.textContent='Peso invariato';de.className='weight-delta';}
+
+  // Card admin: partecipa o già partecipante
+  const isAdminUser = currentUser.id==='admin_carlo';
+  const joinCard=document.getElementById('adminJoinCard');
+  const activeCard=document.getElementById('adminActiveCard');
+  if(isAdminUser){
+    if(currentUser.challengeId){
+      joinCard.style.display='none';
+      activeCard.style.display='block';
+      document.getElementById('adminActiveChallengeName').textContent=challengeConfig?.name||'—';
+      document.getElementById('adminActiveChallengeCode').textContent='Codice: '+(challengeConfig?.code||'—');
+    } else {
+      joinCard.style.display='block';
+      activeCard.style.display='none';
+    }
+  } else {
+    joinCard.style.display='none';
+    activeCard.style.display='none';
+  }
+
+  const start=currentUser.weightStart;
+  const cur=currentUser.weightCurrent;
+  if(start==null||cur==null){
+    document.getElementById('weightStartLabel').textContent='Non stai partecipando a nessuna challenge';
+    document.getElementById('weightCurrent').textContent='—';
+    document.getElementById('weightDelta').textContent='';
+    document.getElementById('weightDelta').className='weight-delta';
+  } else {
+    const delta=cur-start;
+    document.getElementById('weightStartLabel').textContent=`Peso iniziale: ${start} kg`;
+    document.getElementById('weightCurrent').textContent=cur.toFixed(1);
+    const de=document.getElementById('weightDelta');
+    if(delta<0){de.textContent=`▼ ${Math.abs(delta).toFixed(1)} kg persi`;de.className='weight-delta loss';}
+    else if(delta>0){de.textContent=`▲ ${delta.toFixed(1)} kg guadagnati`;de.className='weight-delta gain';}
+    else{de.textContent='Peso invariato';de.className='weight-delta';}
+  }
   const today=new Date().toDateString();
   const mine=posts.filter(p=>p.userId===currentUser.id&&new Date(p.timestamp).toDateString()===today);
   document.getElementById('myPostsToday').innerHTML=mine.length
     ?mine.map(p=>`<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:14px">${MEAL_LABELS[p.mealType]||p.mealType} · ${formatTime(p.timestamp)}</div>`).join('')
     :'<div style="color:var(--text3);font-size:14px">Nessun post ancora oggi.</div>';
 }
+
+window.adminJoinChallenge=async function(){
+  const code=document.getElementById('adminJoinCode').value.trim().toUpperCase();
+  const weight=parseFloat(document.getElementById('adminJoinWeight').value);
+  if(!code||!weight){showToast('Compila codice e peso');return;}
+  const ch=await findChallengeByCode(code);
+  if(!ch){showToast('Codice challenge non valido');return;}
+  activeChallengeId=ch.id;
+  challengeConfig=ch;
+  localStorage.setItem('c11_activeChallenge',activeChallengeId);
+  currentUser.challengeId=activeChallengeId;
+  currentUser.weightStart=weight;
+  currentUser.weightCurrent=weight;
+  localStorage.setItem('c11_user',JSON.stringify(currentUser));
+  if(window._firebaseReady) await window._update(window._ref(window._db,'users/'+currentUser.id),{
+    challengeId:activeChallengeId,weightStart:weight,weightCurrent:weight
+  });
+  showToast('Ora partecipi a "'+ch.name+'"! 💪');
+  loadData();
+  updateProfile();
+  renderDayDots();
+  renderPrize();
+};
+
+window.adminLeaveChallenge=async function(){
+  if(!confirm('Vuoi smettere di partecipare a questa challenge? I tuoi dati come partecipante (peso, punti) resteranno salvati ma non comparirai più come attivo.'))return;
+  currentUser.challengeId=null;
+  currentUser.weightStart=null;
+  currentUser.weightCurrent=null;
+  currentUser.team=null;
+  localStorage.setItem('c11_user',JSON.stringify(currentUser));
+  if(window._firebaseReady) await window._update(window._ref(window._db,'users/'+currentUser.id),{
+    challengeId:null,weightStart:null,weightCurrent:null,team:null
+  });
+  activeChallengeId=null;
+  challengeConfig={};
+  localStorage.removeItem('c11_activeChallenge');
+  showToast('Non partecipi più a questa challenge');
+  updateProfile();
+};
 
 window.handleAvatar=function(input){
   const file=input.files[0];if(!file)return;
@@ -1956,6 +2084,110 @@ window.openLightbox=function(postId){
 window.closeLightbox=function(){
   document.getElementById('lightbox').style.display='none';
 };
+
+// ============================================================
+// ESPORTAZIONE RIEPILOGO
+// ============================================================
+window.exportChallengeSummary=function(){
+  if(!activeChallengeId){showToast('Nessuna challenge selezionata');return;}
+  const chUsers=users.filter(u=>u.challengeId===activeChallengeId&&u.role!=='admin');
+  if(!chUsers.length){showToast('Nessun partecipante da esportare');return;}
+  const sorted=[...chUsers].sort((a,b)=>calcScore(b)-calcScore(a));
+
+  let txt=`RIEPILOGO CHALLENGE: ${challengeConfig.name||'—'}\n`;
+  txt+=`Codice: ${challengeConfig.code||'—'}\n`;
+  txt+=`Data inizio: ${challengeConfig.startDate||'—'} · Durata: ${challengeConfig.duration||'—'} giorni\n`;
+  txt+=`Esportato il: ${new Date().toLocaleString('it-IT')}\n`;
+  txt+=`Partecipanti: ${sorted.length}\n`;
+  txt+=`\n${'='.repeat(50)}\n`;
+  txt+=`CLASSIFICA FINALE\n`;
+  txt+=`${'='.repeat(50)}\n\n`;
+  sorted.forEach((u,i)=>{
+    const loss=calcLoss(u);
+    txt+=`${i+1}. ${u.name}\n`;
+    txt+=`   Squadra: ${u.team||'—'} · Ruolo: ${u.role==='captain'?'Capitano':'Membro'}\n`;
+    txt+=`   Peso: ${u.weightStart}kg → ${u.weightCurrent}kg (${loss>0?'-':''}${loss.toFixed(1)}%)\n`;
+    txt+=`   Punti bonus: ${u.bonusPoints||0}\n\n`;
+  });
+
+  const chPosts=posts.filter(p=>p.challengeId===activeChallengeId);
+  txt+=`${'='.repeat(50)}\n`;
+  txt+=`STATISTICHE\n`;
+  txt+=`${'='.repeat(50)}\n\n`;
+  txt+=`Post totali: ${chPosts.length}\n`;
+  const byUser={};
+  chPosts.forEach(p=>{byUser[p.userName]=(byUser[p.userName]||0)+1;});
+  Object.entries(byUser).sort((a,b)=>b[1]-a[1]).forEach(([name,count])=>{
+    txt+=`  ${name}: ${count} post\n`;
+  });
+
+  const blob=new Blob([txt],{type:'text/plain'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`riepilogo_${(challengeConfig.name||'challenge').replace(/\s+/g,'_')}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Riepilogo scaricato! 📄');
+};
+
+// ============================================================
+// ELIMINAZIONE CHALLENGE — doppia conferma
+// ============================================================
+window.deleteChallengeStep1=function(){
+  if(!activeChallengeId){showToast('Nessuna challenge selezionata');return;}
+  const name=challengeConfig.name||'questa challenge';
+  const partCount=users.filter(u=>u.challengeId===activeChallengeId&&u.role!=='admin').length;
+  const ok=confirm(`⚠️ PRIMA CONFERMA\n\nStai per eliminare "${name}" con ${partCount} partecipanti.\n\nTutti i post, foto, squadre e la classifica andranno persi per sempre.\n\nVuoi continuare?`);
+  if(ok) deleteChallengeStep2();
+};
+
+function deleteChallengeStep2(){
+  const name=challengeConfig.name||'';
+  const typed=prompt(`⚠️ SECONDA CONFERMA\n\nPer confermare definitivamente, scrivi il nome esatto della challenge:\n\n"${name}"`);
+  if(typed===null)return;
+  if(typed.trim()!==name.trim()){
+    showToast('Nome non corrispondente — eliminazione annullata');
+    return;
+  }
+  executeDeleteChallenge();
+}
+
+async function executeDeleteChallenge(){
+  const chId=activeChallengeId;
+  showToast('Eliminazione in corso...');
+  if(window._firebaseReady){
+    try{
+      // Elimina la challenge
+      await window._remove(window._ref(window._db,'challenges/'+chId));
+      // Elimina utenti collegati
+      const usersToDelete=users.filter(u=>u.challengeId===chId&&u.role!=='admin');
+      for(const u of usersToDelete){
+        await window._remove(window._ref(window._db,'users/'+u.id));
+      }
+      // Elimina squadre collegate
+      const teamsToDelete=teams.filter(t=>t.challengeId===chId);
+      for(const t of teamsToDelete){
+        await window._remove(window._ref(window._db,'teams/'+t.id));
+      }
+      // Elimina post collegati
+      const postsToDelete=posts.filter(p=>p.challengeId===chId);
+      for(const p of postsToDelete){
+        await window._remove(window._ref(window._db,'posts/'+p.id));
+      }
+    }catch(e){
+      showToast('Errore durante l\'eliminazione');
+      console.error(e);
+      return;
+    }
+  }
+  // Pulisci stato locale
+  activeChallengeId=null;
+  challengeConfig={};
+  localStorage.removeItem('c11_activeChallenge');
+  showToast('Challenge eliminata definitivamente ✓');
+  setTimeout(()=>location.reload(),1500);
+}
 
 window.showEndChallenge=function(){
   const sorted=[...users].filter(u=>u.role!=='admin'||calcLoss(u)!==0).sort((a,b)=>calcScore(b)-calcScore(a));
