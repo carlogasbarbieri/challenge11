@@ -2568,30 +2568,62 @@ window.addTip=async function(){
   const text=document.getElementById('newTipText').value.trim();
   const videoUrl=document.getElementById('newTipVideo').value.trim();
   if(!text&&!videoUrl){showToast('Scrivi il testo o inserisci un link video');return;}
-  const tip={type,text,videoUrl:videoUrl||'',challengeId:activeChallengeId||'demo',createdAt:Date.now()};
-  if(window._firebaseReady){await window._push(window._ref(window._db,'tips'),tip);}
-  else{tips.push({id:'t'+Date.now(),...tip});renderTips();}
-  document.getElementById('newTipText').value='';
-  document.getElementById('newTipVideo').value='';
-  showToast('Aggiunto!');
-  renderAdminTips();
+  if(!activeChallengeId){
+    showToast('⚠️ Nessuna challenge selezionata — seleziona prima una challenge in cima alla pagina');
+    return;
+  }
+  const tip={type,text,videoUrl:videoUrl||'',challengeId:activeChallengeId,createdAt:Date.now()};
+
+  if(window._firebaseReady){
+    try{
+      const ref=await window._push(window._ref(window._db,'tips'),tip);
+      // Aggiorna subito la vista locale, senza aspettare il listener (che potrebbe avere latenza)
+      tips.push({id:ref.key,...tip});
+      document.getElementById('newTipText').value='';
+      document.getElementById('newTipVideo').value='';
+      showToast('Aggiunto! ✓');
+      renderTips();
+      renderAdminTips();
+      updateTipsBadge();
+    }catch(e){
+      console.warn('Errore salvataggio tip',e);
+      showToast('⚠️ Non salvato — controlla la connessione e riprova');
+    }
+  } else {
+    tips.push({id:'t'+Date.now(),...tip});
+    document.getElementById('newTipText').value='';
+    document.getElementById('newTipVideo').value='';
+    showToast('Aggiunto!');
+    renderTips();
+    renderAdminTips();
+  }
 };
 
 function renderAdminTips(){
   const c=document.getElementById('adminTipsList');
-  const myTips=tips.filter(t=>!activeChallengeId||t.challengeId===activeChallengeId);
-  if(!myTips.length){c.innerHTML='<div style="font-size:13px;color:var(--text3)">Nessun contenuto ancora.</div>';return;}
+  const myTips=tips.filter(t=>t.challengeId===activeChallengeId);
+  if(!myTips.length){c.innerHTML='<div style="font-size:13px;color:var(--text3)">Nessun contenuto ancora per questa challenge.</div>';return;}
   c.innerHTML=myTips.map(t=>`
     <div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
-      <div style="flex:1;font-size:13px;color:var(--text2)">[${t.type}] ${t.text}</div>
+      <div style="flex:1;font-size:13px;color:var(--text2)">[${esc(t.type)}] ${esc(t.text)}${t.videoUrl?' 🎬':''}</div>
       <button style="border:none;background:none;color:var(--red);font-size:18px;cursor:pointer;padding:0 2px" onclick="deleteTip('${t.id}')">×</button>
     </div>`).join('');
 }
 
 window.deleteTip=async function(id){
   if(!confirm('Elimina?'))return;
-  if(window._firebaseReady) await window._remove(window._ref(window._db,'tips/'+id));
-  else{tips=tips.filter(t=>t.id!==id);renderTips();renderAdminTips();}
+  if(window._firebaseReady){
+    try{
+      await window._remove(window._ref(window._db,'tips/'+id));
+      tips=tips.filter(t=>t.id!==id);
+      renderTips();renderAdminTips();updateTipsBadge();
+    }catch(e){
+      console.warn('Errore eliminazione tip',e);
+      showToast('⚠️ Eliminazione fallita — riprova');
+    }
+  } else {
+    tips=tips.filter(t=>t.id!==id);renderTips();renderAdminTips();
+  }
 };
 
 // ============================================================
