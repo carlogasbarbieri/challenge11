@@ -538,6 +538,7 @@ textarea.form-input{resize:vertical;min-height:72px}
 .reminder-card.late{background:linear-gradient(135deg,#fff8e6,#ffefc7);border-color:rgba(243,156,18,0.35)}
 .reminder-card.start{background:linear-gradient(135deg,#e8f9ef,#d3f3e0);border-color:rgba(46,204,113,0.4)}
 .reminder-card.done{background:linear-gradient(135deg,#f3f0ff,#e8e2ff);border-color:rgba(142,68,173,0.3);cursor:default}
+.reminder-card.countdown{background:linear-gradient(135deg,#eef2ff,#e0e7ff);border-color:rgba(99,102,241,0.35);cursor:default}
 .reminder-icon{font-size:32px;flex-shrink:0}
 .reminder-body{flex:1;min-width:0}
 .reminder-title{font-size:15px;font-weight:800;color:var(--text);margin-bottom:2px}
@@ -1189,8 +1190,13 @@ async function _doLogin(){
          weightStart:null,weightCurrent:null,team:null,challengeId:null,
          recoveryCode:generateRecoveryCode(),joinedAt:Date.now()};
     if(!currentUser.recoveryCode) currentUser.recoveryCode=generateRecoveryCode();
-    activeChallengeId=currentUser.challengeId||null;
-    if(activeChallengeId) localStorage.setItem('c11_activeChallenge',activeChallengeId);
+    // Se l'admin partecipa a una challenge specifica, quella diventa attiva.
+    // Altrimenti mantieni la challenge che stava già gestendo (letta da localStorage
+    // all'avvio dello script) — gestire e partecipare sono due cose separate.
+    if(currentUser.challengeId){
+      activeChallengeId=currentUser.challengeId;
+      localStorage.setItem('c11_activeChallenge',activeChallengeId);
+    }
     localStorage.setItem('c11_user',JSON.stringify(currentUser));
     if(window._firebaseReady){
       try{ await window._set(window._ref(window._db,'users/'+uid),currentUser); }
@@ -1670,7 +1676,13 @@ window.showPage=function(name,btn){
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
   document.getElementById('page'+name).classList.add('active');
   btn.classList.add('active');
-  document.getElementById('fabBtn').style.display=(name==='Feed')?'flex':'none';
+  const fab=document.getElementById('fabBtn');
+  fab.style.display=(name==='Feed')?'flex':'none';
+  if(name==='Feed'){
+    const locked=!hasChallengeStarted();
+    fab.style.opacity=locked?'0.5':'1';
+    fab.style.filter=locked?'grayscale(1)':'none';
+  }
   if(name==='Classifica')renderRanking();
   if(name==='Profilo')updateProfile();
   if(name==='Bonus')renderActivities();
@@ -1924,6 +1936,20 @@ function renderFeedReminder(){
   if(!el||!currentUser)return;
   if(!currentUser.challengeId){el.innerHTML='';return;}
 
+  // Se la challenge non è ancora iniziata, questo messaggio ha priorità su tutto il resto
+  if(!hasChallengeStarted()){
+    const days=daysUntilStart();
+    const dateStr=challengeConfig.startDate?new Date(challengeConfig.startDate).toLocaleDateString('it-IT',{day:'numeric',month:'long'}):'';
+    el.innerHTML=`<div class="reminder-card countdown">
+      <div class="reminder-icon">⏳</div>
+      <div class="reminder-body">
+        <div class="reminder-title">${days===1?'Si parte domani!':'Ti stai preparando alla challenge!'}</div>
+        <div class="reminder-text">Si comincia il ${dateStr}${days>1?' — mancano '+days+' giorni':''}. Intanto leggi le Regole e guarda il video di benvenuto nella sezione Tips 💡</div>
+      </div>
+    </div>`;
+    return;
+  }
+
   const now=new Date();
   const hour=now.getHours();
   const today=now.toDateString();
@@ -1985,8 +2011,32 @@ function getCurrentDay(){
   return Math.max(1,Math.min(dur,diff+1));
 }
 
+// Vero solo dal giorno di inizio in poi. Se non c'è una data impostata,
+// consideriamo la challenge già iniziata (comportamento precedente, per compatibilità).
+function hasChallengeStarted(){
+  if(!challengeConfig?.startDate) return true;
+  const start=new Date(challengeConfig.startDate);
+  start.setHours(0,0,0,0);
+  const now=new Date();
+  return now>=start;
+}
+
+function daysUntilStart(){
+  if(!challengeConfig?.startDate) return 0;
+  const start=new Date(challengeConfig.startDate);
+  start.setHours(0,0,0,0);
+  const now=new Date();now.setHours(0,0,0,0);
+  return Math.max(0,Math.round((start-now)/86400000));
+}
+
 function renderFeed(){
   renderFeedReminder();
+  const fab=document.getElementById('fabBtn');
+  if(fab){
+    const locked=!hasChallengeStarted();
+    fab.style.opacity=locked?'0.5':'1';
+    fab.style.filter=locked?'grayscale(1)':'none';
+  }
   const c=document.getElementById('feedContainer');
   if(!posts.length){
     c.innerHTML=`<div class="empty-state"><div class="empty-icon" style="animation:bounce 1.5s ease infinite">🌿</div><div class="empty-text">Nessun post ancora.<br>Posta il tuo primo pasto!</div></div>`;
@@ -2078,6 +2128,14 @@ window.setPostTime=function(mode){
 };
 
 window.openPostModal=function(){
+  if(!hasChallengeStarted()){
+    const days=daysUntilStart();
+    const dateStr=challengeConfig.startDate?new Date(challengeConfig.startDate).toLocaleDateString('it-IT',{day:'numeric',month:'long'}):'';
+    showToast(days===1
+      ? `⏳ La challenge inizia domani (${dateStr}) — non puoi ancora postare`
+      : `⏳ La challenge inizia il ${dateStr} — mancano ${days} giorni`);
+    return;
+  }
   photoDataUrl=null;
   postIsLate=false;
   document.getElementById('photoPreview').style.display='none';
@@ -2154,6 +2212,11 @@ window.submitPost=async function(){
 
 async function _doSubmitPost(){
   if(!currentUser)return;
+  if(!hasChallengeStarted()){
+    showToast('⏳ La challenge non è ancora iniziata');
+    closeModal('postModal');
+    return;
+  }
   const mealType=document.getElementById('postMealType').value;
   const desc=document.getElementById('postDesc').value.trim();
   let compressedPhoto=null;
@@ -2349,6 +2412,10 @@ function renderActivities(){
 }
 
 window.openActivity=function(id){
+  if(!hasChallengeStarted()){
+    showToast('⏳ La challenge non è ancora iniziata');
+    return;
+  }
   const today=getTodayKey();
   const done=JSON.parse(localStorage.getItem(actKey(today))||'[]');
   if(done.includes(id)){showToast('Già completata oggi!');return;}
