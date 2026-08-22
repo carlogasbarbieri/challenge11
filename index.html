@@ -201,12 +201,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .post-body{padding:12px 14px}
 .post-desc{font-size:14px;color:var(--text2);margin-bottom:10px}
 .reactions{display:flex;gap:8px}
-.react-btn{
-  background:var(--surface2);border:1px solid var(--border);
-  border-radius:20px;padding:5px 12px;font-size:13px;cursor:pointer;
-  display:flex;align-items:center;gap:4px;transition:all 0.15s;
-}
-.react-btn:active{transform:scale(0.9)}
 
 /* CLASSIFICA */
 .rank-item{
@@ -424,6 +418,131 @@ textarea.form-input{resize:vertical;min-height:72px}
 .challenge-pill:active{background:rgba(46,204,113,0.3);border-color:var(--green)}
 .challenge-pill.active-ch{background:var(--green);border-color:var(--green)}
 
+/* DAY ONE WELCOME */
+.day-one-card{
+  background:linear-gradient(135deg,#1a2e1a,#2d5a27);
+  border-radius:var(--radius);padding:24px 20px;margin-bottom:14px;
+  text-align:center;position:relative;overflow:hidden;
+  box-shadow:0 8px 32px rgba(0,0,0,0.2);
+  animation:fadeInUp 0.5s ease both;
+}
+.day-one-card::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,0.07) 50%,transparent 60%);
+  background-size:200% 100%;animation:shimmer 3s infinite;pointer-events:none;
+}
+.day-one-icon{font-size:52px;animation:bounce 1.6s ease infinite;display:block;margin-bottom:8px}
+.day-one-title{font-size:22px;font-weight:900;color:white;letter-spacing:-0.5px;margin-bottom:6px}
+.day-one-text{font-size:14px;color:rgba(255,255,255,0.7);line-height:1.6;margin-bottom:16px}
+.day-one-btn{
+  background:var(--green);color:white;border:none;border-radius:12px;
+  padding:13px 28px;font-size:15px;font-weight:800;cursor:pointer;
+  transition:transform 0.15s;position:relative;z-index:1;
+}
+.day-one-btn:active{transform:scale(0.96)}
+
+/* WEIGHT REMINDER */
+.weight-reminder{
+  background:linear-gradient(135deg,#fff8e1,#fff3cd);
+  border:1px solid rgba(243,156,18,0.3);border-left:4px solid var(--gold);
+  border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;
+  display:flex;align-items:center;gap:12px;
+  animation:fadeInUp 0.4s ease both;
+}
+.weight-reminder-icon{font-size:28px;flex-shrink:0}
+.weight-reminder-text{flex:1;font-size:13px;color:#7a6200;line-height:1.5;font-weight:600}
+.weight-reminder-btn{
+  background:var(--gold);color:white;border:none;border-radius:8px;
+  padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;
+}
+
+/* LATE MEAL HINT */
+.late-hint{
+  background:var(--surface2);border:1px dashed var(--border2);
+  border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:12px;
+  display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text2);
+  cursor:pointer;transition:all 0.2s;
+}
+.late-hint:active{background:var(--green-light);border-color:var(--green)}
+
+/* ATTENDANCE (chi ha postato oggi) */
+.attendance-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px;margin-bottom:12px;
+}
+.attendance-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.attendance-count{font-size:26px;font-weight:900;color:var(--green);line-height:1}
+.attendance-label{font-size:11px;color:var(--text3);font-weight:600}
+.attendance-bar{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;margin-bottom:14px}
+.attendance-fill{height:100%;background:linear-gradient(90deg,var(--green),#52e891);border-radius:4px;transition:width 0.6s ease}
+.attendance-section{margin-top:12px}
+.attendance-section-title{
+  font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;
+  color:var(--text3);margin-bottom:8px;
+}
+.attendance-chips{display:flex;flex-wrap:wrap;gap:6px}
+.attendance-chip{
+  display:flex;align-items:center;gap:5px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:20px;padding:5px 10px 5px 5px;font-size:12px;font-weight:600;
+}
+.attendance-chip.missing{background:#fff5f5;border-color:rgba(231,76,60,0.25);color:#a03030}
+.attendance-chip.done{background:var(--green-light);border-color:rgba(46,204,113,0.3);color:var(--green-dark)}
+
+/* WEIGHT CHART */
+.weight-chart{margin:14px 0 4px;position:relative}
+.weight-chart svg{width:100%;height:110px;display:block;overflow:visible}
+.chart-empty{
+  text-align:center;padding:24px 12px;color:var(--text3);font-size:13px;line-height:1.6;
+}
+
+/* REACTIONS migliorate */
+.react-btn{
+  background:var(--surface2);border:1.5px solid var(--border);
+  border-radius:20px;padding:7px 14px;font-size:14px;cursor:pointer;
+  display:flex;align-items:center;gap:5px;transition:all 0.15s;font-weight:700;
+  color:var(--text2);
+}
+.react-btn:active{transform:scale(0.88)}
+.react-btn.reacted{
+  background:var(--green-light);border-color:var(--green);color:var(--green-dark);
+}
+.react-btn .react-emoji{font-size:17px;line-height:1}
+
+/* POST con foto: più prominente */
+.post-card.has-photo{box-shadow:0 4px 18px rgba(0,0,0,0.1)}
+.post-card.no-photo .post-body{padding-top:4px}
+
+/* RECOVERY CODE */
+.recovery-box{
+  background:linear-gradient(135deg,#f0f9ff,#e0f2fe);
+  border:1px solid rgba(52,152,219,0.3);border-left:4px solid #3498DB;
+  border-radius:var(--radius-sm);padding:16px;margin-bottom:12px;
+}
+.recovery-code-display{
+  font-family:monospace;font-size:22px;font-weight:900;letter-spacing:3px;
+  color:#1a6ba8;text-align:center;padding:12px;background:white;
+  border-radius:8px;margin:10px 0;border:1.5px dashed rgba(52,152,219,0.4);
+}
+
+/* REMINDER CARD */
+.reminder-card{
+  display:flex;align-items:center;gap:14px;
+  border-radius:var(--radius);padding:16px;margin-bottom:12px;
+  cursor:pointer;transition:transform 0.15s;
+  animation:fadeInUp 0.4s ease both;
+  border:1.5px solid;
+}
+.reminder-card:active{transform:scale(0.98)}
+.reminder-card.weight{background:linear-gradient(135deg,#eaf6ff,#d6ecff);border-color:rgba(52,152,219,0.35)}
+.reminder-card.late{background:linear-gradient(135deg,#fff8e6,#ffefc7);border-color:rgba(243,156,18,0.35)}
+.reminder-card.start{background:linear-gradient(135deg,#e8f9ef,#d3f3e0);border-color:rgba(46,204,113,0.4)}
+.reminder-card.done{background:linear-gradient(135deg,#f3f0ff,#e8e2ff);border-color:rgba(142,68,173,0.3);cursor:default}
+.reminder-icon{font-size:32px;flex-shrink:0}
+.reminder-body{flex:1;min-width:0}
+.reminder-title{font-size:15px;font-weight:800;color:var(--text);margin-bottom:2px}
+.reminder-text{font-size:13px;color:var(--text2);line-height:1.4}
+
 /* PODIUM */
 .podium{
   display:flex;align-items:flex-end;justify-content:center;gap:8px;
@@ -528,7 +647,7 @@ textarea.form-input{resize:vertical;min-height:72px}
   <div class="login-card">
     <div class="form-group">
       <label class="form-label">Il tuo nome completo</label>
-      <input class="form-input" id="loginName" type="text" placeholder="Es: Marco Rossi">
+      <input class="form-input" id="loginName" type="text" placeholder="Es: Marco Rossi" maxlength="50">
     </div>
     <div class="form-group">
       <label class="form-label">Codice challenge</label>
@@ -586,7 +705,11 @@ textarea.form-input{resize:vertical;min-height:72px}
 
   <!-- FEED -->
   <div class="page active" id="pageFeed">
+    <div id="dayOneWelcome"></div>
+    <div id="weightReminder"></div>
+    <div id="feedReminder"></div>
     <div id="prizePreview"></div>
+    <div id="lateMealHint"></div>
     <div id="feedContainer">
       <div class="empty-state">
         <div class="empty-icon" style="animation:bounce 1.5s ease infinite">🌿</div>
@@ -597,9 +720,9 @@ textarea.form-input{resize:vertical;min-height:72px}
 
   <!-- CLASSIFICA -->
   <div class="page" id="pageClassifica">
-    <div class="tab-row">
+    <div class="tab-row" id="rankTabRow">
       <button class="tab-btn active" onclick="switchRankTab('individual',this)">Individuale</button>
-      <button class="tab-btn" onclick="switchRankTab('team',this)">Squadre</button>
+      <button class="tab-btn" id="teamTabBtn" onclick="switchRankTab('team',this)">Squadre</button>
     </div>
     <div id="rankIndividual"></div>
     <div id="rankTeam" style="display:none"></div>
@@ -635,7 +758,7 @@ textarea.form-input{resize:vertical;min-height:72px}
 
   <!-- TIPS -->
   <div class="page" id="pageTips">
-    <div class="tab-row">
+    <div class="tab-row" id="tipsTabRow">
       <button class="tab-btn active" onclick="switchTipsTab('tips',this)">Consigli</button>
       <button class="tab-btn" onclick="switchTipsTab('rules',this)">Regole</button>
     </div>
@@ -683,12 +806,21 @@ textarea.form-input{resize:vertical;min-height:72px}
         <div><span class="weight-big" id="weightCurrent">-</span><span class="weight-unit"> kg</span></div>
         <div class="weight-delta" id="weightDelta"></div>
       </div>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:10px">Il tuo peso non è mai visibile agli altri.<br>In classifica appare solo la percentuale di variazione.</div>
+      <div id="weightChartContainer"></div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin:10px 0">Il tuo peso non è mai visibile agli altri.<br>In classifica appare solo la percentuale di variazione.</div>
       <button class="btn btn-outline" onclick="openWeightModal()">📊 Aggiorna peso oggi</button>
     </div>
     <div class="card">
       <div class="card-title">I miei post oggi</div>
       <div id="myPostsToday" style="color:var(--text3);font-size:14px">Nessun post ancora oggi.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔑 Codice di recupero</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:4px">
+        Serve per rientrare se cambi telefono o cancelli l'app. Salvalo in un posto sicuro.
+      </div>
+      <div class="recovery-code-display" id="recoveryCodeDisplay">—</div>
+      <button class="btn btn-outline" onclick="copyRecoveryCode()">📋 Copia il codice</button>
     </div>
     <button class="btn" style="background:var(--surface2);color:var(--text2);border:1px solid var(--border);margin-bottom:8px" onclick="doLogout()">Esci dall'account</button>
   </div>
@@ -712,6 +844,14 @@ textarea.form-input{resize:vertical;min-height:72px}
 
     <div class="card" id="adminConfigCard">
       <div class="card-title">Configura challenge selezionata</div>
+      <div class="form-group">
+        <label class="form-label">Modalità challenge</label>
+        <div style="display:flex;gap:8px">
+          <button id="modeTeamBtn" class="btn btn-primary btn-sm" style="flex:1" onclick="setChallengeMode('team')">👥 A squadre</button>
+          <button id="modeIndBtn" class="btn btn-outline btn-sm" style="flex:1" onclick="setChallengeMode('individual')">🏃 Individuale</button>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.5" id="modeExplain">Le persone vengono divise in squadre e competono anche come gruppo.</div>
+      </div>
       <div class="form-group">
         <label class="form-label">Codice accesso partecipanti</label>
         <input class="form-input" id="adminCode" placeholder="Es: MAGGIO25">
@@ -743,13 +883,20 @@ textarea.form-input{resize:vertical;min-height:72px}
       <button class="btn btn-primary" onclick="saveChallenge()">💾 Salva configurazione</button>
     </div>
 
-    <div class="card">
+    <div class="card" id="adminTeamsCard">
       <div class="card-title">Squadre</div>
       <div id="adminTeamsList"></div>
       <div style="display:flex;gap:8px;margin-top:10px">
-        <input class="form-input" id="newTeamName" placeholder="Nome squadra" style="flex:1">
+        <input class="form-input" id="newTeamName" placeholder="Nome squadra" maxlength="30" style="flex:1">
         <button class="btn btn-primary btn-sm" onclick="addTeam()">+</button>
       </div>
+    </div>
+
+    <div id="attendanceContainer"></div>
+
+    <div class="card" id="activityMonitorCard">
+      <div class="card-title">📊 Attività di oggi</div>
+      <div id="activityMonitor"></div>
     </div>
 
     <div class="card">
@@ -773,7 +920,7 @@ textarea.form-input{resize:vertical;min-height:72px}
       </div>
       <div class="form-group">
         <label class="form-label">Testo</label>
-        <textarea class="form-input" id="newTipText" placeholder="Scrivi il consiglio o la regola..." rows="3"></textarea>
+        <textarea class="form-input" id="newTipText" placeholder="Scrivi il consiglio o la regola..." rows="3" maxlength="500"></textarea>
       </div>
       <div class="form-group">
         <label class="form-label">Link video YouTube (opzionale)</label>
@@ -879,7 +1026,7 @@ textarea.form-input{resize:vertical;min-height:72px}
     </div>
     <div class="form-group">
       <label class="form-label">Descrizione</label>
-      <textarea class="form-input" id="postDesc" rows="2" placeholder="Es: Frullato F1 + aloe mango..."></textarea>
+      <textarea class="form-input" id="postDesc" rows="2" maxlength="300" placeholder="Es: Frullato F1 + aloe mango..."></textarea>
     </div>
     <button class="btn btn-primary" onclick="submitPost()">Posta ✓</button>
     <button class="btn" style="background:none;color:var(--text3);margin-top:8px" onclick="closeModal('postModal')">Annulla</button>
@@ -1008,7 +1155,15 @@ function createParticles(){
 // ============================================================
 // LOGIN
 // ============================================================
+let _loggingIn=false;
+
 window.doLogin = async function(){
+  if(_loggingIn)return;
+  _loggingIn=true;
+  try{ await _doLogin(); } finally{ _loggingIn=false; }
+};
+
+async function _doLogin(){
   const rawName=document.getElementById('loginName').value.trim();
   const code=document.getElementById('loginCode').value.trim().toUpperCase();
   const weight=parseFloat(document.getElementById('loginWeight').value);
@@ -1020,10 +1175,27 @@ window.doLogin = async function(){
   // ============================================================
   if(rawName.toLowerCase()===ADMIN_LOGIN_PATTERN){
     const uid='admin_carlo';
-    currentUser={id:uid,name:ADMIN_NAME,role:'admin',bonusPoints:0,
-      weightStart:null,weightCurrent:null,team:null,challengeId:null,joinedAt:Date.now()};
+    // Recupera i dati esistenti se l'admin è già registrato (foto, partecipazione, punti)
+    let existing=null;
+    if(window._firebaseReady){
+      try{
+        const snap=await window._get(window._ref(window._db,'users/'+uid));
+        if(snap.exists()) existing=snap.val();
+      }catch(e){console.warn('Errore lettura admin',e);}
+    }
+    currentUser= existing
+      ? {...existing,id:uid,name:ADMIN_NAME,role:'admin'}
+      : {id:uid,name:ADMIN_NAME,role:'admin',bonusPoints:0,
+         weightStart:null,weightCurrent:null,team:null,challengeId:null,
+         recoveryCode:generateRecoveryCode(),joinedAt:Date.now()};
+    if(!currentUser.recoveryCode) currentUser.recoveryCode=generateRecoveryCode();
+    activeChallengeId=currentUser.challengeId||null;
+    if(activeChallengeId) localStorage.setItem('c11_activeChallenge',activeChallengeId);
     localStorage.setItem('c11_user',JSON.stringify(currentUser));
-    if(window._firebaseReady) await window._set(window._ref(window._db,'users/'+uid),currentUser);
+    if(window._firebaseReady){
+      try{ await window._set(window._ref(window._db,'users/'+uid),currentUser); }
+      catch(e){console.warn('Errore salvataggio admin',e);}
+    }
     document.getElementById('loginPage').style.display='none';
     showMainApp();
     loadData();
@@ -1046,9 +1218,19 @@ window.doLogin = async function(){
 
   const uid='u_'+name.replace(/\s+/g,'').toLowerCase()+'_'+Date.now();
   currentUser={id:uid,name,weightStart:weight,weightCurrent:weight,
-    team:null,role:'member',bonusPoints:0,challengeId:activeChallengeId,joinedAt:Date.now()};
+    team:null,role:'member',bonusPoints:0,challengeId:activeChallengeId,
+    recoveryCode:generateRecoveryCode(),joinedAt:Date.now()};
+  if(window._firebaseReady){
+    try{
+      await window._set(window._ref(window._db,'users/'+uid),currentUser);
+    }catch(e){
+      console.warn('Errore registrazione',e);
+      showToast('⚠️ Registrazione fallita — controlla la connessione e riprova');
+      currentUser=null;
+      return;
+    }
+  }
   localStorage.setItem('c11_user',JSON.stringify(currentUser));
-  if(window._firebaseReady) await window._set(window._ref(window._db,'users/'+uid),currentUser);
   document.getElementById('loginPage').style.display='none';
   showMainApp();
   loadData();
@@ -1101,26 +1283,57 @@ window.finishOnboarding=function(){
   launchConfetti(10);
 };
 
-window.doLoginExisting=function(){
-  const name=prompt('Il tuo nome esatto:');
-  if(!name)return;
+// Genera un codice di recupero leggibile (es. RKT-4829)
+function generateRecoveryCode(){
+  const letters='ABCDEFGHJKLMNPQRSTUVWXYZ'; // niente I/O per evitare confusione
+  let p1='';for(let i=0;i<3;i++)p1+=letters[Math.floor(Math.random()*letters.length)];
+  const p2=String(Math.floor(1000+Math.random()*9000));
+  return p1+'-'+p2;
+}
+
+window.doLoginExisting=async function(){
+  const code=prompt('Inserisci il tuo codice di recupero\n(es. RKT-4829)\n\nLo trovi nella sezione Profilo dell\'app sul tuo vecchio dispositivo.');
+  if(!code)return;
+  const clean=code.trim().toUpperCase();
   if(!window._firebaseReady){showToast('Modalità demo');return;}
-  window._get(window._ref(window._db,'users')).then(snap=>{
+  try{
+    const snap=await window._get(window._ref(window._db,'users'));
     let found=null;
-    snap.forEach(c=>{if(c.val().name.toLowerCase()===name.toLowerCase())found={id:c.key,...c.val()};});
+    snap.forEach(c=>{if((c.val().recoveryCode||'').toUpperCase()===clean)found={id:c.key,...c.val()};});
     if(found){
       currentUser=found;
       activeChallengeId=found.challengeId||null;
       localStorage.setItem('c11_user',JSON.stringify(currentUser));
-      localStorage.setItem('c11_activeChallenge',activeChallengeId||'');
+      if(activeChallengeId) localStorage.setItem('c11_activeChallenge',activeChallengeId);
       document.getElementById('loginPage').style.display='none';
-      showMainApp();loadData();showToast('Bentornato/a '+found.name.split(' ')[0]+'!');
-    } else showToast('Utente non trovato');
-  });
+      showMainApp();loadData();
+      showToast('Bentornato/a '+found.name.split(' ')[0]+'! 👋');
+    } else showToast('Codice non riconosciuto');
+  }catch(e){
+    console.warn('Errore recupero account',e);
+    showToast('⚠️ Errore di connessione — riprova');
+  }
+};
+
+window.copyRecoveryCode=function(){
+  const code=currentUser?.recoveryCode;
+  if(!code){showToast('Nessun codice disponibile');return;}
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(code).then(
+      ()=>showToast('Codice copiato! 📋'),
+      ()=>showToast('Codice: '+code)
+    );
+  } else {
+    showToast('Il tuo codice: '+code);
+  }
 };
 
 window.doLogout=function(){
-  if(!confirm('Vuoi davvero uscire?'))return;
+  const code=currentUser?.recoveryCode;
+  const msg=code
+    ? `Stai per uscire.\n\nPer rientrare ti servirà il codice di recupero:\n\n${code}\n\nAssicurati di averlo salvato. Vuoi continuare?`
+    : 'Stai per uscire e perderai l\'accesso ai tuoi dati su questo dispositivo. Vuoi continuare?';
+  if(!confirm(msg))return;
   localStorage.clear();location.reload();
 };
 
@@ -1141,7 +1354,7 @@ async function findChallengeByCode(code){
 window.createChallenge=async function(){
   const name=document.getElementById('newChallengeName').value.trim();
   if(!name){showToast('Inserisci un nome');return;}
-  const ch={name,code:'',duration:11,startDate:'',prize:{title:'',desc:'',photoUrl:''},createdAt:Date.now(),tips:[],rules:[]};
+  const ch={name,mode:'team',code:'',duration:11,startDate:'',prize:{title:'',desc:'',photoUrl:''},createdAt:Date.now(),tips:[],rules:[]};
   if(window._firebaseReady){
     const r=await window._push(window._ref(window._db,'challenges'),ch);
     activeChallengeId=r.key;
@@ -1154,9 +1367,22 @@ window.createChallenge=async function(){
   loadChallenges();
 };
 
+let _pendingMode='team'; // modalità selezionata ma non ancora salvata
+
+window.setChallengeMode=function(mode){
+  _pendingMode=mode;
+  document.getElementById('modeTeamBtn').className='btn btn-sm '+(mode==='team'?'btn-primary':'btn-outline');
+  document.getElementById('modeIndBtn').className='btn btn-sm '+(mode==='individual'?'btn-primary':'btn-outline');
+  document.getElementById('modeExplain').textContent = mode==='team'
+    ? 'Le persone vengono divise in squadre e competono anche come gruppo.'
+    : 'Ognuno gareggia per sé stesso. Nessuna squadra, solo classifica individuale.';
+  document.getElementById('adminTeamsCard').style.display = mode==='team' ? 'block' : 'none';
+};
+
 window.saveChallenge=async function(){
   if(!activeChallengeId){showToast('Crea prima una challenge');return;}
   const cfg={
+    mode:_pendingMode,
     code:document.getElementById('adminCode').value.trim().toUpperCase(),
     duration:parseInt(document.getElementById('adminDuration').value)||11,
     startDate:document.getElementById('adminStartDate').value,
@@ -1173,10 +1399,37 @@ window.saveChallenge=async function(){
   showToast('Salvato! ✓');
   renderDayDots();
   renderPrize();
+  applyRankingMode();
 };
+
+function applyRankingMode(){
+  const isTeam=challengeConfig?.mode!=='individual';
+  const teamTabBtn=document.getElementById('teamTabBtn');
+  if(teamTabBtn) teamTabBtn.style.display=isTeam?'inline-block':'none';
+  // Se siamo sul tab squadre ma la modalità è individuale, torna a individuale
+  if(!isTeam){
+    const rankTeamEl=document.getElementById('rankTeam');
+    const rankIndEl=document.getElementById('rankIndividual');
+    if(rankTeamEl && rankTeamEl.style.display!=='none'){
+      rankTeamEl.style.display='none';
+      if(rankIndEl) rankIndEl.style.display='block';
+    }
+    // Ripristina lo stato visivo del pulsante "Individuale"
+    const tabRow=document.getElementById('rankTabRow');
+    if(tabRow){
+      tabRow.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      const firstBtn=tabRow.querySelector('.tab-btn');
+      if(firstBtn) firstBtn.classList.add('active');
+    }
+  }
+}
+
+let _challengesListenerActive=false;
 
 function loadChallenges(){
   if(!window._firebaseReady){renderAdminChallenges();return;}
+  if(_challengesListenerActive){renderAdminChallenges();return;}
+  _challengesListenerActive=true;
   window._onValue(window._ref(window._db,'challenges'),snap=>{
     challenges=[];
     snap.forEach(c=>challenges.push({id:c.key,...c.val()}));
@@ -1188,14 +1441,15 @@ function loadChallenges(){
         challengeConfig=active;
         renderDayDots();
         renderPrize();
+        applyRankingMode();
         document.getElementById('headerDays').textContent=active.duration||11;
-        document.getElementById('splashTitle') && (document.getElementById('splashTitle').textContent='Challenge '+active.duration);
         // Prefill admin form
         document.getElementById('adminCode').value=active.code||'';
         document.getElementById('adminDuration').value=active.duration||11;
         document.getElementById('adminStartDate').value=active.startDate||'';
         document.getElementById('adminPrizeTitle').value=active.prize?.title||'';
         document.getElementById('adminPrizeDesc').value=active.prize?.desc||'';
+        setChallengeMode(active.mode||'team');
       }
     }
   });
@@ -1206,7 +1460,7 @@ function renderAdminChallenges(){
   if(!challenges.length){c.innerHTML='<div style="font-size:13px;color:var(--text3)">Nessuna challenge ancora.</div>';return;}
   c.innerHTML=challenges.map(ch=>`
     <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
-      <span style="font-weight:700">${ch.name} <small style="color:var(--text3)">[${ch.code||'no codice'}]</small></span>
+      <span style="font-weight:700">${esc(ch.name)} <small style="color:var(--text3)">[${esc(ch.code)||'no codice'}]</small> ${ch.mode==='individual'?'<small style="color:var(--gold)">🏃 individuale</small>':'<small style="color:var(--green)">👥 squadre</small>'}</span>
       <button class="btn btn-primary btn-sm" style="${activeChallengeId===ch.id?'background:var(--gold)':''}"
         onclick="selectChallenge('${ch.id}')">
         ${activeChallengeId===ch.id?'✓ Attiva':'Seleziona'}
@@ -1214,7 +1468,7 @@ function renderAdminChallenges(){
     </div>`).join('');
 }
 
-window.selectChallenge=function(id){
+window.selectChallenge=async function(id){
   activeChallengeId=id;
   localStorage.setItem('c11_activeChallenge',id);
   const active=challenges.find(c=>c.id===id);
@@ -1225,9 +1479,13 @@ window.selectChallenge=function(id){
     document.getElementById('adminStartDate').value=active.startDate||'';
     document.getElementById('adminPrizeTitle').value=active.prize?.title||'';
     document.getElementById('adminPrizeDesc').value=active.prize?.desc||'';
+    setChallengeMode(active.mode||'team');
+    applyRankingMode();
   }
+  await refreshFilteredData();
   renderAdminChallenges();
   renderDayDots();
+  renderPrize();
   showToast('Challenge selezionata!');
 };
 
@@ -1306,9 +1564,47 @@ function sendNotif(title, body){
   }
 }
 
+// Ricarica i dati applicando i filtri della challenge attiva.
+// Serve quando activeChallengeId cambia ma i listener sono già registrati.
+async function refreshFilteredData(){
+  if(!window._firebaseReady){loadDemoData();return;}
+  try{
+    const [postsSnap,usersSnap,teamsSnap,tipsSnap]=await Promise.all([
+      window._get(window._ref(window._db,'posts')),
+      window._get(window._ref(window._db,'users')),
+      window._get(window._ref(window._db,'teams')),
+      window._get(window._ref(window._db,'tips'))
+    ]);
+    posts=[];postsSnap.forEach(c=>posts.push({id:c.key,...c.val()}));
+    posts=activeChallengeId?posts.filter(p=>p.challengeId===activeChallengeId):[];
+    posts.sort((a,b)=>b.timestamp-a.timestamp);
+
+    users=[];usersSnap.forEach(c=>users.push({id:c.key,...c.val()}));
+    users=activeChallengeId?users.filter(u=>u.challengeId===activeChallengeId):[];
+
+    teams=[];teamsSnap.forEach(c=>teams.push({id:c.key,...c.val()}));
+    teams=activeChallengeId?teams.filter(t=>t.challengeId===activeChallengeId):[];
+
+    tips=[];tipsSnap.forEach(c=>tips.push({id:c.key,...c.val()}));
+    tips=activeChallengeId?tips.filter(t=>t.challengeId===activeChallengeId):[];
+
+    renderFeed();renderRanking();renderTips();updateProfile();updateTipsBadge();
+    if(isAdmin()){renderAdminUsers();renderActivityMonitor();renderAdminTeams();renderAdminTips();}
+  }catch(e){console.warn('Errore refresh dati',e);}
+}
+
+let _listenersActive=false; // impedisce registrazioni duplicate dei listener Firebase
+
 function loadData(){
   if(!window._firebaseReady){loadDemoData();return;}
   loadChallenges();
+  // I listener vanno registrati una sola volta: se già attivi, basta ridisegnare
+  if(_listenersActive){
+    renderFeed();renderRanking();renderTips();updateProfile();
+    if(isAdmin()){renderAdminUsers();renderActivityMonitor();renderAdminTeams();}
+    return;
+  }
+  _listenersActive=true;
   window._onValue(window._ref(window._db,'posts'),snap=>{
     posts=[];
     snap.forEach(c=>posts.push({id:c.key,...c.val()}));
@@ -1323,7 +1619,7 @@ function loadData(){
     // In classifica: solo utenti della challenge attiva (l'admin stesso non compare se non partecipa)
     users=activeChallengeId?users.filter(u=>u.challengeId===activeChallengeId):[];
     renderRanking();
-    if(isAdmin())renderAdminUsers();
+    if(isAdmin()){renderAdminUsers();renderActivityMonitor();}
   });
   window._onValue(window._ref(window._db,'teams'),snap=>{
     teams=[];
@@ -1362,7 +1658,7 @@ function loadDemoData(){
   ];
   document.getElementById('headerDays').textContent=challengeConfig.duration;
   renderFeed();renderRanking();renderTips();updateProfile();renderDayDots();renderPrize();
-  if(isAdmin()){renderAdminUsers();renderAdminTeams();}
+  if(isAdmin()){renderAdminUsers();renderActivityMonitor();renderAdminTeams();}
   updateTipsBadge();
 }
 
@@ -1397,7 +1693,7 @@ window.goToProfile=function(){
       document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
       document.getElementById('pageAdmin').classList.add('active');
       document.getElementById('fabBtn').style.display='none';
-      loadChallenges();renderAdminUsers();renderAdminTeams();renderAdminTips();return;
+      loadChallenges();renderAdminUsers();renderActivityMonitor();renderAdminTeams();renderAdminTips();return;
     }
   }
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -1411,6 +1707,196 @@ window.goToProfile=function(){
 // ============================================================
 // PRIZE RENDER
 // ============================================================
+// ============================================================
+// CARD DINAMICHE DEL FEED
+// ============================================================
+
+// Restituisce il giorno corrente della challenge (1-based) o null
+function currentChallengeDay(){
+  if(!challengeConfig?.startDate)return null;
+  const start=new Date(challengeConfig.startDate);
+  const today=new Date();
+  start.setHours(0,0,0,0);today.setHours(0,0,0,0);
+  const diff=Math.floor((today-start)/86400000)+1;
+  const dur=parseInt(challengeConfig.duration)||11;
+  if(diff<1||diff>dur)return null;
+  return diff;
+}
+
+function renderDayOneWelcome(){
+  const el=document.getElementById('dayOneWelcome');
+  if(!el)return;
+  const day=currentChallengeDay();
+  const dismissed=localStorage.getItem('c11_day1seen_'+(activeChallengeId||''));
+  // Mostra solo il Giorno 1, e solo se non ancora chiusa
+  if(day!==1||dismissed||!currentUser?.challengeId){el.innerHTML='';return;}
+  const prize=challengeConfig?.prize;
+  const dur=challengeConfig?.duration||11;
+  el.innerHTML=`
+    <div class="day-one-card">
+      <span class="day-one-icon">🚀</span>
+      <div class="day-one-title">Si parte!</div>
+      <div class="day-one-text">
+        Oggi è il Giorno 1 di ${dur}.<br>
+        ${prize?.title?`In palio: <strong style="color:var(--green)">${esc(prize.title)}</strong><br>`:''}
+        Pesati stamattina e posta il tuo primo pasto.
+      </div>
+      <button class="day-one-btn" onclick="dismissDayOne()">Iniziamo 💪</button>
+    </div>`;
+}
+
+window.dismissDayOne=function(){
+  localStorage.setItem('c11_day1seen_'+(activeChallengeId||''),'1');
+  renderDayOneWelcome();
+  openPostModal();
+};
+
+function renderWeightReminder(){
+  const el=document.getElementById('weightReminder');
+  if(!el)return;
+  // Solo per partecipanti attivi, non per admin non iscritto
+  if(!currentUser?.challengeId||currentUser.weightStart==null){el.innerHTML='';return;}
+  const today=getTodayKey();
+  const lastWeighIn=localStorage.getItem('c11_lastWeighIn');
+  const dismissed=localStorage.getItem('c11_weighDismissed_'+today);
+  if(lastWeighIn===today||dismissed){el.innerHTML='';return;}
+  el.innerHTML=`
+    <div class="weight-reminder">
+      <div class="weight-reminder-icon">⚖️</div>
+      <div class="weight-reminder-text">Buongiorno! Hai aggiornato il peso di oggi?</div>
+      <button class="weight-reminder-btn" onclick="openWeightModal()">Aggiorna</button>
+      <button style="background:none;border:none;color:#7a6200;font-size:18px;cursor:pointer;padding:0 2px" onclick="dismissWeighIn()">×</button>
+    </div>`;
+}
+
+window.dismissWeighIn=function(){
+  localStorage.setItem('c11_weighDismissed_'+getTodayKey(),'1');
+  renderWeightReminder();
+};
+
+function renderLateMealHint(){
+  const el=document.getElementById('lateMealHint');
+  if(!el)return;
+  if(!currentUser?.challengeId){el.innerHTML='';return;}
+  const hour=new Date().getHours();
+  const today=new Date().toDateString();
+  const myToday=posts.filter(p=>p.userId===currentUser.id&&new Date(p.timestamp).toDateString()===today);
+  // Mostra dalle 19 in poi se ha postato meno di 3 pasti
+  if(hour<19||myToday.length>=3){el.innerHTML='';return;}
+  el.innerHTML=`
+    <div class="late-hint" onclick="openPostModalLate()">
+      <span style="font-size:20px">📌</span>
+      <span>Hai dimenticato un pasto di oggi? Puoi recuperarlo indicando l'orario reale.</span>
+    </div>`;
+}
+
+window.openPostModalLate=function(){
+  openPostModal();
+  setTimeout(()=>setPostTime('late'),100);
+};
+
+// ============================================================
+// CHI HA POSTATO OGGI (admin)
+// ============================================================
+function renderAttendance(){
+  const el=document.getElementById('attendanceContainer');
+  if(!el)return;
+  const participants=users.filter(u=>u.role!=='admin');
+  if(!activeChallengeId||!participants.length){el.innerHTML='';return;}
+  const today=new Date().toDateString();
+  const postedIds=new Set(posts.filter(p=>new Date(p.timestamp).toDateString()===today).map(p=>p.userId));
+  const done=participants.filter(u=>postedIds.has(u.id));
+  const missing=participants.filter(u=>!postedIds.has(u.id));
+  const pct=Math.round((done.length/participants.length)*100);
+  el.innerHTML=`
+    <div class="attendance-card">
+      <div class="attendance-header">
+        <div>
+          <div class="attendance-count">${done.length}<span style="font-size:16px;color:var(--text3)">/${participants.length}</span></div>
+          <div class="attendance-label">Hanno postato oggi</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:20px;font-weight:800;color:${pct>=70?'var(--green)':pct>=40?'var(--gold)':'var(--red)'}">${pct}%</div>
+          <div class="attendance-label">partecipazione</div>
+        </div>
+      </div>
+      <div class="attendance-bar"><div class="attendance-fill" style="width:${pct}%"></div></div>
+      ${missing.length?`
+        <div class="attendance-section">
+          <div class="attendance-section-title">⚠️ Non hanno ancora postato (${missing.length})</div>
+          <div class="attendance-chips">
+            ${missing.map(u=>`<span class="attendance-chip missing">${avatarHtml(u,22)}${esc(u.name.split(' ')[0])}</span>`).join('')}
+          </div>
+        </div>`:'<div style="font-size:13px;color:var(--green);font-weight:700;text-align:center;padding:6px 0">🎉 Tutti hanno postato oggi!</div>'}
+      ${done.length?`
+        <div class="attendance-section">
+          <div class="attendance-section-title">✓ Attivi oggi (${done.length})</div>
+          <div class="attendance-chips">
+            ${done.map(u=>`<span class="attendance-chip done">${avatarHtml(u,22)}${esc(u.name.split(' ')[0])}</span>`).join('')}
+          </div>
+        </div>`:''}
+    </div>`;
+}
+
+// ============================================================
+// GRAFICO PESO
+// ============================================================
+function renderWeightChart(){
+  const el=document.getElementById('weightChartContainer');
+  if(!el)return;
+  const history=JSON.parse(localStorage.getItem('c11_weightHistory_'+(activeChallengeId||''))||'[]');
+  if(history.length<2){
+    el.innerHTML=`<div class="chart-empty">📈 Il grafico dei tuoi progressi<br>apparirà dopo qualche pesata.</div>`;
+    return;
+  }
+  const values=history.map(h=>h.w);
+  const min=Math.min(...values), max=Math.max(...values);
+  const range=(max-min)||1;
+  const w=300, h=90, pad=8;
+  const stepX=(w-pad*2)/Math.max(1,history.length-1);
+  const pts=history.map((p,i)=>{
+    const x=pad+i*stepX;
+    const y=pad+(1-(p.w-min)/range)*(h-pad*2);
+    return {x,y,...p};
+  });
+  const path=pts.map((p,i)=>(i===0?'M':'L')+p.x.toFixed(1)+' '+p.y.toFixed(1)).join(' ');
+  const areaPath=path+` L ${pts[pts.length-1].x.toFixed(1)} ${h-pad} L ${pts[0].x.toFixed(1)} ${h-pad} Z`;
+  const first=history[0].w, last=history[history.length-1].w;
+  const improving=last<first;
+  const color=improving?'#2ECC71':'#E74C3C';
+  el.innerHTML=`
+    <div class="weight-chart">
+      <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="wgrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="${color}" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <path d="${areaPath}" fill="url(#wgrad)"/>
+        <path d="${path}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        ${pts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="white" stroke="${color}" stroke-width="2"/>`).join('')}
+      </svg>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:4px">
+        <span>${first.toFixed(1)} kg</span>
+        <span style="color:${color};font-weight:700">${improving?'▼':'▲'} ${Math.abs(last-first).toFixed(1)} kg</span>
+        <span>${last.toFixed(1)} kg</span>
+      </div>
+    </div>`;
+}
+
+function recordWeightHistory(weight){
+  const key='c11_weightHistory_'+(activeChallengeId||'');
+  const history=JSON.parse(localStorage.getItem(key)||'[]');
+  const today=getTodayKey();
+  const existing=history.findIndex(h=>h.d===today);
+  if(existing>=0) history[existing].w=weight;
+  else history.push({d:today,w:weight});
+  history.sort((a,b)=>a.d.localeCompare(b.d));
+  localStorage.setItem(key,JSON.stringify(history));
+  localStorage.setItem('c11_lastWeighIn',today);
+}
+
 function renderPrize(){
   const prize=challengeConfig?.prize;
   if(!prize||!prize.title)return;
@@ -1421,8 +1907,8 @@ function renderPrize(){
       `<div style="padding:20px 20px 0;text-align:center"><div class="prize-trophy">🏆</div></div>`}
     <div class="prize-card-inner">
       <div class="prize-label">🎁 Premio per il vincitore</div>
-      <div class="prize-title">${prize.title}</div>
-      ${prize.desc?`<div class="prize-desc">${prize.desc}</div>`:''}
+      <div class="prize-title">${esc(prize.title)}</div>
+      ${prize.desc?`<div class="prize-desc">${esc(prize.desc)}</div>`:''}
     </div>
   </div>`;
   document.getElementById('prizePreview').innerHTML=html;
@@ -1432,7 +1918,75 @@ function renderPrize(){
 // ============================================================
 // FEED
 // ============================================================
+// Card contestuale in cima al feed: cambia in base a ora del giorno e stato dell'utente
+function renderFeedReminder(){
+  const el=document.getElementById('feedReminder');
+  if(!el||!currentUser)return;
+  if(!currentUser.challengeId){el.innerHTML='';return;}
+
+  const now=new Date();
+  const hour=now.getHours();
+  const today=now.toDateString();
+  const myPostsToday=posts.filter(p=>p.userId===currentUser.id&&new Date(p.timestamp).toDateString()===today);
+  const weighedToday=currentUser.lastWeightDate===getTodayKey();
+  const currentDay=getCurrentDay();
+
+  let html='';
+
+  // Giorno 1: benvenuto celebrativo
+  if(currentDay===1&&myPostsToday.length===0){
+    html=`<div class="reminder-card start">
+      <div class="reminder-icon">🚀</div>
+      <div class="reminder-body">
+        <div class="reminder-title">La challenge è iniziata!</div>
+        <div class="reminder-text">Pesati stamattina e posta il tuo primo pasto per partire alla grande.</div>
+      </div>
+    </div>`;
+  }
+  // Mattina, non ancora pesato
+  else if(hour<12&&!weighedToday){
+    html=`<div class="reminder-card weight" onclick="openWeightModal()">
+      <div class="reminder-icon">⚖️</div>
+      <div class="reminder-body">
+        <div class="reminder-title">Buongiorno! Hai pesato oggi?</div>
+        <div class="reminder-text">Tocca qui per aggiornare il tuo peso →</div>
+      </div>
+    </div>`;
+  }
+  // Sera, pochi pasti postati
+  else if(hour>=19&&myPostsToday.length<2){
+    html=`<div class="reminder-card late" onclick="openPostModal()">
+      <div class="reminder-icon">📌</div>
+      <div class="reminder-body">
+        <div class="reminder-title">Hai dimenticato qualche pasto?</div>
+        <div class="reminder-text">Puoi recuperarlo indicando l'orario reale →</div>
+      </div>
+    </div>`;
+  }
+  // Ha postato tutto: complimenti
+  else if(myPostsToday.length>=3){
+    html=`<div class="reminder-card done">
+      <div class="reminder-icon">🌟</div>
+      <div class="reminder-body">
+        <div class="reminder-title">Ottimo lavoro oggi!</div>
+        <div class="reminder-text">${myPostsToday.length} pasti postati. Continua così!</div>
+      </div>
+    </div>`;
+  }
+
+  el.innerHTML=html;
+}
+
+function getCurrentDay(){
+  const dur=parseInt(challengeConfig?.duration)||11;
+  const start=challengeConfig?.startDate?new Date(challengeConfig.startDate):null;
+  if(!start)return 1;
+  const diff=Math.floor((new Date()-start)/86400000);
+  return Math.max(1,Math.min(dur,diff+1));
+}
+
 function renderFeed(){
+  renderFeedReminder();
   const c=document.getElementById('feedContainer');
   if(!posts.length){
     c.innerHTML=`<div class="empty-state"><div class="empty-icon" style="animation:bounce 1.5s ease infinite">🌿</div><div class="empty-text">Nessun post ancora.<br>Posta il tuo primo pasto!</div></div>`;
@@ -1446,32 +2000,69 @@ function renderFeed(){
       <div class="post-header">
         ${avatarHtml(u||{name:post.userName},38,isCap?'captain':'')}
         <div class="post-meta">
-          <div class="post-author">${post.userName}${isCap?' 👑':''}</div>
-          <div class="post-info">${post.team||'—'} · ${formatTime(post.timestamp)}${post.isLate?' · <span style="color:var(--gold);font-size:11px;font-weight:700">📌 recuperato</span>':''}</div>
+          <div class="post-author">${esc(post.userName)}${isCap?' 👑':''}</div>
+          <div class="post-info">${challengeConfig?.mode==='individual'?'':(post.team&&post.team!=='—'?post.team+' · ':'')}${formatTime(post.timestamp)}${post.isLate?' · <span style="color:var(--gold);font-size:11px;font-weight:700">📌 recuperato</span>':''}</div>
         </div>
         <div class="meal-badge">${MEAL_LABELS[post.mealType]||post.mealType}</div>
       </div>
       ${post.photoUrl?`<img class="post-image" src="${post.photoUrl}" loading="lazy" onclick="openLightbox('${post.id}')">`:`<div class="post-image-ph">${post.mealType==='frullato'?'🥤':'🍽️'}</div>`}
       <div class="post-body">
-        ${post.desc?`<div class="post-desc">${post.desc}</div>`:''}
+        ${post.desc?`<div class="post-desc">${esc(post.desc)}</div>`:''}
         <div class="reactions">
-          <button class="react-btn" onclick="react('${post.id}','strong')">💪 <span id="r_${post.id}_strong">${post.reactions?.strong||0}</span></button>
-          <button class="react-btn" onclick="react('${post.id}','fire')">🔥 <span id="r_${post.id}_fire">${post.reactions?.fire||0}</span></button>
-          <button class="react-btn" onclick="react('${post.id}','heart')">❤️ <span id="r_${post.id}_heart">${post.reactions?.heart||0}</span></button>
+          <button class="react-btn${hasReacted(post.id,'strong')?' reacted':''}" onclick="react('${post.id}','strong')"><span class="react-emoji">💪</span> <span id="r_${post.id}_strong">${post.reactions?.strong||0}</span></button>
+          <button class="react-btn${hasReacted(post.id,'fire')?' reacted':''}" onclick="react('${post.id}','fire')"><span class="react-emoji">🔥</span> <span id="r_${post.id}_fire">${post.reactions?.fire||0}</span></button>
+          <button class="react-btn${hasReacted(post.id,'heart')?' reacted':''}" onclick="react('${post.id}','heart')"><span class="react-emoji">❤️</span> <span id="r_${post.id}_heart">${post.reactions?.heart||0}</span></button>
         </div>
       </div>
     </div>`;
   }).join('');
 }
 
+// Traccia le reazioni date dall'utente (localStorage: sopravvive ai refresh)
+function myReactions(){
+  try{ return JSON.parse(localStorage.getItem('c11_myReactions')||'{}'); }
+  catch(e){ return {}; }
+}
+function hasReacted(postId,key){
+  const m=myReactions();
+  return !!(m[postId]&&m[postId][key]);
+}
+
 window.react=async function(postId,key){
   const post=posts.find(p=>p.id===postId);
   if(!post)return;
   if(!post.reactions)post.reactions={};
-  post.reactions[key]=(post.reactions[key]||0)+1;
+
+  const mine=myReactions();
+  if(!mine[postId])mine[postId]={};
+  const already=!!mine[postId][key];
+
+  // Toggle: se già reagito, rimuove; altrimenti aggiunge
+  if(already){
+    post.reactions[key]=Math.max(0,(post.reactions[key]||0)-1);
+    delete mine[postId][key];
+  } else {
+    post.reactions[key]=(post.reactions[key]||0)+1;
+    mine[postId][key]=true;
+  }
+  localStorage.setItem('c11_myReactions',JSON.stringify(mine));
+
+  // Aggiorna la UI immediatamente
   const el=document.getElementById(`r_${postId}_${key}`);
-  if(el){el.textContent=post.reactions[key];el.parentElement.style.transform='scale(1.2)';setTimeout(()=>el.parentElement.style.transform='',200);}
-  if(window._firebaseReady) await window._update(window._ref(window._db,'posts/'+postId+'/reactions'),post.reactions);
+  if(el){
+    el.textContent=post.reactions[key];
+    const btn=el.closest('.react-btn');
+    if(btn){
+      btn.classList.toggle('reacted',!already);
+      btn.style.transform='scale(1.18)';
+      setTimeout(()=>btn.style.transform='',180);
+    }
+  }
+
+  if(window._firebaseReady){
+    try{ await window._update(window._ref(window._db,'posts/'+postId+'/reactions'),post.reactions); }
+    catch(e){ console.warn('Errore salvataggio reazione',e); }
+  }
 };
 
 // ============================================================
@@ -1553,7 +2144,15 @@ async function compressAvatar(dataUrl){
   });
 }
 
+let _submitting=false; // impedisce doppi invii
+
 window.submitPost=async function(){
+  if(_submitting)return;
+  _submitting=true;
+  try{ await _doSubmitPost(); } finally{ _submitting=false; }
+};
+
+async function _doSubmitPost(){
   if(!currentUser)return;
   const mealType=document.getElementById('postMealType').value;
   const desc=document.getElementById('postDesc').value.trim();
@@ -1578,17 +2177,23 @@ window.submitPost=async function(){
     mealType,desc,timestamp,isLate,reactions:{strong:0,fire:0,heart:0},
     photoUrl:compressedPhoto,challengeId:activeChallengeId||'demo'};
   closeModal('postModal');
-  showToast(isLate?'Post recuperato! 📌':'Post inviato! +1 punto 🌿');
   if(window._firebaseReady){
-    const nr=window._push(window._ref(window._db,'posts'));
-    await window._set(nr,post);
-    const newPts=(currentUser.bonusPoints||0)+1;
-    currentUser.bonusPoints=newPts;
-    localStorage.setItem('c11_user',JSON.stringify(currentUser));
-    await window._update(window._ref(window._db,'users/'+currentUser.id),{bonusPoints:newPts});
+    try{
+      const nr=window._push(window._ref(window._db,'posts'));
+      await window._set(nr,post);
+      const newPts=(currentUser.bonusPoints||0)+1;
+      currentUser.bonusPoints=newPts;
+      localStorage.setItem('c11_user',JSON.stringify(currentUser));
+      await window._update(window._ref(window._db,'users/'+currentUser.id),{bonusPoints:newPts});
+      showToast(isLate?'Post recuperato! 📌':'Post inviato! +1 punto 🌿');
+    }catch(e){
+      console.warn('Errore salvataggio post',e);
+      showToast('⚠️ Post non salvato — controlla la connessione e riprova');
+    }
   } else {
     post.id='demo_'+Date.now();
     posts.unshift(post);renderFeed();
+    showToast(isLate?'Post recuperato! 📌':'Post inviato! +1 punto 🌿');
   }
 };
 
@@ -1604,6 +2209,7 @@ function calcScore(u){return calcLoss(u)+(u.bonusPoints||0)*0.1;}
 let _lastRankOrder = []; // per rilevare i sorpassi
 
 function renderRanking(){
+  applyRankingMode();
   const sorted=[...users].sort((a,b)=>calcScore(b)-calcScore(a));
   const c=document.getElementById('rankIndividual');
   if(!sorted.length){c.innerHTML=`<div class="empty-state"><div class="empty-icon">🏆</div><div class="empty-text">Nessun partecipante ancora.</div></div>`;return;}
@@ -1637,8 +2243,8 @@ function renderRanking(){
       <div class="rank-pos ${pc}">${i+1}</div>
       ${avatarHtml(u,34)}
       <div class="rank-info">
-        <div class="rank-name">${u.name}${isMe?' (tu)':''}${u.role==='captain'?' 👑':''}</div>
-        <div class="rank-sub">${u.team||'—'} · ${u.bonusPoints||0} punti bonus</div>
+        <div class="rank-name">${esc(u.name)}${isMe?' (tu)':''}${u.role==='captain'?' 👑':''}</div>
+        <div class="rank-sub">${challengeConfig?.mode==='individual'?'':(u.team?u.team+' · ':'')}${u.bonusPoints||0} punti bonus</div>
       </div>
       <div class="rank-score">${loss>0?'-'+loss.toFixed(1)+'%':loss.toFixed(1)+'%'}<small>${loss>0?'perso':'variazione'}</small></div>
     </div>`;
@@ -1659,7 +2265,7 @@ function podiumSpot(u,pos){
       ${avatarHtml(u,pos===1?56:46)}
       <div class="podium-medal">${medals[pos]}</div>
     </div>
-    <div class="podium-name">${u.name.split(' ')[0]}${isMe?' (tu)':''}</div>
+    <div class="podium-name">${esc(u.name.split(' ')[0])}${isMe?' (tu)':''}</div>
     <div class="podium-score">${loss>0?'-'+loss.toFixed(1):loss.toFixed(1)}%</div>
     <div class="podium-base" style="height:${heights[pos]};background:${colors[pos]}">
       <span class="podium-pos-num">${pos}</span>
@@ -1711,7 +2317,7 @@ function renderTeamRank(){
 }
 
 window.switchRankTab=function(tab,btn){
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#rankTabRow .tab-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('rankIndividual').style.display=tab==='individual'?'block':'none';
   document.getElementById('rankTeam').style.display=tab==='team'?'block':'none';
@@ -1722,7 +2328,7 @@ window.switchRankTab=function(tab,btn){
 // ============================================================
 function renderActivities(){
   const today=getTodayKey();
-  const done=JSON.parse(localStorage.getItem('c11_act_'+today)||'[]');
+  const done=JSON.parse(localStorage.getItem(actKey(today))||'[]');
   const doneCount=done.length;
   document.getElementById('todayActCount').textContent=doneCount?`${doneCount}/${ACTIVITIES.length} completate`:'';
   document.getElementById('activityGrid').innerHTML=ACTIVITIES.map(act=>`
@@ -1744,7 +2350,7 @@ function renderActivities(){
 
 window.openActivity=function(id){
   const today=getTodayKey();
-  const done=JSON.parse(localStorage.getItem('c11_act_'+today)||'[]');
+  const done=JSON.parse(localStorage.getItem(actKey(today))||'[]');
   if(done.includes(id)){showToast('Già completata oggi!');return;}
   const act=ACTIVITIES.find(a=>a.id===id);
   currentActivityId=id;
@@ -1757,15 +2363,30 @@ window.confirmActivity=async function(){
   if(!currentActivityId)return;
   const today=getTodayKey();
   const act=ACTIVITIES.find(a=>a.id===currentActivityId);
-  const done=JSON.parse(localStorage.getItem('c11_act_'+today)||'[]');
+  const done=JSON.parse(localStorage.getItem(actKey(today))||'[]');
+  const prevPoints=currentUser.bonusPoints||0;
   done.push(currentActivityId);
-  localStorage.setItem('c11_act_'+today,JSON.stringify(done));
-  currentUser.bonusPoints=(currentUser.bonusPoints||0)+act.pts;
+  localStorage.setItem(actKey(today),JSON.stringify(done));
+  currentUser.bonusPoints=prevPoints+act.pts;
   localStorage.setItem('c11_user',JSON.stringify(currentUser));
-  if(window._firebaseReady) await window._update(window._ref(window._db,'users/'+currentUser.id),{bonusPoints:currentUser.bonusPoints});
   closeModal('activityModal');
-  showToast(`+${act.pts} punti! ${act.icon}`);
-  launchConfetti(6);
+  if(window._firebaseReady){
+    try{
+      await window._update(window._ref(window._db,'users/'+currentUser.id),{bonusPoints:currentUser.bonusPoints});
+      showToast(`+${act.pts} punti! ${act.icon}`);
+      launchConfetti(6);
+    }catch(e){
+      console.warn('Errore salvataggio attività',e);
+      // Rollback
+      currentUser.bonusPoints=prevPoints;
+      localStorage.setItem('c11_user',JSON.stringify(currentUser));
+      localStorage.setItem(actKey(today),JSON.stringify(done.filter(d=>d!==currentActivityId)));
+      showToast('⚠️ Attività non salvata — controlla la connessione');
+    }
+  } else {
+    showToast(`+${act.pts} punti! ${act.icon}`);
+    launchConfetti(6);
+  }
   renderActivities();
   currentActivityId=null;
 };
@@ -1795,7 +2416,7 @@ function renderTips(){
       (t.videoUrl?`<a href="${t.videoUrl}" target="_blank" style="display:block;margin-top:8px;color:var(--green);font-size:13px;font-weight:700">▶ Guarda il video →</a>`:'');
     return `<div class="tip-card ${typeClass[t.type]||''}" style="animation-delay:${i*0.06}s">
       <div class="tip-category">${typeLabel[t.type]||'💡'}</div>
-      ${t.text?`<div class="tip-text">${t.text}</div>`:''}
+      ${t.text?`<div class="tip-text">${esc(t.text)}</div>`:''}
       ${videoHtml}
     </div>`;
   };
@@ -1809,7 +2430,7 @@ function renderTips(){
 }
 
 window.switchTipsTab=function(tab,btn){
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#tipsTabRow .tab-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('tipsList').style.display=tab==='tips'?'block':'none';
   document.getElementById('rulesList').style.display=tab==='rules'?'block':'none';
@@ -1867,7 +2488,8 @@ function updateProfile(){
     av.textContent=getInitials(currentUser.name);
   }
   document.getElementById('profileName').textContent=currentUser.name;
-  document.getElementById('profileTeam').textContent=currentUser.team?'👥 '+currentUser.team:'Squadra non assegnata';
+  document.getElementById('profileTeam').textContent = challengeConfig?.mode==='individual'
+    ? '' : (currentUser.team?'👥 '+currentUser.team:'Squadra non assegnata');
   const cb=document.getElementById('captainBadge');
   cb.style.display=currentUser.role==='captain'?'inline-block':'none';
 
@@ -1930,10 +2552,11 @@ window.adminJoinChallenge=async function(){
     challengeId:activeChallengeId,weightStart:weight,weightCurrent:weight
   });
   showToast('Ora partecipi a "'+ch.name+'"! 💪');
-  loadData();
+  await refreshFilteredData();
   updateProfile();
   renderDayDots();
   renderPrize();
+  applyRankingMode();
 };
 
 window.adminLeaveChallenge=async function(){
@@ -1950,7 +2573,9 @@ window.adminLeaveChallenge=async function(){
   challengeConfig={};
   localStorage.removeItem('c11_activeChallenge');
   showToast('Non partecipi più a questa challenge');
+  await refreshFilteredData();
   updateProfile();
+  renderDayDots();
 };
 
 window.handleAvatar=function(input){
@@ -1990,12 +2615,27 @@ window.openWeightModal=function(){
 window.saveWeight=async function(){
   const w=parseFloat(document.getElementById('newWeight').value);
   if(!w||w<30||w>300){showToast('Peso non valido');return;}
+  const previous=currentUser.weightCurrent;
   currentUser.weightCurrent=w;
+  currentUser.lastWeightDate=getTodayKey();
   localStorage.setItem('c11_user',JSON.stringify(currentUser));
-  if(window._firebaseReady) await window._update(window._ref(window._db,'users/'+currentUser.id),{weightCurrent:w});
+  recordWeightHistory(w);
   closeModal('weightModal');
-  updateProfile();renderRanking();
-  showToast('Peso aggiornato! 💪');
+  updateProfile();renderRanking();renderWeightReminder();
+  if(window._firebaseReady){
+    try{
+      await window._update(window._ref(window._db,'users/'+currentUser.id),{weightCurrent:w,lastWeightDate:getTodayKey()});
+      showToast('Peso aggiornato! 💪');
+    }catch(e){
+      console.warn('Errore salvataggio peso',e);
+      currentUser.weightCurrent=previous;
+      localStorage.setItem('c11_user',JSON.stringify(currentUser));
+      updateProfile();renderRanking();
+      showToast('⚠️ Peso non salvato — controlla la connessione');
+    }
+  } else {
+    showToast('Peso aggiornato! 💪');
+  }
 };
 
 // ============================================================
@@ -2023,11 +2663,52 @@ function renderAdminTeams(){
     </div>`).join('');
 }
 
+function renderActivityMonitor(){
+  const c=document.getElementById('activityMonitor');
+  if(!c)return;
+  const participants=users.filter(u=>u.role!=='admin'||u.challengeId===activeChallengeId);
+  if(!participants.length){
+    c.innerHTML='<div style="font-size:13px;color:var(--text3)">Nessun partecipante ancora.</div>';
+    return;
+  }
+  const today=new Date().toDateString();
+  const postedToday=new Set(posts.filter(p=>new Date(p.timestamp).toDateString()===today).map(p=>p.userId));
+  const weighedToday=participants.filter(u=>u.lastWeightDate===getTodayKey());
+
+  const active=participants.filter(u=>postedToday.has(u.id));
+  const inactive=participants.filter(u=>!postedToday.has(u.id));
+  const pct=Math.round(active.length/participants.length*100);
+
+  c.innerHTML=`
+    <div style="display:flex;gap:10px;margin-bottom:14px">
+      <div style="flex:1;background:var(--green-light);border-radius:10px;padding:12px;text-align:center">
+        <div style="font-size:24px;font-weight:800;color:var(--green-dark)">${active.length}/${participants.length}</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">hanno postato oggi</div>
+      </div>
+      <div style="flex:1;background:${pct>=70?'var(--green-light)':pct>=40?'var(--gold-light)':'#fdecea'};border-radius:10px;padding:12px;text-align:center">
+        <div style="font-size:24px;font-weight:800;color:${pct>=70?'var(--green-dark)':pct>=40?'var(--gold-dark)':'var(--red)'}">${pct}%</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">partecipazione</div>
+      </div>
+      <div style="flex:1;background:var(--surface2);border-radius:10px;padding:12px;text-align:center">
+        <div style="font-size:24px;font-weight:800;color:var(--text2)">${weighedToday.length}</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">pesati oggi</div>
+      </div>
+    </div>
+    ${inactive.length?`
+      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">⚠️ Non hanno ancora postato oggi:</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${inactive.map(u=>`<span style="background:#fdecea;color:#a33;font-size:12px;font-weight:600;padding:5px 10px;border-radius:14px">${esc(u.name.split(' ')[0])}</span>`).join('')}
+      </div>`
+    :'<div style="font-size:13px;color:var(--green-dark);font-weight:600">🎉 Tutti hanno postato oggi!</div>'}
+  `;
+}
+
 function renderAdminUsers(){
   const c=document.getElementById('adminUsersList');
   document.getElementById('adminUserCount').textContent=users.filter(u=>u.role!=='admin').length;
   const filtered=users.filter(u=>u.role!=='admin');
   if(!filtered.length){c.innerHTML='<div style="font-size:13px;color:var(--text3)">Nessun utente ancora.</div>';return;}
+  const isTeamMode=challengeConfig?.mode!=='individual';
   c.innerHTML=filtered.map(u=>`
     <div class="user-row">
       <div class="avatar" style="width:30px;height:30px;font-size:10px;flex-shrink:0">${getInitials(u.name)}</div>
@@ -2035,10 +2716,10 @@ function renderAdminUsers(){
         <div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.name}</div>
         <div style="font-size:11px;color:var(--text3)">${u.weightStart}kg→${u.weightCurrent}kg · ${calcLoss(u).toFixed(1)}% · ${u.bonusPoints||0}pt</div>
       </div>
-      <select style="font-size:11px;padding:4px;border:1px solid var(--border2);border-radius:6px;background:white;max-width:90px" onchange="assignTeam('${u.id}',this.value)">
+      ${isTeamMode?`<select style="font-size:11px;padding:4px;border:1px solid var(--border2);border-radius:6px;background:white;max-width:90px" onchange="assignTeam('${u.id}',this.value)">
         <option value="">—squadra—</option>
-        ${teams.map(t=>`<option value="${t.name}" ${u.team===t.name?'selected':''}>${t.name}</option>`).join('')}
-      </select>
+        ${teams.map(t=>`<option value="${esc(t.name)}" ${u.team===t.name?'selected':''}>${esc(t.name)}</option>`).join('')}
+      </select>`:''}
       <select style="font-size:11px;padding:4px;border:1px solid var(--border2);border-radius:6px;background:white;margin-left:4px" onchange="assignRole('${u.id}',this.value)">
         <option value="member" ${!u.role||u.role==='member'?'selected':''}>Membro</option>
         <option value="captain" ${u.role==='captain'?'selected':''}>Capitano</option>
@@ -2210,7 +2891,7 @@ window.showEndChallenge=function(){
   document.getElementById('endWinner').textContent='🎉 '+winner.name;
   document.getElementById('endWinnerScore').textContent='-'+calcLoss(winner).toFixed(2)+'% perso · '+winner.bonusPoints+' punti bonus';
   const prize=challengeConfig?.prize;
-  document.getElementById('endPrize').innerHTML=prize?.title?`🎁 <strong>${prize.title}</strong><br><span style="font-size:13px">${prize.desc||''}</span>`:'';
+  document.getElementById('endPrize').innerHTML=prize?.title?`🎁 <strong>${esc(prize.title)}</strong><br><span style="font-size:13px">${esc(prize.desc||'')}</span>`:'';
   document.getElementById('endOverlay').classList.add('show');
   launchConfetti(40);
 };
@@ -2237,6 +2918,11 @@ function renderDayDots(){
   }).join('');
 }
 
+// Chiave attività: separata per challenge, così challenge diverse non si sovrappongono
+function actKey(dateStr){
+  return 'c11_act_'+(activeChallengeId||'none')+'_'+dateStr;
+}
+
 function getTodayKey(){return new Date().toISOString().split('T')[0];}
 
 function calcStreak(){
@@ -2244,7 +2930,7 @@ function calcStreak(){
   for(let i=0;i<30;i++){
     const d=new Date(today);d.setDate(d.getDate()-i);
     const k=d.toISOString().split('T')[0];
-    if(JSON.parse(localStorage.getItem('c11_act_'+k)||'[]').length>0)s++;else break;
+    if(JSON.parse(localStorage.getItem(actKey(k))||'[]').length>0)s++;else break;
   }
   return s;
 }
@@ -2253,6 +2939,14 @@ function formatTime(ts){
   const d=new Date(ts),today=new Date();
   if(d.toDateString()===today.toDateString())return d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
   return d.toLocaleDateString('it-IT',{day:'numeric',month:'short'});
+}
+
+// Protegge da inserimento di HTML/script nei campi liberi
+function esc(str){
+  if(str==null)return '';
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function getInitials(name){
