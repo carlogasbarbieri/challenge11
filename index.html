@@ -1414,6 +1414,10 @@ window.createChallenge=async function(){
     challenges.push({id:activeChallengeId,...ch});
   }
   localStorage.setItem('c11_activeChallenge',activeChallengeId);
+  // Sincronizza _pendingMode con la modalità appena scelta: altrimenti un salvataggio
+  // successivo (es. del premio) userebbe il valore vecchio e la sovrascriverebbe.
+  _pendingMode=ch.mode;
+  challengeConfig={...ch,id:activeChallengeId};
   document.getElementById('newChallengeName').value='';
   _newChallengeMode='team';
   document.getElementById('newModeTeamBtn').className='btn btn-primary btn-sm';
