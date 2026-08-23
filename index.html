@@ -1686,13 +1686,25 @@ function loadData(){
     teams=activeChallengeId?teams.filter(t=>t.challengeId===activeChallengeId):[];
     if(isAdmin())renderAdminTeams();
   });
-  window._onValue(window._ref(window._db,'tips'),snap=>{
+  // Tips/regole: caricamento esplicito (non un listener automatico), perché solo l'admin
+  // le scrive e un ascolto in tempo reale può creare conflitti tra letture ravvicinate.
+  loadTips();
+}
+
+// Ricarica consigli/regole/video dal database in modo esplicito e sicuro
+async function loadTips(){
+  if(!window._firebaseReady){renderTips();updateTipsBadge();return;}
+  try{
+    const snap=await window._get(window._ref(window._db,'tips'));
     tips=[];
     snap.forEach(c=>tips.push({id:c.key,...c.val()}));
     tips=activeChallengeId?tips.filter(t=>t.challengeId===activeChallengeId):[];
     renderTips();
     updateTipsBadge();
-  });
+    if(isAdmin())renderAdminTips();
+  }catch(e){
+    console.warn('Errore caricamento tips',e);
+  }
 }
 
 function loadDemoData(){
@@ -2588,17 +2600,15 @@ window.addTip=async function(){
 
   if(window._firebaseReady){
     try{
-      const ref=await window._push(window._ref(window._db,'tips'),tip);
-      // Aggiorna subito la vista locale, senza aspettare il listener (che potrebbe avere latenza)
-      tips.push({id:ref.key,...tip});
+      await window._push(window._ref(window._db,'tips'),tip);
+      // Ricarica l'intera lista dal server: più lento di un aggiornamento locale,
+      // ma elimina il rischio di perdere elementi per conflitti di timing.
+      await loadTips();
       document.getElementById('newTipText').value='';
       document.getElementById('newTipVideo').value='';
       document.getElementById('newTipType').value='tips'; // torna al default, per evitare che il tipo scelto in precedenza resti "appiccicato"
       const cc=document.getElementById('tipCharCount'); if(cc)cc.textContent='0 / 4000 caratteri';
-      showToast('Aggiunto come "'+({tips:'Consiglio',rules:'Regola',warning:'Avvertenza',video:'Video'}[type]||type)+'" ✓');
-      renderTips();
-      renderAdminTips();
-      updateTipsBadge();
+      showToast('Aggiunto come "'+({tips:'Consiglio',rules:'Regola',warning:'Avvertenza',video:'Video'}[type]||type)+'" ✓ ('+tips.filter(t=>t.challengeId===activeChallengeId).length+' totali)');
     }catch(e){
       console.warn('Errore salvataggio tip',e);
       showToast('⚠️ Non salvato — controlla la connessione e riprova');
@@ -2639,8 +2649,7 @@ window.deleteTip=async function(id){
   if(window._firebaseReady){
     try{
       await window._remove(window._ref(window._db,'tips/'+id));
-      tips=tips.filter(t=>t.id!==id);
-      renderTips();renderAdminTips();updateTipsBadge();
+      await loadTips();
     }catch(e){
       console.warn('Errore eliminazione tip',e);
       showToast('⚠️ Eliminazione fallita — riprova');
@@ -2662,13 +2671,15 @@ window.cleanupFragmentedTips=async function(){
       for(const t of toDelete){
         await window._remove(window._ref(window._db,'tips/'+t.id));
       }
+      await loadTips();
     }catch(e){
       console.warn('Errore durante pulizia',e);
       showToast('⚠️ Alcuni elementi potrebbero non essere stati eliminati');
     }
+  } else {
+    tips=tips.filter(t=>t.challengeId!==activeChallengeId);
+    renderTips();renderAdminTips();updateTipsBadge();
   }
-  tips=tips.filter(t=>t.challengeId!==activeChallengeId);
-  renderTips();renderAdminTips();updateTipsBadge();
   showToast('Ripulito! Ora puoi reinserire il testo in un\'unica voce (fino a 4000 caratteri)');
 };
 
