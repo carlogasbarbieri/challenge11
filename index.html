@@ -967,10 +967,26 @@ textarea.form-input{resize:vertical;min-height:72px}
       <button class="btn" style="background:none;color:var(--red);font-size:12px;margin-top:8px" onclick="cleanupFragmentedTips()">🗑️ Elimina tutti i consigli/regole di questa challenge (per ricominciare puliti)</button>
     </div>
 
+    <div class="card" style="border-color:var(--green);border-width:2px;background:var(--green-light)">
+      <div class="card-title" style="color:var(--green-dark)">💾 Salva tutto adesso</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.6">
+        Salva subito la configurazione (codice, durata, data, premio) e, se stai scrivendo un consiglio o una regola non ancora confermato, lo aggiunge anche quello. Usalo come rete di sicurezza prima di uscire.
+      </div>
+      <button class="btn btn-primary" onclick="saveAllNow()">💾 Salva tutto</button>
+    </div>
+
     <div class="card">
       <div class="card-title">Fine Challenge</div>
       <button class="btn btn-gold" onclick="showEndChallenge()">🏆 Mostra podio finale</button>
       <button class="btn btn-outline" style="margin-top:10px" onclick="exportChallengeSummary()">📄 Scarica riepilogo (nomi, pesi, punti)</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔍 Registro eventi</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.6">
+        Traccia ogni salvataggio, selezione challenge e lettura dei consigli/regole. Utile per capire cosa è successo se qualcosa sembra sparire.
+      </div>
+      <button class="btn btn-outline" onclick="showEventLog()">📋 Apri registro eventi</button>
     </div>
 
     <div class="card" style="border-color:rgba(231,76,60,0.3)">
@@ -980,6 +996,18 @@ textarea.form-input{resize:vertical;min-height:72px}
         <strong>Consiglio:</strong> scarica prima il riepilogo qui sopra.
       </div>
       <button class="btn btn-danger" onclick="deleteChallengeStep1()">🗑️ Elimina questa challenge</button>
+    </div>
+  </div>
+
+  <!-- EVENT LOG PANEL -->
+  <div id="eventLogPanel" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);align-items:flex-end;justify-content:center">
+    <div style="background:white;border-radius:24px 24px 0 0;width:100%;max-width:600px;max-height:80vh;display:flex;flex-direction:column;padding:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-weight:800;font-size:16px">🔍 Registro eventi</div>
+        <button onclick="hideEventLog()" style="border:none;background:none;font-size:24px;color:var(--text3);cursor:pointer">×</button>
+      </div>
+      <div id="eventLogContent" style="flex:1;overflow-y:auto;font-size:12px;font-family:monospace;color:var(--text2);margin-bottom:12px"></div>
+      <button class="btn" style="background:var(--surface2);color:var(--text2)" onclick="clearEventLog()">Svuota registro</button>
     </div>
   </div>
 
@@ -1173,6 +1201,7 @@ window.initApp = function(){
 
 function bootApp(){
   createParticles();
+  logEvent(`bootApp: utente="${currentUser?.name||'nessuno'}" (${currentUser?.role||'-'}), challenge=${activeChallengeId||'nessuna'}`);
   if(currentUser){ showMainApp(); loadData(); }
   else { document.getElementById('loginPage').style.display='flex'; }
 }
@@ -1254,10 +1283,14 @@ async function _doLogin(){
 
   const name=rawName;
   const ch=await findChallengeByCode(code);
-  if(!ch){showToast('Codice challenge non valido');return;}
+  if(!ch){
+    logEvent(`LOGIN FALLITO: codice="${code}" non trovato`);
+    showToast('Codice challenge non valido');return;
+  }
   activeChallengeId=ch.id;
   challengeConfig=ch;
   localStorage.setItem('c11_activeChallenge',activeChallengeId);
+  logEvent(`Login utente "${name}": codice="${code}" → trovata challenge "${ch.name}" (id=${ch.id})`);
 
   const uid='u_'+name.replace(/\s+/g,'').toLowerCase()+'_'+Date.now();
   currentUser={id:uid,name,weightStart:weight,weightCurrent:weight,
@@ -1389,9 +1422,12 @@ async function findChallengeByCode(code){
     return challengeConfig.code===code?{id:'demo',...challengeConfig}:null;
   }
   const snap=await window._get(window._ref(window._db,'challenges'));
-  let found=null;
-  snap.forEach(c=>{if(c.val().code===code)found={id:c.key,...c.val()};});
-  return found;
+  const matches=[];
+  snap.forEach(c=>{ if(c.val().code===code) matches.push({id:c.key,...c.val()}); });
+  if(matches.length>1){
+    logEvent(`⚠️ CODICE DUPLICATO: "${code}" trovato su ${matches.length} challenge diverse (${matches.map(m=>m.id).join(', ')}) — usata l'ultima creata`);
+  }
+  return matches.length ? matches[matches.length-1] : null;
 }
 
 let _newChallengeMode='team'; // modalità scelta per la nuova challenge in creazione
@@ -1475,6 +1511,27 @@ window.saveChallenge=async function(){
   } else {
     showToast('Salvato! ✓');
   }
+};
+
+// Pulsante "Salva tutto": rete di sicurezza finale — salva la configurazione
+// e, se c'è del testo scritto ma non ancora confermato con "Aggiungi", lo salva anche.
+window.saveAllNow=async function(){
+  let actions=[];
+
+  // 1. Salva sempre la configurazione (codice, durata, data, premio)
+  await saveChallenge();
+  actions.push('configurazione');
+
+  // 2. Se c'è testo scritto nel campo consiglio/regola non ancora aggiunto, lo salva
+  const pendingText=document.getElementById('newTipText')?.value.trim();
+  const pendingVideo=document.getElementById('newTipVideo')?.value.trim();
+  if(pendingText || pendingVideo){
+    await addTip();
+    actions.push('contenuto in sospeso');
+  }
+
+  logEvent(`saveAllNow: salvato ${actions.join(' + ')}`);
+  showToast('✅ Tutto salvato: '+actions.join(' e '));
 };
 
 function applyRankingMode(){
@@ -1581,9 +1638,11 @@ function renderAdminChallenges(){
 }
 
 window.selectChallenge=async function(id){
+  const prevId=activeChallengeId;
   activeChallengeId=id;
   localStorage.setItem('c11_activeChallenge',id);
   const active=challenges.find(c=>c.id===id);
+  logEvent(`selectChallenge: era ${prevId} → ora ${id} (nome: "${active?.name||'?'}")`);
   if(active){
     challengeConfig=active;
     document.getElementById('adminCode').value=active.code||'';
@@ -1678,6 +1737,40 @@ function sendNotif(title, body){
 
 // Ricarica i dati applicando i filtri della challenge attiva.
 // Serve quando activeChallengeId cambia ma i listener sono già registrati.
+// ============================================================
+// LOG EVENTI — traccia ogni operazione critica su tips/challenge
+// per capire con certezza cosa succede, senza dover aprire Firebase
+// ============================================================
+function logEvent(msg){
+  try{
+    const log=JSON.parse(localStorage.getItem('c11_eventLog')||'[]');
+    const time=new Date().toLocaleTimeString('it-IT');
+    log.push(`${time} — ${msg}`);
+    // Tieni solo gli ultimi 50 eventi
+    while(log.length>50) log.shift();
+    localStorage.setItem('c11_eventLog',JSON.stringify(log));
+  }catch(e){}
+}
+
+window.showEventLog=function(){
+  const log=JSON.parse(localStorage.getItem('c11_eventLog')||'[]');
+  const el=document.getElementById('eventLogContent');
+  if(!el)return;
+  el.innerHTML=log.length
+    ? log.slice().reverse().map(l=>`<div style="padding:4px 0;border-bottom:1px solid var(--border)">${esc(l)}</div>`).join('')
+    : '<div style="color:var(--text3)">Nessun evento registrato ancora.</div>';
+  document.getElementById('eventLogPanel').style.display='block';
+};
+
+window.hideEventLog=function(){
+  document.getElementById('eventLogPanel').style.display='none';
+};
+
+window.clearEventLog=function(){
+  localStorage.removeItem('c11_eventLog');
+  showEventLog();
+};
+
 async function refreshFilteredData(){
   if(!window._firebaseReady){loadDemoData();return;}
   try{
@@ -1699,6 +1792,7 @@ async function refreshFilteredData(){
 
     tips=[];tipsSnap.forEach(c=>tips.push({id:c.key,...c.val()}));
     tips=activeChallengeId?tips.filter(t=>t.challengeId===activeChallengeId):[];
+    logEvent(`refreshFilteredData: challenge=${activeChallengeId} → trovate ${tips.length} tips`);
 
     renderFeed();renderRanking();renderTips();updateProfile();updateTipsBadge();
     if(isAdmin()){renderAdminUsers();renderActivityMonitor();renderAdminTeams();renderAdminTips();}
@@ -2666,6 +2760,7 @@ window.addTip=async function(){
   if(window._firebaseReady){
     try{
       const ref=await window._push(window._ref(window._db,'tips'),tip);
+      logEvent(`addTip: salvato "${text.substring(0,25)}" (${type}) su challenge=${activeChallengeId}, key=${ref.key}`);
       // Uso direttamente i dati appena scritti (li conosco con certezza) invece di
       // rileggerli subito dal server: una rilettura immediata può arrivare prima che
       // il server abbia reso disponibile la scrittura, mostrando "0 totali" per errore.
@@ -2673,6 +2768,7 @@ window.addTip=async function(){
       renderTips();
       renderAdminTips();
       updateTipsBadge();
+      renderAdminChallenges(); // aggiorna il conteggio "contenuti" sulla card della challenge
       document.getElementById('newTipText').value='';
       document.getElementById('newTipVideo').value='';
       document.getElementById('newTipType').value='tips'; // torna al default, per evitare che il tipo scelto in precedenza resti "appiccicato"
@@ -2741,8 +2837,9 @@ window.deleteTip=async function(id){
   if(window._firebaseReady){
     try{
       await window._remove(window._ref(window._db,'tips/'+id));
+      logEvent(`deleteTip: eliminata tip id=${id} (challenge=${activeChallengeId})`);
       tips=tips.filter(t=>t.id!==id);
-      renderTips();renderAdminTips();updateTipsBadge();
+      renderTips();renderAdminTips();updateTipsBadge();renderAdminChallenges();
     }catch(e){
       console.warn('Errore eliminazione tip',e);
       showToast('⚠️ Eliminazione fallita — riprova');
@@ -2770,7 +2867,7 @@ window.cleanupFragmentedTips=async function(){
     }
   }
   tips=tips.filter(t=>t.challengeId!==activeChallengeId);
-  renderTips();renderAdminTips();updateTipsBadge();
+  renderTips();renderAdminTips();updateTipsBadge();renderAdminChallenges();
   showToast('Ripulito! Ora puoi reinserire il testo in un\'unica voce (fino a 4000 caratteri)');
 };
 
