@@ -801,6 +801,7 @@ textarea.form-input{resize:vertical;min-height:72px}
     </div>
     <div id="tipsList"></div>
     <div id="rulesList" style="display:none"></div>
+    <div id="tipsDiagnostic" style="margin-top:20px;padding:12px;background:var(--surface2);border-radius:10px;font-size:11px;color:var(--text3);font-family:monospace;word-break:break-all;display:none"></div>
   </div>
 
   <!-- PROFILO -->
@@ -945,6 +946,9 @@ textarea.form-input{resize:vertical;min-height:72px}
 
     <div class="card">
       <div class="card-title">Consigli e Regole</div>
+      <div style="font-size:11px;color:var(--text3);font-family:monospace;margin-bottom:10px;padding:8px;background:var(--surface2);border-radius:8px;word-break:break-all">
+        🔍 Stai scrivendo su: <strong id="adminTipsChallengeId">—</strong>
+      </div>
       <div id="adminTipsList" style="margin-bottom:10px"></div>
       <div class="form-group">
         <label class="form-label">Tipo</label>
@@ -2559,6 +2563,18 @@ function renderTips(){
 
   document.getElementById('tipsList').innerHTML=render(tipsList);
   document.getElementById('rulesList').innerHTML=render(rulesList);
+
+  // Pannello diagnostico: appare solo se non c'è nulla da mostrare,
+  // per capire subito se il problema è "nessun contenuto" o "challenge sbagliata"
+  const diag=document.getElementById('tipsDiagnostic');
+  if(diag){
+    if(!tips.length){
+      diag.style.display='block';
+      diag.innerHTML=`🔍 Diagnostica — Challenge attiva: ${activeChallengeId||'NESSUNA'}<br>Nome: ${esc(challengeConfig?.name||'—')} · Codice: ${esc(challengeConfig?.code||'—')}<br>Contenuti trovati per questa challenge: 0`;
+    } else {
+      diag.style.display='none';
+    }
+  }
 }
 
 window.switchTipsTab=function(tab,btn){
@@ -2629,6 +2645,8 @@ window.addTip=async function(){
 };
 
 function renderAdminTips(){
+  const idEl=document.getElementById('adminTipsChallengeId');
+  if(idEl) idEl.textContent=activeChallengeId||'⚠️ nessuna challenge selezionata';
   const c=document.getElementById('adminTipsList');
   const myTips=tips.filter(t=>t.challengeId===activeChallengeId);
   if(!myTips.length){c.innerHTML='<div style="font-size:13px;color:var(--text3)">Nessun contenuto ancora per questa challenge.</div>';return;}
