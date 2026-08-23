@@ -1799,7 +1799,9 @@ async function refreshFilteredData(){
       const sampleIds=rawTips.slice(0,3).map(t=>`"${t.challengeId}"(len:${(t.challengeId||'').length})`).join(', ');
       logEvent(`⚠️ refreshFilteredData MISMATCH: DB ha ${rawTips.length} tips totali, 0 corrispondono a activeChallengeId="${activeChallengeId}"(len:${activeChallengeId.length}). Esempi nel DB: ${sampleIds}`);
     } else {
-      logEvent(`refreshFilteredData: DB totale=${rawTips.length}, challenge=${activeChallengeId} → filtrate ${tips.length}`);
+      const byType={tips:0,rules:0,warning:0,video:0};
+      tips.forEach(t=>{ if(byType[t.type]!==undefined) byType[t.type]++; });
+      logEvent(`refreshFilteredData: DB totale=${rawTips.length}, filtrate=${tips.length} (consigli=${byType.tips}, regole=${byType.rules}, avvisi=${byType.warning}, video=${byType.video})`);
     }
 
     renderFeed();renderRanking();renderTips();updateProfile();updateTipsBadge();
@@ -1859,7 +1861,9 @@ async function loadTips(){
       const sampleIds=rawTips.slice(0,3).map(t=>`"${t.challengeId}"(len:${(t.challengeId||'').length})`).join(', ');
       logEvent(`⚠️ loadTips MISMATCH: il DB ha ${rawTips.length} tips totali, ma 0 corrispondono a activeChallengeId="${activeChallengeId}"(len:${activeChallengeId.length}). Esempi challengeId nel DB: ${sampleIds}`);
     } else {
-      logEvent(`loadTips: DB totale=${rawTips.length}, filtrate per challenge=${tips.length}`);
+      const byType={tips:0,rules:0,warning:0,video:0};
+      tips.forEach(t=>{ if(byType[t.type]!==undefined) byType[t.type]++; });
+      logEvent(`loadTips: DB totale=${rawTips.length}, filtrate=${tips.length} (consigli=${byType.tips}, regole=${byType.rules}, avvisi=${byType.warning}, video=${byType.video})`);
     }
     renderTips();
     updateTipsBadge();
@@ -3412,10 +3416,16 @@ function getInitials(name){
   return name.split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();
 }
 
+let _toastTimer=null;
 function showToast(msg){
   const t=document.getElementById('toast');
-  t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2800);
+  t.textContent=msg;
+  t.classList.add('show');
+  // Annulla sempre il timer precedente prima di impostarne uno nuovo:
+  // così se arrivano più messaggi ravvicinati, solo l'ultimo conta e
+  // il toast sparisce sempre esattamente 5 secondi dopo l'ultimo messaggio.
+  if(_toastTimer) clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(()=>{ t.classList.remove('show'); _toastTimer=null; },5000);
 }
 
 function launchConfetti(n=15){
