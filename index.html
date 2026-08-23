@@ -957,13 +957,15 @@ textarea.form-input{resize:vertical;min-height:72px}
       </div>
       <div class="form-group">
         <label class="form-label">Testo</label>
-        <textarea class="form-input" id="newTipText" placeholder="Scrivi il consiglio o la regola..." rows="3" maxlength="500"></textarea>
+        <textarea class="form-input" id="newTipText" placeholder="Scrivi il consiglio o la regola..." rows="6" maxlength="4000"></textarea>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px" id="tipCharCount">0 / 4000 caratteri</div>
       </div>
       <div class="form-group">
         <label class="form-label">Link video YouTube (opzionale)</label>
         <input class="form-input" id="newTipVideo" placeholder="Es: https://youtube.com/watch?v=...">
       </div>
       <button class="btn btn-primary" onclick="addTip()">Aggiungi</button>
+      <button class="btn" style="background:none;color:var(--red);font-size:12px;margin-top:8px" onclick="cleanupFragmentedTips()">🗑️ Elimina tutti i consigli/regole di questa challenge (per ricominciare puliti)</button>
     </div>
 
     <div class="card">
@@ -2563,6 +2565,16 @@ function updateTipsBadge(){
 }
 
 // ADMIN TIPS
+document.addEventListener('DOMContentLoaded',()=>{
+  const tipTextEl=document.getElementById('newTipText');
+  if(tipTextEl){
+    tipTextEl.addEventListener('input',()=>{
+      const el=document.getElementById('tipCharCount');
+      if(el)el.textContent=tipTextEl.value.length+' / 4000 caratteri';
+    });
+  }
+});
+
 window.addTip=async function(){
   const type=document.getElementById('newTipType').value;
   const text=document.getElementById('newTipText').value.trim();
@@ -2582,6 +2594,7 @@ window.addTip=async function(){
       document.getElementById('newTipText').value='';
       document.getElementById('newTipVideo').value='';
       document.getElementById('newTipType').value='tips'; // torna al default, per evitare che il tipo scelto in precedenza resti "appiccicato"
+      const cc=document.getElementById('tipCharCount'); if(cc)cc.textContent='0 / 4000 caratteri';
       showToast('Aggiunto come "'+({tips:'Consiglio',rules:'Regola',warning:'Avvertenza',video:'Video'}[type]||type)+'" ✓');
       renderTips();
       renderAdminTips();
@@ -2635,6 +2648,28 @@ window.deleteTip=async function(id){
   } else {
     tips=tips.filter(t=>t.id!==id);renderTips();renderAdminTips();
   }
+};
+
+window.cleanupFragmentedTips=async function(){
+  if(!activeChallengeId){showToast('Nessuna challenge selezionata');return;}
+  const toDelete=tips.filter(t=>t.challengeId===activeChallengeId);
+  if(!toDelete.length){showToast('Non c\'è nulla da eliminare per questa challenge');return;}
+  const ok=confirm(`Stai per eliminare TUTTI i ${toDelete.length} consigli/regole/video di questa challenge, per poterli reinserire puliti (utile se sono rimasti spezzati in tanti pezzi). Continuare?`);
+  if(!ok)return;
+  showToast('Eliminazione in corso...');
+  if(window._firebaseReady){
+    try{
+      for(const t of toDelete){
+        await window._remove(window._ref(window._db,'tips/'+t.id));
+      }
+    }catch(e){
+      console.warn('Errore durante pulizia',e);
+      showToast('⚠️ Alcuni elementi potrebbero non essere stati eliminati');
+    }
+  }
+  tips=tips.filter(t=>t.challengeId!==activeChallengeId);
+  renderTips();renderAdminTips();updateTipsBadge();
+  showToast('Ripulito! Ora puoi reinserire il testo in un\'unica voce (fino a 4000 caratteri)');
 };
 
 // ============================================================
