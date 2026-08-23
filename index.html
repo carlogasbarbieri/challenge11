@@ -2630,6 +2630,26 @@ window.addTip=async function(){
       const cc=document.getElementById('tipCharCount'); if(cc)cc.textContent='0 / 4000 caratteri';
       const totale=tips.filter(t=>t.challengeId===activeChallengeId).length;
       showToast('Aggiunto come "'+({tips:'Consiglio',rules:'Regola',warning:'Avvertenza',video:'Video'}[type]||type)+'" ✓ ('+totale+' total'+(totale===1?'e':'i')+')');
+
+      // Verifica di conferma: dopo 2.5 secondi controlla che il dato sia REALMENTE
+      // arrivato sul server (non solo confermato localmente sul dispositivo).
+      // Su connessioni instabili la scrittura può "sembrare" riuscita senza
+      // depositarsi mai davvero — questo controllo lo intercetta subito.
+      setTimeout(async ()=>{
+        try{
+          const checkSnap=await window._get(window._ref(window._db,'tips/'+ref.key));
+          if(!checkSnap.exists()){
+            showToast('⚠️ ATTENZIONE: "'+text.substring(0,30)+'..." non risulta salvato sul server. Verifica la connessione e riprova.');
+            const diag=document.getElementById('tipsDiagnostic');
+            if(diag){
+              diag.style.display='block';
+              diag.innerHTML=`⚠️ Scrittura non confermata dal server per l'elemento appena aggiunto (id: ${ref.key}). Possibile problema di rete: riprova con una connessione più stabile.`;
+            }
+          }
+        }catch(err){
+          console.warn('Errore verifica conferma server',err);
+        }
+      },2500);
     }catch(e){
       console.warn('Errore salvataggio tip',e);
       showToast('⚠️ Non salvato — controlla la connessione e riprova');
