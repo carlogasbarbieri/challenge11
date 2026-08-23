@@ -885,24 +885,16 @@ textarea.form-input{resize:vertical;min-height:72px}
     <div class="card" id="adminConfigCard">
       <div class="card-title">Configura challenge selezionata</div>
       <div class="form-group">
-        <label class="form-label">Modalità challenge</label>
-        <div style="display:flex;gap:8px">
-          <button id="modeTeamBtn" class="btn btn-primary btn-sm" style="flex:1" onclick="setChallengeMode('team')">👥 A squadre</button>
-          <button id="modeIndBtn" class="btn btn-outline btn-sm" style="flex:1" onclick="setChallengeMode('individual')">🏃 Individuale</button>
-        </div>
-        <div style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.5" id="modeExplain">Le persone vengono divise in squadre e competono anche come gruppo.</div>
-      </div>
-      <div class="form-group">
         <label class="form-label">Codice accesso partecipanti</label>
-        <input class="form-input" id="adminCode" placeholder="Es: MAGGIO25">
+        <input class="form-input" id="adminCode" placeholder="Es: MAGGIO25" onchange="saveChallenge()">
       </div>
       <div class="form-group">
         <label class="form-label">Durata (giorni)</label>
-        <input class="form-input" id="adminDuration" type="number" value="11" min="3" max="30">
+        <input class="form-input" id="adminDuration" type="number" value="11" min="3" max="30" onchange="saveChallenge()">
       </div>
       <div class="form-group">
         <label class="form-label">Data inizio</label>
-        <input class="form-input" id="adminStartDate" type="date">
+        <input class="form-input" id="adminStartDate" type="date" onchange="saveChallenge()">
       </div>
       <div class="form-group">
         <label class="form-label">Premio — titolo</label>
@@ -920,7 +912,8 @@ textarea.form-input{resize:vertical;min-height:72px}
         </div>
         <input type="file" id="prizePhotoInput" accept="image/*" style="display:none" onchange="handlePrizePhoto(this)">
       </div>
-      <button class="btn btn-primary" onclick="saveChallenge()">💾 Salva configurazione</button>
+      <button class="btn btn-primary" onclick="saveChallenge()">💾 Salva premio</button>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;text-align:center">Codice, durata e data si salvano da soli appena li modifichi.</div>
     </div>
 
     <div class="card" id="adminTeamsCard">
@@ -1431,28 +1424,12 @@ window.createChallenge=async function(){
 
 let _pendingMode='team'; // modalità corrente in memoria (sincronizzata con Firebase)
 
-window.setChallengeMode=async function(mode){
+// Sincronizza solo lo stato interno quando cambi/carichi una challenge —
+// la modalità non è più modificabile qui, si sceglie solo alla creazione.
+window.setChallengeMode=function(mode){
   _pendingMode=mode;
-  document.getElementById('modeTeamBtn').className='btn btn-sm '+(mode==='team'?'btn-primary':'btn-outline');
-  document.getElementById('modeIndBtn').className='btn btn-sm '+(mode==='individual'?'btn-primary':'btn-outline');
-  document.getElementById('modeExplain').textContent = mode==='team'
-    ? 'Le persone vengono divise in squadre e competono anche come gruppo.'
-    : 'Ognuno gareggia per sé stesso. Nessuna squadra, solo classifica individuale.';
-  document.getElementById('adminTeamsCard').style.display = mode==='team' ? 'block' : 'none';
-
-  // Salva SUBITO la modalità su Firebase: non aspettare il pulsante "Salva configurazione",
-  // che è un passaggio separato facile da dimenticare — la scelta va persa se non lo premi.
-  if(activeChallengeId && window._firebaseReady){
-    try{
-      await window._update(window._ref(window._db,'challenges/'+activeChallengeId),{mode});
-      challengeConfig.mode=mode;
-      applyRankingMode();
-      showToast(mode==='team'?'Modalità: a squadre ✓':'Modalità: individuale ✓');
-    }catch(e){
-      console.warn('Errore salvataggio modalità',e);
-      showToast('⚠️ Modalità non salvata — controlla la connessione');
-    }
-  }
+  const teamsCard=document.getElementById('adminTeamsCard');
+  if(teamsCard) teamsCard.style.display = mode==='team' ? 'block' : 'none';
 };
 
 window.saveChallenge=async function(){
@@ -1469,13 +1446,31 @@ window.saveChallenge=async function(){
     }
   };
   challengeConfig={...challengeConfig,...cfg};
-  if(window._firebaseReady){
-    await window._update(window._ref(window._db,'challenges/'+activeChallengeId),cfg);
-  }
-  showToast('Salvato! ✓');
   renderDayDots();
   renderPrize();
   applyRankingMode();
+  if(window._firebaseReady){
+    try{
+      await window._update(window._ref(window._db,'challenges/'+activeChallengeId),cfg);
+      showToast('Salvato! ✓ (durata: '+cfg.duration+' giorni)');
+      // Verifica di conferma: controlla dopo 2 secondi che il valore sia REALMENTE
+      // sul server, non solo confermato localmente sul dispositivo.
+      const savedId=activeChallengeId;
+      setTimeout(async ()=>{
+        try{
+          const checkSnap=await window._get(window._ref(window._db,'challenges/'+savedId+'/duration'));
+          if(checkSnap.val()!==cfg.duration){
+            showToast('⚠️ ATTENZIONE: la durata potrebbe non essersi salvata sul server. Riprova.');
+          }
+        }catch(err){ console.warn('Errore verifica conferma',err); }
+      },2000);
+    }catch(e){
+      console.warn('Errore salvataggio configurazione',e);
+      showToast('⚠️ Non salvato — controlla la connessione e riprova');
+    }
+  } else {
+    showToast('Salvato! ✓');
+  }
 };
 
 function applyRankingMode(){
