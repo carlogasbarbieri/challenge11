@@ -527,10 +527,10 @@ textarea.form-input{resize:vertical;min-height:72px}
 
 /* CHALLENGE PICKER — lista challenge nel pannello admin, ottimizzata per mobile */
 .challenge-pick-card{
-  display:flex;align-items:flex-start;gap:12px;
+  display:flex;flex-direction:column;
   background:var(--surface2);border:1.5px solid var(--border);
-  border-radius:12px;padding:14px;margin-bottom:8px;
-  cursor:pointer;transition:all 0.15s;position:relative;
+  border-radius:12px;padding:14px 14px 36px;margin-bottom:8px;
+  transition:all 0.15s;position:relative;
   min-height:44px; /* area di tap minima consigliata */
 }
 .challenge-pick-card:active{transform:scale(0.98)}
@@ -1512,23 +1512,45 @@ function renderAdminChallenges(){
     if(b.id===activeChallengeId)return 1;
     return (b.createdAt||0)-(a.createdAt||0);
   });
-  c.innerHTML=sorted.map(ch=>{
+  // Rileva nomi duplicati: se più challenge hanno lo stesso nome, è facile cliccare quella sbagliata
+  const nameCounts={};
+  sorted.forEach(ch=>{ const n=(ch.name||'').trim().toLowerCase(); nameCounts[n]=(nameCounts[n]||0)+1; });
+  const hasDupes=Object.values(nameCounts).some(n=>n>1);
+
+  let html='';
+  if(hasDupes){
+    html+=`<div style="background:#fdecea;border:1.5px solid rgba(231,76,60,0.4);border-radius:10px;padding:12px;margin-bottom:10px;font-size:12px;color:#a33;line-height:1.6">
+      ⚠️ <strong>Attenzione:</strong> hai più challenge con lo stesso nome. Controlla il codice e il numero di contenuti prima di selezionare, per non finire su quella sbagliata.
+    </div>`;
+  }
+
+  html+=sorted.map(ch=>{
     const isActive=activeChallengeId===ch.id;
     const partCount=users.filter(u=>u.challengeId===ch.id&&u.role!=='admin').length;
+    const tipsCount=tips.filter(t=>t.challengeId===ch.id).length; // conta solo quelle già caricate localmente
+    const nameKey=(ch.name||'').trim().toLowerCase();
+    const isDupeName=nameCounts[nameKey]>1;
     return `
-    <div class="challenge-pick-card${isActive?' active':''}" onclick="selectChallenge('${ch.id}')">
-      <div class="challenge-pick-radio">${isActive?'●':''}</div>
-      <div class="challenge-pick-body">
-        <div class="challenge-pick-name">${esc(ch.name)}</div>
-        <div class="challenge-pick-meta">
-          <span class="challenge-pick-code">${esc(ch.code)||'nessun codice'}</span>
-          <span class="challenge-pick-mode">${ch.mode==='individual'?'🏃 individuale':'👥 squadre'}</span>
-          <span class="challenge-pick-count">${partCount} partecipant${partCount===1?'e':'i'}</span>
+    <div class="challenge-pick-card${isActive?' active':''}" style="position:relative">
+      <div style="display:flex;flex:1;cursor:pointer" onclick="selectChallenge('${ch.id}')">
+        <div class="challenge-pick-radio">${isActive?'●':''}</div>
+        <div class="challenge-pick-body">
+          <div class="challenge-pick-name">${esc(ch.name)}${isDupeName?' <span style="color:var(--red);font-weight:800">⚠️ nome duplicato</span>':''}</div>
+          <div class="challenge-pick-meta">
+            <span class="challenge-pick-code">${esc(ch.code)||'nessun codice'}</span>
+            <span class="challenge-pick-mode">${ch.mode==='individual'?'🏃 individuale':'👥 squadre'}</span>
+            <span class="challenge-pick-count">${partCount} partecipant${partCount===1?'e':'i'}</span>
+            ${isActive?`<span class="challenge-pick-count" style="background:var(--green-light);color:var(--green-dark)">💡 ${tipsCount} contenuti</span>`:''}
+          </div>
+          <div style="font-size:10px;color:var(--text3);font-family:monospace;margin-top:4px">ID: ${ch.id}</div>
         </div>
       </div>
       ${isActive?'<div class="challenge-pick-badge">Attiva</div>':''}
+      <button onclick="event.stopPropagation();deleteChallengeStep1('${ch.id}')" style="position:absolute;bottom:8px;right:8px;background:none;border:none;color:var(--red);font-size:11px;font-weight:700;cursor:pointer;padding:4px 8px">🗑️ Elimina</button>
     </div>`;
   }).join('');
+
+  c.innerHTML=html;
 }
 
 window.selectChallenge=async function(id){
@@ -3064,27 +3086,28 @@ window.exportChallengeSummary=function(){
 // ============================================================
 // ELIMINAZIONE CHALLENGE — doppia conferma
 // ============================================================
-window.deleteChallengeStep1=function(){
-  if(!activeChallengeId){showToast('Nessuna challenge selezionata');return;}
-  const name=challengeConfig.name||'questa challenge';
-  const partCount=users.filter(u=>u.challengeId===activeChallengeId&&u.role!=='admin').length;
-  const ok=confirm(`⚠️ PRIMA CONFERMA\n\nStai per eliminare "${name}" con ${partCount} partecipanti.\n\nTutti i post, foto, squadre e la classifica andranno persi per sempre.\n\nVuoi continuare?`);
-  if(ok) deleteChallengeStep2();
+window.deleteChallengeStep1=function(chId){
+  const targetId=chId||activeChallengeId;
+  if(!targetId){showToast('Nessuna challenge selezionata');return;}
+  const ch=challenges.find(c=>c.id===targetId);
+  const name=ch?.name||'questa challenge';
+  const partCount=users.filter(u=>u.challengeId===targetId&&u.role!=='admin').length;
+  const ok=confirm(`⚠️ PRIMA CONFERMA\n\nStai per eliminare "${name}" (ID: ${targetId}) con ${partCount} partecipanti.\n\nTutti i post, foto, squadre, tips e la classifica andranno persi per sempre.\n\nVuoi continuare?`);
+  if(ok) deleteChallengeStep2(targetId, name);
 };
 
-function deleteChallengeStep2(){
-  const name=challengeConfig.name||'';
+function deleteChallengeStep2(targetId, name){
   const typed=prompt(`⚠️ SECONDA CONFERMA\n\nPer confermare definitivamente, scrivi il nome esatto della challenge:\n\n"${name}"`);
   if(typed===null)return;
   if(typed.trim()!==name.trim()){
     showToast('Nome non corrispondente — eliminazione annullata');
     return;
   }
-  executeDeleteChallenge();
+  executeDeleteChallenge(targetId);
 }
 
-async function executeDeleteChallenge(){
-  const chId=activeChallengeId;
+async function executeDeleteChallenge(chId){
+  const wasActive=(chId===activeChallengeId);
   showToast('Eliminazione in corso...');
   if(window._firebaseReady){
     try{
@@ -3105,16 +3128,25 @@ async function executeDeleteChallenge(){
       for(const p of postsToDelete){
         await window._remove(window._ref(window._db,'posts/'+p.id));
       }
+      // Elimina tips/regole/video collegati (potrebbero non essere nell'array locale se non è la challenge attiva)
+      const tipsSnap=await window._get(window._ref(window._db,'tips'));
+      const tipsToDelete=[];
+      tipsSnap.forEach(c=>{ if(c.val().challengeId===chId) tipsToDelete.push(c.key); });
+      for(const tId of tipsToDelete){
+        await window._remove(window._ref(window._db,'tips/'+tId));
+      }
     }catch(e){
       showToast('Errore durante l\'eliminazione');
       console.error(e);
       return;
     }
   }
-  // Pulisci stato locale
-  activeChallengeId=null;
-  challengeConfig={};
-  localStorage.removeItem('c11_activeChallenge');
+  challenges=challenges.filter(c=>c.id!==chId);
+  if(wasActive){
+    activeChallengeId=null;
+    challengeConfig={};
+    localStorage.removeItem('c11_activeChallenge');
+  }
   showToast('Challenge eliminata definitivamente ✓');
   setTimeout(()=>location.reload(),1500);
 }
