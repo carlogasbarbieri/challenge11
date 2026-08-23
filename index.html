@@ -987,6 +987,7 @@ textarea.form-input{resize:vertical;min-height:72px}
         Traccia ogni salvataggio, selezione challenge e lettura dei consigli/regole. Utile per capire cosa è successo se qualcosa sembra sparire.
       </div>
       <button class="btn btn-outline" onclick="showEventLog()">📋 Apri registro eventi</button>
+      <button class="btn btn-outline" style="margin-top:8px;color:var(--gold-dark);border-color:var(--gold)" onclick="cleanupOrphanTips()">🧹 Ripulisci consigli/regole orfani (di challenge già eliminate)</button>
     </div>
 
     <div class="card" style="border-color:rgba(231,76,60,0.3)">
@@ -1610,7 +1611,9 @@ function renderAdminChallenges(){
 
   html+=sorted.map(ch=>{
     const isActive=activeChallengeId===ch.id;
-    const partCount=users.filter(u=>u.challengeId===ch.id&&u.role!=='admin').length;
+    // Conta chiunque abbia questo challengeId — incluso l'admin se sta partecipando lui stesso
+    // (viene comunque escluso dalla lista di gestione partecipanti sotto, quella resta solo per gli altri)
+    const partCount=users.filter(u=>u.challengeId===ch.id).length;
     const tipsCount=tips.filter(t=>t.challengeId===ch.id).length; // conta solo quelle già caricate localmente
     const nameKey=(ch.name||'').trim().toLowerCase();
     const isDupeName=nameCounts[nameKey]>1;
@@ -2882,6 +2885,43 @@ window.cleanupFragmentedTips=async function(){
   tips=tips.filter(t=>t.challengeId!==activeChallengeId);
   renderTips();renderAdminTips();updateTipsBadge();renderAdminChallenges();
   showToast('Ripulito! Ora puoi reinserire il testo in un\'unica voce (fino a 4000 caratteri)');
+};
+
+// Trova ed elimina consigli/regole/video il cui challengeId non corrisponde
+// a NESSUNA challenge esistente — residui di challenge eliminate in passato
+// (con versioni vecchie del codice che non pulivano i tips collegati).
+window.cleanupOrphanTips=async function(){
+  if(!window._firebaseReady){showToast('Funzione disponibile solo online');return;}
+  showToast('Ricerca residui orfani...');
+  try{
+    const [tipsSnap,challengesSnap]=await Promise.all([
+      window._get(window._ref(window._db,'tips')),
+      window._get(window._ref(window._db,'challenges'))
+    ]);
+    const validIds=new Set();
+    challengesSnap.forEach(c=>validIds.add(c.key));
+    const orphans=[];
+    tipsSnap.forEach(c=>{
+      const cid=c.val().challengeId;
+      if(!validIds.has(cid)) orphans.push({id:c.key,text:c.val().text||'(video)'});
+    });
+    if(!orphans.length){
+      showToast('✅ Nessun residuo orfano trovato, tutto pulito');
+      return;
+    }
+    const preview=orphans.slice(0,5).map(o=>'• '+(o.text||'').substring(0,40)).join('\n');
+    const ok=confirm(`Trovati ${orphans.length} consigli/regole orfani (appartenenti a challenge già eliminate):\n\n${preview}${orphans.length>5?'\n...e altri '+(orphans.length-5):''}\n\nEliminarli definitivamente?`);
+    if(!ok)return;
+    for(const o of orphans){
+      await window._remove(window._ref(window._db,'tips/'+o.id));
+    }
+    logEvent(`cleanupOrphanTips: eliminati ${orphans.length} residui orfani`);
+    showToast(`✅ Eliminati ${orphans.length} residui orfani`);
+    await loadTips();
+  }catch(e){
+    console.warn('Errore pulizia orfani',e);
+    showToast('⚠️ Errore durante la ricerca — riprova');
+  }
 };
 
 // ============================================================
