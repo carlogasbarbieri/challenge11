@@ -1790,9 +1790,14 @@ async function refreshFilteredData(){
     teams=[];teamsSnap.forEach(c=>teams.push({id:c.key,...c.val()}));
     teams=activeChallengeId?teams.filter(t=>t.challengeId===activeChallengeId):[];
 
-    tips=[];tipsSnap.forEach(c=>tips.push({id:c.key,...c.val()}));
-    tips=activeChallengeId?tips.filter(t=>t.challengeId===activeChallengeId):[];
-    logEvent(`refreshFilteredData: challenge=${activeChallengeId} → trovate ${tips.length} tips`);
+    const rawTips=[];tipsSnap.forEach(c=>rawTips.push({id:c.key,...c.val()}));
+    tips=activeChallengeId?rawTips.filter(t=>t.challengeId===activeChallengeId):[];
+    if(rawTips.length>0 && tips.length===0 && activeChallengeId){
+      const sampleIds=rawTips.slice(0,3).map(t=>`"${t.challengeId}"(len:${(t.challengeId||'').length})`).join(', ');
+      logEvent(`⚠️ refreshFilteredData MISMATCH: DB ha ${rawTips.length} tips totali, 0 corrispondono a activeChallengeId="${activeChallengeId}"(len:${activeChallengeId.length}). Esempi nel DB: ${sampleIds}`);
+    } else {
+      logEvent(`refreshFilteredData: DB totale=${rawTips.length}, challenge=${activeChallengeId} → filtrate ${tips.length}`);
+    }
 
     renderFeed();renderRanking();renderTips();updateProfile();updateTipsBadge();
     if(isAdmin()){renderAdminUsers();renderActivityMonitor();renderAdminTeams();renderAdminTips();}
@@ -1843,14 +1848,22 @@ async function loadTips(){
   if(!window._firebaseReady){renderTips();updateTipsBadge();return;}
   try{
     const snap=await window._get(window._ref(window._db,'tips'));
-    tips=[];
-    snap.forEach(c=>tips.push({id:c.key,...c.val()}));
-    tips=activeChallengeId?tips.filter(t=>t.challengeId===activeChallengeId):[];
+    const rawTips=[];
+    snap.forEach(c=>rawTips.push({id:c.key,...c.val()}));
+    tips=activeChallengeId?rawTips.filter(t=>t.challengeId===activeChallengeId):[];
+    // Log dettagliato: distingue "il DB non ha nulla" da "il DB ha dati ma il filtro non li trova"
+    if(rawTips.length>0 && tips.length===0 && activeChallengeId){
+      const sampleIds=rawTips.slice(0,3).map(t=>`"${t.challengeId}"(len:${(t.challengeId||'').length})`).join(', ');
+      logEvent(`⚠️ loadTips MISMATCH: il DB ha ${rawTips.length} tips totali, ma 0 corrispondono a activeChallengeId="${activeChallengeId}"(len:${activeChallengeId.length}). Esempi challengeId nel DB: ${sampleIds}`);
+    } else {
+      logEvent(`loadTips: DB totale=${rawTips.length}, filtrate per challenge=${tips.length}`);
+    }
     renderTips();
     updateTipsBadge();
     if(isAdmin())renderAdminTips();
   }catch(e){
     console.warn('Errore caricamento tips',e);
+    logEvent(`⚠️ loadTips ERRORE: ${e.message||e}`);
   }
 }
 
