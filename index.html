@@ -874,10 +874,12 @@ textarea.form-input{resize:vertical;min-height:72px}
     <div class="card">
       <div class="card-title">Challenge attiva / nuova</div>
       <div id="challengeList" style="margin-bottom:12px"></div>
+      <input class="form-input" id="newChallengeName" placeholder="Nome (es: Maggio 2025)" style="width:100%;margin-bottom:8px">
       <div style="display:flex;gap:8px;margin-bottom:12px">
-        <input class="form-input" id="newChallengeName" placeholder="Nome (es: Maggio 2025)" style="flex:1">
-        <button class="btn btn-primary btn-sm" onclick="createChallenge()">Crea</button>
+        <button id="newModeTeamBtn" class="btn btn-primary btn-sm" style="flex:1" onclick="setNewChallengeMode('team')">👥 A squadre</button>
+        <button id="newModeIndBtn" class="btn btn-outline btn-sm" style="flex:1" onclick="setNewChallengeMode('individual')">🏃 Individuale</button>
       </div>
+      <button class="btn btn-primary" onclick="createChallenge()">Crea</button>
     </div>
 
     <div class="card" id="adminConfigCard">
@@ -1399,10 +1401,18 @@ async function findChallengeByCode(code){
   return found;
 }
 
+let _newChallengeMode='team'; // modalità scelta per la nuova challenge in creazione
+
+window.setNewChallengeMode=function(mode){
+  _newChallengeMode=mode;
+  document.getElementById('newModeTeamBtn').className='btn btn-sm '+(mode==='team'?'btn-primary':'btn-outline');
+  document.getElementById('newModeIndBtn').className='btn btn-sm '+(mode==='individual'?'btn-primary':'btn-outline');
+};
+
 window.createChallenge=async function(){
   const name=document.getElementById('newChallengeName').value.trim();
   if(!name){showToast('Inserisci un nome');return;}
-  const ch={name,mode:'team',code:'',duration:11,startDate:'',prize:{title:'',desc:'',photoUrl:''},createdAt:Date.now(),tips:[],rules:[]};
+  const ch={name,mode:_newChallengeMode,code:'',duration:11,startDate:'',prize:{title:'',desc:'',photoUrl:''},createdAt:Date.now(),tips:[],rules:[]};
   if(window._firebaseReady){
     const r=await window._push(window._ref(window._db,'challenges'),ch);
     activeChallengeId=r.key;
@@ -1411,13 +1421,17 @@ window.createChallenge=async function(){
     challenges.push({id:activeChallengeId,...ch});
   }
   localStorage.setItem('c11_activeChallenge',activeChallengeId);
-  showToast('Challenge "'+name+'" creata!');
+  document.getElementById('newChallengeName').value='';
+  _newChallengeMode='team';
+  document.getElementById('newModeTeamBtn').className='btn btn-primary btn-sm';
+  document.getElementById('newModeIndBtn').className='btn btn-outline btn-sm';
+  showToast('Challenge "'+name+'" creata come '+(ch.mode==='individual'?'Individuale':'A squadre')+'! ✓');
   loadChallenges();
 };
 
-let _pendingMode='team'; // modalità selezionata ma non ancora salvata
+let _pendingMode='team'; // modalità corrente in memoria (sincronizzata con Firebase)
 
-window.setChallengeMode=function(mode){
+window.setChallengeMode=async function(mode){
   _pendingMode=mode;
   document.getElementById('modeTeamBtn').className='btn btn-sm '+(mode==='team'?'btn-primary':'btn-outline');
   document.getElementById('modeIndBtn').className='btn btn-sm '+(mode==='individual'?'btn-primary':'btn-outline');
@@ -1425,6 +1439,20 @@ window.setChallengeMode=function(mode){
     ? 'Le persone vengono divise in squadre e competono anche come gruppo.'
     : 'Ognuno gareggia per sé stesso. Nessuna squadra, solo classifica individuale.';
   document.getElementById('adminTeamsCard').style.display = mode==='team' ? 'block' : 'none';
+
+  // Salva SUBITO la modalità su Firebase: non aspettare il pulsante "Salva configurazione",
+  // che è un passaggio separato facile da dimenticare — la scelta va persa se non lo premi.
+  if(activeChallengeId && window._firebaseReady){
+    try{
+      await window._update(window._ref(window._db,'challenges/'+activeChallengeId),{mode});
+      challengeConfig.mode=mode;
+      applyRankingMode();
+      showToast(mode==='team'?'Modalità: a squadre ✓':'Modalità: individuale ✓');
+    }catch(e){
+      console.warn('Errore salvataggio modalità',e);
+      showToast('⚠️ Modalità non salvata — controlla la connessione');
+    }
+  }
 };
 
 window.saveChallenge=async function(){
