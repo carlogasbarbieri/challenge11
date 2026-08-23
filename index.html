@@ -2581,7 +2581,8 @@ window.addTip=async function(){
       tips.push({id:ref.key,...tip});
       document.getElementById('newTipText').value='';
       document.getElementById('newTipVideo').value='';
-      showToast('Aggiunto! ✓');
+      document.getElementById('newTipType').value='tips'; // torna al default, per evitare che il tipo scelto in precedenza resti "appiccicato"
+      showToast('Aggiunto come "'+({tips:'Consiglio',rules:'Regola',warning:'Avvertenza',video:'Video'}[type]||type)+'" ✓');
       renderTips();
       renderAdminTips();
       updateTipsBadge();
@@ -2603,11 +2604,21 @@ function renderAdminTips(){
   const c=document.getElementById('adminTipsList');
   const myTips=tips.filter(t=>t.challengeId===activeChallengeId);
   if(!myTips.length){c.innerHTML='<div style="font-size:13px;color:var(--text3)">Nessun contenuto ancora per questa challenge.</div>';return;}
-  c.innerHTML=myTips.map(t=>`
-    <div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
-      <div style="flex:1;font-size:13px;color:var(--text2)">[${esc(t.type)}] ${esc(t.text)}${t.videoUrl?' 🎬':''}</div>
-      <button style="border:none;background:none;color:var(--red);font-size:18px;cursor:pointer;padding:0 2px" onclick="deleteTip('${t.id}')">×</button>
-    </div>`).join('');
+  const badge={
+    tips:{label:'💡 Consiglio',color:'#2ECC71'},
+    rules:{label:'📋 Regola',color:'#F39C12'},
+    warning:{label:'⚠️ Avvertenza',color:'#E74C3C'},
+    video:{label:'🎬 Video',color:'#8E44AD'}
+  };
+  c.innerHTML=myTips.map(t=>{
+    const b=badge[t.type]||{label:t.type,color:'#999'};
+    return `
+    <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="flex-shrink:0;background:${b.color}22;color:${b.color};font-size:11px;font-weight:800;padding:3px 8px;border-radius:8px;white-space:nowrap">${b.label}</span>
+      <div style="flex:1;font-size:13px;color:var(--text2);word-break:break-word">${esc(t.text)}${t.videoUrl?' <span style="color:var(--text3)">(+ link video)</span>':''}</div>
+      <button style="border:none;background:none;color:var(--red);font-size:18px;cursor:pointer;padding:0 2px;flex-shrink:0" onclick="deleteTip('${t.id}')">×</button>
+    </div>`;
+  }).join('');
 }
 
 window.deleteTip=async function(id){
