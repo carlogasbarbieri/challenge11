@@ -939,40 +939,54 @@ textarea.form-input{resize:vertical;min-height:72px}
       </div>
     </div>
 
+    <div style="font-size:11px;color:var(--text3);font-family:monospace;margin-bottom:6px;padding:8px;background:var(--surface2);border-radius:8px;word-break:break-all">
+      🔍 Stai scrivendo su: <strong id="adminTipsChallengeId">—</strong>
+    </div>
+
     <div class="card">
-      <div class="card-title">Consigli e Regole</div>
-      <div style="font-size:11px;color:var(--text3);font-family:monospace;margin-bottom:10px;padding:8px;background:var(--surface2);border-radius:8px;word-break:break-all">
-        🔍 Stai scrivendo su: <strong id="adminTipsChallengeId">—</strong>
-      </div>
-      <div id="adminTipsList" style="margin-bottom:10px"></div>
+      <div class="card-title">💡 Consigli</div>
+      <div id="adminAdviceList" style="margin-bottom:10px"></div>
       <div class="form-group">
-        <label class="form-label">Tipo</label>
-        <select class="form-input" id="newTipType">
-          <option value="tips">Consiglio</option>
-          <option value="rules">Regola</option>
-          <option value="warning">Avvertenza</option>
-          <option value="video">Video</option>
-        </select>
+        <textarea class="form-input" id="newAdviceText" placeholder="Scrivi un consiglio..." rows="4" maxlength="4000"></textarea>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px" id="adviceCharCount">0 / 4000 caratteri</div>
+      </div>
+      <button class="btn btn-primary" onclick="addAdvice()">➕ Aggiungi consiglio</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 Regole</div>
+      <div id="adminRulesList" style="margin-bottom:10px"></div>
+      <div class="form-group">
+        <textarea class="form-input" id="newRuleText" placeholder="Scrivi una regola..." rows="4" maxlength="4000"></textarea>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px" id="ruleCharCount">0 / 4000 caratteri</div>
+      </div>
+      <button class="btn btn-primary" onclick="addRule()">➕ Aggiungi regola</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎬 Video</div>
+      <div id="adminVideosList" style="margin-bottom:10px"></div>
+      <div class="form-group">
+        <label class="form-label">Titolo</label>
+        <input class="form-input" id="newVideoTitle" placeholder="Es: Video di benvenuto" maxlength="200">
       </div>
       <div class="form-group">
-        <label class="form-label">Testo</label>
-        <textarea class="form-input" id="newTipText" placeholder="Scrivi il consiglio o la regola..." rows="6" maxlength="4000"></textarea>
-        <div style="font-size:11px;color:var(--text3);margin-top:4px" id="tipCharCount">0 / 4000 caratteri</div>
+        <label class="form-label">Link YouTube</label>
+        <input class="form-input" id="newVideoUrl" placeholder="Es: https://youtube.com/watch?v=...">
       </div>
-      <div class="form-group">
-        <label class="form-label">Link video YouTube (opzionale)</label>
-        <input class="form-input" id="newTipVideo" placeholder="Es: https://youtube.com/watch?v=...">
-      </div>
-      <button class="btn btn-primary" onclick="addTip()">Aggiungi</button>
-      <button class="btn" style="background:none;color:var(--red);font-size:12px;margin-top:8px" onclick="cleanupFragmentedTips()">🗑️ Elimina tutti i consigli/regole di questa challenge (per ricominciare puliti)</button>
+      <button class="btn btn-primary" onclick="addVideoTip()">➕ Aggiungi video</button>
+    </div>
+
+    <div class="card">
+      <button class="btn" style="background:none;color:var(--red);font-size:12px" onclick="cleanupFragmentedTips()">🗑️ Elimina tutti i consigli/regole/video di questa challenge (per ricominciare puliti)</button>
     </div>
 
     <div class="card" style="border-color:var(--green);border-width:2px;background:var(--green-light)">
       <div class="card-title" style="color:var(--green-dark)">💾 Salva tutto adesso</div>
       <div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.6">
-        Salva subito la configurazione (codice, durata, data, premio) e, se stai scrivendo un consiglio o una regola non ancora confermato, lo aggiunge anche quello. Usalo come rete di sicurezza prima di uscire.
+        Salva subito la configurazione (codice, durata, data, premio). Consigli, regole e video invece si salvano subito con il loro pulsante "+" dedicato.
       </div>
-      <button class="btn btn-primary" onclick="saveAllNow()">💾 Salva tutto</button>
+      <button class="btn btn-primary" onclick="saveAllNow()">💾 Salva configurazione</button>
     </div>
 
     <div class="card">
@@ -1186,23 +1200,40 @@ const MEAL_LABELS = {colazione:'🌅 Colazione',spuntino_m:'🍎 Spuntino',pranz
 let currentUser  = JSON.parse(localStorage.getItem('c11_user')||'null');
 let activeChallengeId = localStorage.getItem('c11_activeChallenge')||null;
 let challengeConfig = {};
-let posts=[], users=[], teams=[], tips=[], challenges=[];
+let posts=[], users=[], teams=[], advice=[], rules=[], videos=[], challenges=[];
 let currentActivityId=null, photoDataUrl=null, prizePhotoDataUrl=null;
 
 // ============================================================
 // SPLASH & INIT
 // ============================================================
+let _appStarted=false; // impedisce doppio avvio
+
 window.initApp = function(){
+  if(_appStarted) return;
+  _appStarted=true;
   setTimeout(()=>{
     const s=document.getElementById('splashScreen');
-    s.style.opacity='0';
-    setTimeout(()=>{s.style.display='none';bootApp();},600);
+    if(s){ s.style.opacity='0'; setTimeout(()=>{ s.style.display='none'; bootApp(); },600); }
+    else bootApp();
   },1400);
 };
 
+// RETE DI SICUREZZA: se il modulo Firebase non riesce a caricarsi dal CDN
+// (rete assente, CDN irraggiungibile, blocco del browser), l'intero blocco
+// <script type="module"> viene scartato e initApp() non verrebbe mai chiamato,
+// lasciando l'app bloccata sulla schermata di caricamento. Questo timer
+// garantisce che l'app parta comunque, in modalità offline.
+setTimeout(()=>{
+  if(!_appStarted){
+    console.warn('Firebase non caricato entro 6s — avvio in modalità offline');
+    if(window._firebaseReady===undefined) window._firebaseReady=false;
+    window.initApp();
+  }
+},6000);
+
 function bootApp(){
   createParticles();
-  logEvent(`bootApp: utente="${currentUser?.name||'nessuno'}" (${currentUser?.role||'-'}), challenge=${activeChallengeId||'nessuna'}`);
+  logEvent(`bootApp: utente="${currentUser?.name||'nessuno'}" (${currentUser?.role||'-'}), challenge=${activeChallengeId||'nessuna'}, firebase=${window._firebaseReady?'ok':'OFFLINE'}`);
   if(currentUser){ showMainApp(); loadData(); }
   else { document.getElementById('loginPage').style.display='flex'; }
 }
@@ -1257,13 +1288,12 @@ async function _doLogin(){
          weightStart:null,weightCurrent:null,team:null,challengeId:null,
          recoveryCode:generateRecoveryCode(),joinedAt:Date.now()};
     if(!currentUser.recoveryCode) currentUser.recoveryCode=generateRecoveryCode();
-    // Se l'admin partecipa a una challenge specifica, quella diventa attiva.
-    // Altrimenti mantieni la challenge che stava già gestendo (letta da localStorage
-    // all'avvio dello script) — gestire e partecipare sono due cose separate.
-    if(currentUser.challengeId){
-      activeChallengeId=currentUser.challengeId;
-      localStorage.setItem('c11_activeChallenge',activeChallengeId);
-    }
+    // IMPORTANTE: activeChallengeId (quale challenge l'admin sta GESTENDO) non deve
+    // MAI essere sovrascritto da currentUser.challengeId (a quale challenge l'admin
+    // PARTECIPA come utente) — sono due cose separate. Se le confondiamo, ogni logout/
+    // login riporta l'admin su una vecchia challenge di partecipazione dimenticata,
+    // facendo sembrare "sparito" tutto ciò che aveva scritto sulla challenge che
+    // stava davvero gestendo. activeChallengeId resta quello già in localStorage.
     localStorage.setItem('c11_user',JSON.stringify(currentUser));
     if(window._firebaseReady){
       try{ await window._set(window._ref(window._db,'users/'+uid),currentUser); }
@@ -1379,9 +1409,14 @@ window.doLoginExisting=async function(){
     snap.forEach(c=>{if((c.val().recoveryCode||'').toUpperCase()===clean)found={id:c.key,...c.val()};});
     if(found){
       currentUser=found;
-      activeChallengeId=found.challengeId||null;
+      // Imposta la challenge attiva SOLO se l'utente recuperato ne ha una di partecipazione.
+      // Se è vuota (tipico dell'admin che gestisce senza partecipare), non azzerare
+      // quella già in uso: gestire e partecipare restano due cose separate.
+      if(found.challengeId){
+        activeChallengeId=found.challengeId;
+        localStorage.setItem('c11_activeChallenge',activeChallengeId);
+      }
       localStorage.setItem('c11_user',JSON.stringify(currentUser));
-      if(activeChallengeId) localStorage.setItem('c11_activeChallenge',activeChallengeId);
       document.getElementById('loginPage').style.display='none';
       showMainApp();loadData();
       showToast('Bentornato/a '+found.name.split(' ')[0]+'! 👋');
@@ -1442,10 +1477,17 @@ window.setNewChallengeMode=function(mode){
 window.createChallenge=async function(){
   const name=document.getElementById('newChallengeName').value.trim();
   if(!name){showToast('Inserisci un nome');return;}
-  const ch={name,mode:_newChallengeMode,code:'',duration:11,startDate:'',prize:{title:'',desc:'',photoUrl:''},createdAt:Date.now(),tips:[],rules:[]};
+  const ch={name,mode:_newChallengeMode,code:'',duration:11,startDate:'',prize:{title:'',desc:'',photoUrl:''},createdAt:Date.now()};
   if(window._firebaseReady){
-    const r=await window._push(window._ref(window._db,'challenges'),ch);
-    activeChallengeId=r.key;
+    try{
+      const r=await window._push(window._ref(window._db,'challenges'),ch);
+      activeChallengeId=r.key;
+      logEvent(`createChallenge: creata "${name}" (${ch.mode}) id=${r.key}`);
+    }catch(e){
+      console.warn('Errore creazione challenge',e);
+      showToast('⚠️ Challenge non creata — controlla la connessione e riprova');
+      return;
+    }
   } else {
     activeChallengeId='ch_'+Date.now();
     challenges.push({id:activeChallengeId,...ch});
@@ -1514,25 +1556,13 @@ window.saveChallenge=async function(){
   }
 };
 
-// Pulsante "Salva tutto": rete di sicurezza finale — salva la configurazione
-// e, se c'è del testo scritto ma non ancora confermato con "Aggiungi", lo salva anche.
+// Pulsante "Salva tutto": salva la configurazione della challenge
+// (codice, durata, data, premio). Consigli/regole/video si salvano già da soli
+// con i loro pulsanti "+" dedicati, quindi qui basta la configurazione.
 window.saveAllNow=async function(){
-  let actions=[];
-
-  // 1. Salva sempre la configurazione (codice, durata, data, premio)
   await saveChallenge();
-  actions.push('configurazione');
-
-  // 2. Se c'è testo scritto nel campo consiglio/regola non ancora aggiunto, lo salva
-  const pendingText=document.getElementById('newTipText')?.value.trim();
-  const pendingVideo=document.getElementById('newTipVideo')?.value.trim();
-  if(pendingText || pendingVideo){
-    await addTip();
-    actions.push('contenuto in sospeso');
-  }
-
-  logEvent(`saveAllNow: salvato ${actions.join(' + ')}`);
-  showToast('✅ Tutto salvato: '+actions.join(' e '));
+  logEvent(`saveAllNow: salvato configurazione`);
+  showToast('✅ Configurazione salvata');
 };
 
 function applyRankingMode(){
@@ -1614,7 +1644,7 @@ function renderAdminChallenges(){
     // Conta chiunque abbia questo challengeId — incluso l'admin se sta partecipando lui stesso
     // (viene comunque escluso dalla lista di gestione partecipanti sotto, quella resta solo per gli altri)
     const partCount=users.filter(u=>u.challengeId===ch.id).length;
-    const tipsCount=tips.filter(t=>t.challengeId===ch.id).length; // conta solo quelle già caricate localmente
+    const tipsCount=[...advice,...rules,...videos].filter(t=>t.challengeId===ch.id).length;
     const nameKey=(ch.name||'').trim().toLowerCase();
     const isDupeName=nameCounts[nameKey]>1;
     return `
@@ -1777,11 +1807,13 @@ window.clearEventLog=function(){
 async function refreshFilteredData(){
   if(!window._firebaseReady){loadDemoData();return;}
   try{
-    const [postsSnap,usersSnap,teamsSnap,tipsSnap]=await Promise.all([
+    const [postsSnap,usersSnap,teamsSnap,adviceSnap,rulesSnap,videosSnap]=await Promise.all([
       window._get(window._ref(window._db,'posts')),
       window._get(window._ref(window._db,'users')),
       window._get(window._ref(window._db,'teams')),
-      window._get(window._ref(window._db,'tips'))
+      window._get(window._ref(window._db,'advice')),
+      window._get(window._ref(window._db,'rules')),
+      window._get(window._ref(window._db,'videos'))
     ]);
     posts=[];postsSnap.forEach(c=>posts.push({id:c.key,...c.val()}));
     posts=activeChallengeId?posts.filter(p=>p.challengeId===activeChallengeId):[];
@@ -1793,19 +1825,19 @@ async function refreshFilteredData(){
     teams=[];teamsSnap.forEach(c=>teams.push({id:c.key,...c.val()}));
     teams=activeChallengeId?teams.filter(t=>t.challengeId===activeChallengeId):[];
 
-    const rawTips=[];tipsSnap.forEach(c=>rawTips.push({id:c.key,...c.val()}));
-    tips=activeChallengeId?rawTips.filter(t=>t.challengeId===activeChallengeId):[];
-    if(rawTips.length>0 && tips.length===0 && activeChallengeId){
-      const sampleIds=rawTips.slice(0,3).map(t=>`"${t.challengeId}"(len:${(t.challengeId||'').length})`).join(', ');
-      logEvent(`⚠️ refreshFilteredData MISMATCH: DB ha ${rawTips.length} tips totali, 0 corrispondono a activeChallengeId="${activeChallengeId}"(len:${activeChallengeId.length}). Esempi nel DB: ${sampleIds}`);
-    } else {
-      const byType={tips:0,rules:0,warning:0,video:0};
-      tips.forEach(t=>{ if(byType[t.type]!==undefined) byType[t.type]++; });
-      logEvent(`refreshFilteredData: DB totale=${rawTips.length}, filtrate=${tips.length} (consigli=${byType.tips}, regole=${byType.rules}, avvisi=${byType.warning}, video=${byType.video})`);
-    }
+    const rawAdvice=[];adviceSnap.forEach(c=>rawAdvice.push({id:c.key,...c.val()}));
+    advice=activeChallengeId?rawAdvice.filter(t=>t.challengeId===activeChallengeId):[];
+
+    const rawRules=[];rulesSnap.forEach(c=>rawRules.push({id:c.key,...c.val()}));
+    rules=activeChallengeId?rawRules.filter(t=>t.challengeId===activeChallengeId):[];
+
+    const rawVideos=[];videosSnap.forEach(c=>rawVideos.push({id:c.key,...c.val()}));
+    videos=activeChallengeId?rawVideos.filter(t=>t.challengeId===activeChallengeId):[];
+
+    logEvent(`refreshFilteredData: consigli=${advice.length}/${rawAdvice.length}, regole=${rules.length}/${rawRules.length}, video=${videos.length}/${rawVideos.length}`);
 
     renderFeed();renderRanking();renderTips();updateProfile();updateTipsBadge();
-    if(isAdmin()){renderAdminUsers();renderActivityMonitor();renderAdminTeams();renderAdminTips();}
+    if(isAdmin()){renderAdminUsers();renderActivityMonitor();renderAdminTeams();renderAdminAdvice();renderAdminRules();renderAdminVideos();}
   }catch(e){console.warn('Errore refresh dati',e);}
 }
 
@@ -1843,34 +1875,37 @@ function loadData(){
     teams=activeChallengeId?teams.filter(t=>t.challengeId===activeChallengeId):[];
     if(isAdmin())renderAdminTeams();
   });
-  // Tips/regole: caricamento esplicito (non un listener automatico), perché solo l'admin
-  // le scrive e un ascolto in tempo reale può creare conflitti tra letture ravvicinate.
-  loadTips();
+  // Consigli/regole/video: caricamento esplicito (non un listener automatico), perché solo l'admin
+  // li scrive e un ascolto in tempo reale può creare conflitti tra letture ravvicinate.
+  loadContent();
 }
 
-// Ricarica consigli/regole/video dal database in modo esplicito e sicuro
-async function loadTips(){
+// Ricarica consigli, regole e video dai loro nodi separati su Firebase
+async function loadContent(){
   if(!window._firebaseReady){renderTips();updateTipsBadge();return;}
   try{
-    const snap=await window._get(window._ref(window._db,'tips'));
-    const rawTips=[];
-    snap.forEach(c=>rawTips.push({id:c.key,...c.val()}));
-    tips=activeChallengeId?rawTips.filter(t=>t.challengeId===activeChallengeId):[];
-    // Log dettagliato: distingue "il DB non ha nulla" da "il DB ha dati ma il filtro non li trova"
-    if(rawTips.length>0 && tips.length===0 && activeChallengeId){
-      const sampleIds=rawTips.slice(0,3).map(t=>`"${t.challengeId}"(len:${(t.challengeId||'').length})`).join(', ');
-      logEvent(`⚠️ loadTips MISMATCH: il DB ha ${rawTips.length} tips totali, ma 0 corrispondono a activeChallengeId="${activeChallengeId}"(len:${activeChallengeId.length}). Esempi challengeId nel DB: ${sampleIds}`);
-    } else {
-      const byType={tips:0,rules:0,warning:0,video:0};
-      tips.forEach(t=>{ if(byType[t.type]!==undefined) byType[t.type]++; });
-      logEvent(`loadTips: DB totale=${rawTips.length}, filtrate=${tips.length} (consigli=${byType.tips}, regole=${byType.rules}, avvisi=${byType.warning}, video=${byType.video})`);
-    }
+    const [adviceSnap,rulesSnap,videosSnap]=await Promise.all([
+      window._get(window._ref(window._db,'advice')),
+      window._get(window._ref(window._db,'rules')),
+      window._get(window._ref(window._db,'videos'))
+    ]);
+    const rawAdvice=[];adviceSnap.forEach(c=>rawAdvice.push({id:c.key,...c.val()}));
+    advice=activeChallengeId?rawAdvice.filter(t=>t.challengeId===activeChallengeId):[];
+
+    const rawRules=[];rulesSnap.forEach(c=>rawRules.push({id:c.key,...c.val()}));
+    rules=activeChallengeId?rawRules.filter(t=>t.challengeId===activeChallengeId):[];
+
+    const rawVideos=[];videosSnap.forEach(c=>rawVideos.push({id:c.key,...c.val()}));
+    videos=activeChallengeId?rawVideos.filter(t=>t.challengeId===activeChallengeId):[];
+
+    logEvent(`loadContent: consigli=${advice.length}/${rawAdvice.length}, regole=${rules.length}/${rawRules.length}, video=${videos.length}/${rawVideos.length}`);
+
     renderTips();
     updateTipsBadge();
-    if(isAdmin())renderAdminTips();
+    if(isAdmin()){renderAdminAdvice();renderAdminRules();renderAdminVideos();}
   }catch(e){
-    console.warn('Errore caricamento tips',e);
-    logEvent(`⚠️ loadTips ERRORE: ${e.message||e}`);
+    console.warn('Errore caricamento contenuti',e);
+    logEvent(`⚠️ loadContent ERRORE: ${e.message||e}`);
   }
 }
 
@@ -1887,16 +1922,18 @@ function loadDemoData(){
     {id:'p1',userId:'1',userName:'Marco Rossi',team:'Aquile',mealType:'colazione',desc:'Frullato Formula 1 Cookies and Cream + tè verde',timestamp:Date.now()-3600000,reactions:{strong:3,fire:5,heart:2},challengeId:'demo'},
     {id:'p2',userId:'2',userName:'Sara Bianchi',team:'Leoni',mealType:'pranzo',desc:'Insalata di pollo con verdure + frullato pomeridiano',timestamp:Date.now()-7200000,reactions:{strong:1,fire:2,heart:4},challengeId:'demo'},
   ];
-  tips=[
-    {id:'tip1',type:'tips',text:'Bevi almeno 2 litri d\'acqua al giorno. L\'idratazione è fondamentale per ottimizzare i risultati.',challengeId:'demo'},
-    {id:'tip2',type:'tips',text:'Prepara i pasti in anticipo la sera prima. Riduce le scelte impulsive e ti fa risparmiare tempo.',challengeId:'demo'},
-    {id:'tip3',type:'rules',text:'Il peso va rilevato ogni mattina, a stomaco vuoto, prima di fare colazione.',challengeId:'demo'},
-    {id:'tip4',type:'rules',text:'Ogni pasto va postato entro 30 minuti dal consumo per essere valido.',challengeId:'demo'},
-    {id:'tip5',type:'warning',text:'In caso di dubbi sulla propria salute, consulta sempre il medico prima di iniziare la challenge.',challengeId:'demo'},
+  advice=[
+    {id:'a1',text:'Bevi almeno 2 litri d\'acqua al giorno. L\'idratazione è fondamentale per ottimizzare i risultati.',challengeId:'demo'},
+    {id:'a2',text:'Prepara i pasti in anticipo la sera prima. Riduce le scelte impulsive e ti fa risparmiare tempo.',challengeId:'demo'},
   ];
+  rules=[
+    {id:'r1',text:'Il peso va rilevato ogni mattina, a stomaco vuoto, prima di fare colazione.',challengeId:'demo'},
+    {id:'r2',text:'Ogni pasto va postato entro 30 minuti dal consumo per essere valido.',challengeId:'demo'},
+  ];
+  videos=[];
   document.getElementById('headerDays').textContent=challengeConfig.duration;
   renderFeed();renderRanking();renderTips();updateProfile();renderDayDots();renderPrize();
-  if(isAdmin()){renderAdminUsers();renderActivityMonitor();renderAdminTeams();}
+  if(isAdmin()){renderAdminUsers();renderActivityMonitor();renderAdminTeams();renderAdminAdvice();renderAdminRules();renderAdminVideos();}
   updateTipsBadge();
 }
 
@@ -1937,7 +1974,7 @@ window.goToProfile=function(){
       document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
       document.getElementById('pageAdmin').classList.add('active');
       document.getElementById('fabBtn').style.display='none';
-      loadChallenges();renderAdminUsers();renderActivityMonitor();renderAdminTeams();renderAdminTips();return;
+      loadChallenges();renderAdminUsers();renderActivityMonitor();renderAdminTeams();renderAdminAdvice();renderAdminRules();renderAdminVideos();return;
     }
   }
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -2700,12 +2737,7 @@ function getYouTubeId(url){
 }
 
 function renderTips(){
-  const tipsList=tips.filter(t=>t.type==='tips'||t.type==='video');
-  const rulesList=tips.filter(t=>t.type==='rules'||t.type==='warning');
-  const typeClass={tips:'',rules:'rule',warning:'warning',video:''};
-  const typeLabel={tips:'💡 Consiglio',rules:'📋 Regola',warning:'⚠️ Attenzione',video:'🎬 Video'};
-
-  const renderCard=(t,i)=>{
+  const renderCard=(t,icon,label,extraClass)=>{
     const ytId=t.videoUrl?getYouTubeId(t.videoUrl):null;
     const videoHtml=ytId?`
       <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px;margin-top:10px">
@@ -2713,25 +2745,32 @@ function renderTips(){
           style="position:absolute;top:0;left:0;width:100%;height:100%;border-radius:8px"></iframe>
       </div>`:
       (t.videoUrl?`<a href="${t.videoUrl}" target="_blank" style="display:block;margin-top:8px;color:var(--green);font-size:13px;font-weight:700">▶ Guarda il video →</a>`:'');
-    return `<div class="tip-card ${typeClass[t.type]||''}" style="animation-delay:${i*0.06}s">
-      <div class="tip-category">${typeLabel[t.type]||'💡'}</div>
+    return `<div class="tip-card ${extraClass||''}">
+      <div class="tip-category">${icon} ${label}</div>
       ${t.text?`<div class="tip-text">${esc(t.text)}</div>`:''}
       ${videoHtml}
     </div>`;
   };
 
-  const render=(arr)=>arr.length
-    ?arr.map((t,i)=>renderCard(t,i)).join('')
-    :`<div class="empty-state" style="padding:30px 0"><div class="empty-icon">📭</div><div class="empty-text">Nessun contenuto ancora.</div></div>`;
+  const emptyState=`<div class="empty-state" style="padding:30px 0"><div class="empty-icon">📭</div><div class="empty-text">Nessun contenuto ancora.</div></div>`;
 
-  document.getElementById('tipsList').innerHTML=render(tipsList);
-  document.getElementById('rulesList').innerHTML=render(rulesList);
+  // Tab "Consigli" mostra consigli + video insieme
+  const adviceAndVideos=[
+    ...advice.map(t=>renderCard(t,'💡','Consiglio')),
+    ...videos.map(t=>renderCard(t,'🎬','Video'))
+  ];
+  document.getElementById('tipsList').innerHTML=adviceAndVideos.length?adviceAndVideos.join(''):emptyState;
 
-  // Pannello diagnostico: appare solo se non c'è nulla da mostrare,
-  // per capire subito se il problema è "nessun contenuto" o "challenge sbagliata"
+  // Tab "Regole" mostra solo le regole
+  document.getElementById('rulesList').innerHTML=rules.length
+    ?rules.map(t=>renderCard(t,'📋','Regola','rule')).join('')
+    :emptyState;
+
+  // Pannello diagnostico: appare solo se non c'è nulla da mostrare in nessuna delle tre categorie
   const diag=document.getElementById('tipsDiagnostic');
+  const totalCount=advice.length+rules.length+videos.length;
   if(diag){
-    if(!tips.length){
+    if(!totalCount){
       diag.style.display='block';
       diag.innerHTML=`🔍 Diagnostica — Challenge attiva: ${activeChallengeId||'NESSUNA'}<br>Nome: ${esc(challengeConfig?.name||'—')} · Codice: ${esc(challengeConfig?.code||'—')}<br>Contenuti trovati per questa challenge: 0`;
     } else {
@@ -2748,180 +2787,260 @@ window.switchTipsTab=function(tab,btn){
 };
 
 function updateTipsBadge(){
+  const total=advice.length+rules.length+videos.length;
   const seen=localStorage.getItem('c11_tipsSeen')||'0';
   const badge=document.getElementById('badgeTips');
-  if(tips.length>parseInt(seen)){badge.classList.add('show');}
+  if(total>parseInt(seen)){badge.classList.add('show');}
   else badge.classList.remove('show');
-  localStorage.setItem('c11_tipsSeen',tips.length.toString());
+  localStorage.setItem('c11_tipsSeen',total.toString());
 }
 
-// ADMIN TIPS
+// Contatori caratteri live per i campi di testo
 document.addEventListener('DOMContentLoaded',()=>{
-  const tipTextEl=document.getElementById('newTipText');
-  if(tipTextEl){
-    tipTextEl.addEventListener('input',()=>{
-      const el=document.getElementById('tipCharCount');
-      if(el)el.textContent=tipTextEl.value.length+' / 4000 caratteri';
+  const adviceEl=document.getElementById('newAdviceText');
+  if(adviceEl){
+    adviceEl.addEventListener('input',()=>{
+      const el=document.getElementById('adviceCharCount');
+      if(el)el.textContent=adviceEl.value.length+' / 4000 caratteri';
+    });
+  }
+  const ruleEl=document.getElementById('newRuleText');
+  if(ruleEl){
+    ruleEl.addEventListener('input',()=>{
+      const el=document.getElementById('ruleCharCount');
+      if(el)el.textContent=ruleEl.value.length+' / 4000 caratteri';
     });
   }
 });
 
-window.addTip=async function(){
-  const type=document.getElementById('newTipType').value;
-  const text=document.getElementById('newTipText').value.trim();
-  const videoUrl=document.getElementById('newTipVideo').value.trim();
-  if(!text&&!videoUrl){showToast('Scrivi il testo o inserisci un link video');return;}
-  if(!activeChallengeId){
-    showToast('⚠️ Nessuna challenge selezionata — seleziona prima una challenge in cima alla pagina');
-    return;
-  }
-  const tip={type,text,videoUrl:videoUrl||'',challengeId:activeChallengeId,createdAt:Date.now()};
+// Aggiorna la scritta diagnostica "Stai scrivendo su" in ogni sezione admin
+function updateContentDiagnostic(){
+  const el=document.getElementById('adminTipsChallengeId');
+  if(el) el.textContent=activeChallengeId||'⚠️ nessuna challenge selezionata';
+}
 
+window.addAdvice=async function(){
+  const text=document.getElementById('newAdviceText').value.trim();
+  if(!text){showToast('Scrivi il testo del consiglio');return;}
+  if(!activeChallengeId){showToast('⚠️ Nessuna challenge selezionata — selezionala in cima alla pagina');return;}
+  const item={text,challengeId:activeChallengeId,createdAt:Date.now()};
   if(window._firebaseReady){
     try{
-      const ref=await window._push(window._ref(window._db,'tips'),tip);
-      logEvent(`addTip: salvato "${text.substring(0,25)}" (${type}) su challenge=${activeChallengeId}, key=${ref.key}`);
-      // Uso direttamente i dati appena scritti (li conosco con certezza) invece di
-      // rileggerli subito dal server: una rilettura immediata può arrivare prima che
-      // il server abbia reso disponibile la scrittura, mostrando "0 totali" per errore.
-      tips.push({id:ref.key,...tip});
-      renderTips();
-      renderAdminTips();
-      updateTipsBadge();
-      renderAdminChallenges(); // aggiorna il conteggio "contenuti" sulla card della challenge
-      document.getElementById('newTipText').value='';
-      document.getElementById('newTipVideo').value='';
-      document.getElementById('newTipType').value='tips'; // torna al default, per evitare che il tipo scelto in precedenza resti "appiccicato"
-      const cc=document.getElementById('tipCharCount'); if(cc)cc.textContent='0 / 4000 caratteri';
-      const totale=tips.filter(t=>t.challengeId===activeChallengeId).length;
-      showToast('Aggiunto come "'+({tips:'Consiglio',rules:'Regola',warning:'Avvertenza',video:'Video'}[type]||type)+'" ✓ ('+totale+' total'+(totale===1?'e':'i')+')');
-
-      // Verifica di conferma: dopo 2.5 secondi controlla che il dato sia REALMENTE
-      // arrivato sul server (non solo confermato localmente sul dispositivo).
-      // Su connessioni instabili la scrittura può "sembrare" riuscita senza
-      // depositarsi mai davvero — questo controllo lo intercetta subito.
-      setTimeout(async ()=>{
-        try{
-          const checkSnap=await window._get(window._ref(window._db,'tips/'+ref.key));
-          if(!checkSnap.exists()){
-            showToast('⚠️ ATTENZIONE: "'+text.substring(0,30)+'..." non risulta salvato sul server. Verifica la connessione e riprova.');
-            const diag=document.getElementById('tipsDiagnostic');
-            if(diag){
-              diag.style.display='block';
-              diag.innerHTML=`⚠️ Scrittura non confermata dal server per l'elemento appena aggiunto (id: ${ref.key}). Possibile problema di rete: riprova con una connessione più stabile.`;
-            }
-          }
-        }catch(err){
-          console.warn('Errore verifica conferma server',err);
-        }
-      },2500);
+      const ref=await window._push(window._ref(window._db,'advice'),item);
+      logEvent(`addAdvice: salvato "${text.substring(0,25)}" su challenge=${activeChallengeId}, key=${ref.key}`);
+      advice.push({id:ref.key,...item});
+      renderTips();renderAdminAdvice();updateTipsBadge();renderAdminChallenges();
+      document.getElementById('newAdviceText').value='';
+      const cc=document.getElementById('adviceCharCount'); if(cc)cc.textContent='0 / 4000 caratteri';
+      showToast('Consiglio aggiunto ✓ ('+advice.length+' total'+(advice.length===1?'e':'i')+')');
     }catch(e){
-      console.warn('Errore salvataggio tip',e);
+      console.warn('Errore salvataggio consiglio',e);
       showToast('⚠️ Non salvato — controlla la connessione e riprova');
     }
   } else {
-    tips.push({id:'t'+Date.now(),...tip});
-    document.getElementById('newTipText').value='';
-    document.getElementById('newTipVideo').value='';
-    showToast('Aggiunto!');
-    renderTips();
-    renderAdminTips();
+    advice.push({id:'a'+Date.now(),...item});
+    document.getElementById('newAdviceText').value='';
+    showToast('Consiglio aggiunto!');
+    renderTips();renderAdminAdvice();
   }
 };
 
-function renderAdminTips(){
-  const idEl=document.getElementById('adminTipsChallengeId');
-  if(idEl) idEl.textContent=activeChallengeId||'⚠️ nessuna challenge selezionata';
-  const c=document.getElementById('adminTipsList');
-  const myTips=tips.filter(t=>t.challengeId===activeChallengeId);
-  if(!myTips.length){c.innerHTML='<div style="font-size:13px;color:var(--text3)">Nessun contenuto ancora per questa challenge.</div>';return;}
-  const badge={
-    tips:{label:'💡 Consiglio',color:'#2ECC71'},
-    rules:{label:'📋 Regola',color:'#F39C12'},
-    warning:{label:'⚠️ Avvertenza',color:'#E74C3C'},
-    video:{label:'🎬 Video',color:'#8E44AD'}
-  };
-  c.innerHTML=myTips.map(t=>{
-    const b=badge[t.type]||{label:t.type,color:'#999'};
-    return `
+window.addRule=async function(){
+  const text=document.getElementById('newRuleText').value.trim();
+  if(!text){showToast('Scrivi il testo della regola');return;}
+  if(!activeChallengeId){showToast('⚠️ Nessuna challenge selezionata — selezionala in cima alla pagina');return;}
+  const item={text,challengeId:activeChallengeId,createdAt:Date.now()};
+  if(window._firebaseReady){
+    try{
+      const ref=await window._push(window._ref(window._db,'rules'),item);
+      logEvent(`addRule: salvato "${text.substring(0,25)}" su challenge=${activeChallengeId}, key=${ref.key}`);
+      rules.push({id:ref.key,...item});
+      renderTips();renderAdminRules();updateTipsBadge();renderAdminChallenges();
+      document.getElementById('newRuleText').value='';
+      const cc=document.getElementById('ruleCharCount'); if(cc)cc.textContent='0 / 4000 caratteri';
+      showToast('Regola aggiunta ✓ ('+rules.length+' total'+(rules.length===1?'e':'i')+')');
+    }catch(e){
+      console.warn('Errore salvataggio regola',e);
+      showToast('⚠️ Non salvata — controlla la connessione e riprova');
+    }
+  } else {
+    rules.push({id:'r'+Date.now(),...item});
+    document.getElementById('newRuleText').value='';
+    showToast('Regola aggiunta!');
+    renderTips();renderAdminRules();
+  }
+};
+
+window.addVideoTip=async function(){
+  const title=document.getElementById('newVideoTitle').value.trim();
+  const url=document.getElementById('newVideoUrl').value.trim();
+  if(!title&&!url){showToast('Scrivi un titolo o un link video');return;}
+  if(!activeChallengeId){showToast('⚠️ Nessuna challenge selezionata — selezionala in cima alla pagina');return;}
+  const item={text:title,videoUrl:url,challengeId:activeChallengeId,createdAt:Date.now()};
+  if(window._firebaseReady){
+    try{
+      const ref=await window._push(window._ref(window._db,'videos'),item);
+      logEvent(`addVideoTip: salvato "${title.substring(0,25)}" su challenge=${activeChallengeId}, key=${ref.key}`);
+      videos.push({id:ref.key,...item});
+      renderTips();renderAdminVideos();updateTipsBadge();renderAdminChallenges();
+      document.getElementById('newVideoTitle').value='';
+      document.getElementById('newVideoUrl').value='';
+      showToast('Video aggiunto ✓ ('+videos.length+' total'+(videos.length===1?'e':'i')+')');
+    }catch(e){
+      console.warn('Errore salvataggio video',e);
+      showToast('⚠️ Non salvato — controlla la connessione e riprova');
+    }
+  } else {
+    videos.push({id:'v'+Date.now(),...item});
+    document.getElementById('newVideoTitle').value='';
+    document.getElementById('newVideoUrl').value='';
+    showToast('Video aggiunto!');
+    renderTips();renderAdminVideos();
+  }
+};
+
+function renderAdminAdvice(){
+  updateContentDiagnostic();
+  const c=document.getElementById('adminAdviceList');
+  const mine=advice.filter(t=>t.challengeId===activeChallengeId);
+  c.innerHTML=mine.length ? mine.map(t=>`
     <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
-      <span style="flex-shrink:0;background:${b.color}22;color:${b.color};font-size:11px;font-weight:800;padding:3px 8px;border-radius:8px;white-space:nowrap">${b.label}</span>
-      <div style="flex:1;font-size:13px;color:var(--text2);word-break:break-word">${esc(t.text)}${t.videoUrl?' <span style="color:var(--text3)">(+ link video)</span>':''}</div>
-      <button style="border:none;background:none;color:var(--red);font-size:18px;cursor:pointer;padding:0 2px;flex-shrink:0" onclick="deleteTip('${t.id}')">×</button>
-    </div>`;
-  }).join('');
+      <div style="flex:1;font-size:13px;color:var(--text2);word-break:break-word">${esc(t.text)}</div>
+      <button style="border:none;background:none;color:var(--red);font-size:18px;cursor:pointer;padding:0 2px;flex-shrink:0" onclick="deleteAdvice('${t.id}')">×</button>
+    </div>`).join('') : '<div style="font-size:13px;color:var(--text3)">Nessun consiglio ancora per questa challenge.</div>';
 }
 
-window.deleteTip=async function(id){
+function renderAdminRules(){
+  updateContentDiagnostic();
+  const c=document.getElementById('adminRulesList');
+  const mine=rules.filter(t=>t.challengeId===activeChallengeId);
+  c.innerHTML=mine.length ? mine.map(t=>`
+    <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1;font-size:13px;color:var(--text2);word-break:break-word">${esc(t.text)}</div>
+      <button style="border:none;background:none;color:var(--red);font-size:18px;cursor:pointer;padding:0 2px;flex-shrink:0" onclick="deleteRule('${t.id}')">×</button>
+    </div>`).join('') : '<div style="font-size:13px;color:var(--text3)">Nessuna regola ancora per questa challenge.</div>';
+}
+
+function renderAdminVideos(){
+  updateContentDiagnostic();
+  const c=document.getElementById('adminVideosList');
+  const mine=videos.filter(t=>t.challengeId===activeChallengeId);
+  c.innerHTML=mine.length ? mine.map(t=>`
+    <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1;font-size:13px;color:var(--text2);word-break:break-word">${esc(t.text||'(senza titolo)')} <span style="color:var(--text3)">— ${esc(t.videoUrl||'')}</span></div>
+      <button style="border:none;background:none;color:var(--red);font-size:18px;cursor:pointer;padding:0 2px;flex-shrink:0" onclick="deleteVideoItem('${t.id}')">×</button>
+    </div>`).join('') : '<div style="font-size:13px;color:var(--text3)">Nessun video ancora per questa challenge.</div>';
+}
+
+window.deleteAdvice=async function(id){
   if(!confirm('Elimina?'))return;
   if(window._firebaseReady){
     try{
-      await window._remove(window._ref(window._db,'tips/'+id));
-      logEvent(`deleteTip: eliminata tip id=${id} (challenge=${activeChallengeId})`);
-      tips=tips.filter(t=>t.id!==id);
-      renderTips();renderAdminTips();updateTipsBadge();renderAdminChallenges();
+      await window._remove(window._ref(window._db,'advice/'+id));
+      logEvent(`deleteAdvice: eliminato id=${id}`);
+      advice=advice.filter(t=>t.id!==id);
+      renderTips();renderAdminAdvice();updateTipsBadge();renderAdminChallenges();
     }catch(e){
-      console.warn('Errore eliminazione tip',e);
+      console.warn('Errore eliminazione',e);
       showToast('⚠️ Eliminazione fallita — riprova');
     }
   } else {
-    tips=tips.filter(t=>t.id!==id);renderTips();renderAdminTips();
+    advice=advice.filter(t=>t.id!==id);renderTips();renderAdminAdvice();
+  }
+};
+
+window.deleteRule=async function(id){
+  if(!confirm('Elimina?'))return;
+  if(window._firebaseReady){
+    try{
+      await window._remove(window._ref(window._db,'rules/'+id));
+      logEvent(`deleteRule: eliminata id=${id}`);
+      rules=rules.filter(t=>t.id!==id);
+      renderTips();renderAdminRules();updateTipsBadge();renderAdminChallenges();
+    }catch(e){
+      console.warn('Errore eliminazione',e);
+      showToast('⚠️ Eliminazione fallita — riprova');
+    }
+  } else {
+    rules=rules.filter(t=>t.id!==id);renderTips();renderAdminRules();
+  }
+};
+
+window.deleteVideoItem=async function(id){
+  if(!confirm('Elimina?'))return;
+  if(window._firebaseReady){
+    try{
+      await window._remove(window._ref(window._db,'videos/'+id));
+      logEvent(`deleteVideoItem: eliminato id=${id}`);
+      videos=videos.filter(t=>t.id!==id);
+      renderTips();renderAdminVideos();updateTipsBadge();renderAdminChallenges();
+    }catch(e){
+      console.warn('Errore eliminazione',e);
+      showToast('⚠️ Eliminazione fallita — riprova');
+    }
+  } else {
+    videos=videos.filter(t=>t.id!==id);renderTips();renderAdminVideos();
   }
 };
 
 window.cleanupFragmentedTips=async function(){
   if(!activeChallengeId){showToast('Nessuna challenge selezionata');return;}
-  const toDelete=tips.filter(t=>t.challengeId===activeChallengeId);
-  if(!toDelete.length){showToast('Non c\'è nulla da eliminare per questa challenge');return;}
-  const ok=confirm(`Stai per eliminare TUTTI i ${toDelete.length} consigli/regole/video di questa challenge, per poterli reinserire puliti (utile se sono rimasti spezzati in tanti pezzi). Continuare?`);
+  const toDeleteAdvice=advice.filter(t=>t.challengeId===activeChallengeId);
+  const toDeleteRules=rules.filter(t=>t.challengeId===activeChallengeId);
+  const toDeleteVideos=videos.filter(t=>t.challengeId===activeChallengeId);
+  const total=toDeleteAdvice.length+toDeleteRules.length+toDeleteVideos.length;
+  if(!total){showToast('Non c\'è nulla da eliminare per questa challenge');return;}
+  const ok=confirm(`Stai per eliminare TUTTI i ${total} consigli/regole/video di questa challenge, per poterli reinserire puliti. Continuare?`);
   if(!ok)return;
   showToast('Eliminazione in corso...');
   if(window._firebaseReady){
     try{
-      for(const t of toDelete){
-        await window._remove(window._ref(window._db,'tips/'+t.id));
-      }
+      for(const t of toDeleteAdvice) await window._remove(window._ref(window._db,'advice/'+t.id));
+      for(const t of toDeleteRules) await window._remove(window._ref(window._db,'rules/'+t.id));
+      for(const t of toDeleteVideos) await window._remove(window._ref(window._db,'videos/'+t.id));
     }catch(e){
       console.warn('Errore durante pulizia',e);
       showToast('⚠️ Alcuni elementi potrebbero non essere stati eliminati');
     }
   }
-  tips=tips.filter(t=>t.challengeId!==activeChallengeId);
-  renderTips();renderAdminTips();updateTipsBadge();renderAdminChallenges();
-  showToast('Ripulito! Ora puoi reinserire il testo in un\'unica voce (fino a 4000 caratteri)');
+  advice=advice.filter(t=>t.challengeId!==activeChallengeId);
+  rules=rules.filter(t=>t.challengeId!==activeChallengeId);
+  videos=videos.filter(t=>t.challengeId!==activeChallengeId);
+  renderTips();renderAdminAdvice();renderAdminRules();renderAdminVideos();updateTipsBadge();renderAdminChallenges();
+  showToast('Ripulito! Ora puoi reinserire i contenuti puliti');
 };
 
 // Trova ed elimina consigli/regole/video il cui challengeId non corrisponde
-// a NESSUNA challenge esistente — residui di challenge eliminate in passato
-// (con versioni vecchie del codice che non pulivano i tips collegati).
+// a NESSUNA challenge esistente — residui di challenge eliminate in passato.
 window.cleanupOrphanTips=async function(){
   if(!window._firebaseReady){showToast('Funzione disponibile solo online');return;}
   showToast('Ricerca residui orfani...');
   try{
-    const [tipsSnap,challengesSnap]=await Promise.all([
-      window._get(window._ref(window._db,'tips')),
+    const [adviceSnap,rulesSnap,videosSnap,challengesSnap]=await Promise.all([
+      window._get(window._ref(window._db,'advice')),
+      window._get(window._ref(window._db,'rules')),
+      window._get(window._ref(window._db,'videos')),
       window._get(window._ref(window._db,'challenges'))
     ]);
     const validIds=new Set();
     challengesSnap.forEach(c=>validIds.add(c.key));
     const orphans=[];
-    tipsSnap.forEach(c=>{
-      const cid=c.val().challengeId;
-      if(!validIds.has(cid)) orphans.push({id:c.key,text:c.val().text||'(video)'});
-    });
+    adviceSnap.forEach(c=>{ if(!validIds.has(c.val().challengeId)) orphans.push({node:'advice',id:c.key,text:c.val().text}); });
+    rulesSnap.forEach(c=>{ if(!validIds.has(c.val().challengeId)) orphans.push({node:'rules',id:c.key,text:c.val().text}); });
+    videosSnap.forEach(c=>{ if(!validIds.has(c.val().challengeId)) orphans.push({node:'videos',id:c.key,text:c.val().text||'(video)'}); });
     if(!orphans.length){
       showToast('✅ Nessun residuo orfano trovato, tutto pulito');
       return;
     }
-    const preview=orphans.slice(0,5).map(o=>'• '+(o.text||'').substring(0,40)).join('\n');
-    const ok=confirm(`Trovati ${orphans.length} consigli/regole orfani (appartenenti a challenge già eliminate):\n\n${preview}${orphans.length>5?'\n...e altri '+(orphans.length-5):''}\n\nEliminarli definitivamente?`);
+    const preview=orphans.slice(0,5).map(o=>'• ['+o.node+'] '+(o.text||'').substring(0,35)).join('\n');
+    const ok=confirm(`Trovati ${orphans.length} elementi orfani (appartenenti a challenge già eliminate):\n\n${preview}${orphans.length>5?'\n...e altri '+(orphans.length-5):''}\n\nEliminarli definitivamente?`);
     if(!ok)return;
     for(const o of orphans){
-      await window._remove(window._ref(window._db,'tips/'+o.id));
+      await window._remove(window._ref(window._db,o.node+'/'+o.id));
     }
     logEvent(`cleanupOrphanTips: eliminati ${orphans.length} residui orfani`);
     showToast(`✅ Eliminati ${orphans.length} residui orfani`);
-    await loadTips();
+    await loadContent();
   }catch(e){
     console.warn('Errore pulizia orfani',e);
     showToast('⚠️ Errore durante la ricerca — riprova');
@@ -2953,8 +3072,10 @@ function updateProfile(){
     if(currentUser.challengeId){
       joinCard.style.display='none';
       activeCard.style.display='block';
-      document.getElementById('adminActiveChallengeName').textContent=challengeConfig?.name||'—';
-      document.getElementById('adminActiveChallengeCode').textContent='Codice: '+(challengeConfig?.code||'—');
+      // Cerca il nome della challenge DI PARTECIPAZIONE (può essere diversa da quella gestita)
+      const participatingCh=challenges.find(c=>c.id===currentUser.challengeId);
+      document.getElementById('adminActiveChallengeName').textContent=participatingCh?.name||'—';
+      document.getElementById('adminActiveChallengeCode').textContent='Codice: '+(participatingCh?.code||'—');
     } else {
       joinCard.style.display='block';
       activeCard.style.display='none';
@@ -2993,41 +3114,57 @@ window.adminJoinChallenge=async function(){
   if(!code||!weight){showToast('Compila codice e peso');return;}
   const ch=await findChallengeByCode(code);
   if(!ch){showToast('Codice challenge non valido');return;}
-  activeChallengeId=ch.id;
-  challengeConfig=ch;
-  localStorage.setItem('c11_activeChallenge',activeChallengeId);
-  currentUser.challengeId=activeChallengeId;
+  // Aggiorna SOLO la partecipazione dell'admin — non tocca activeChallengeId
+  // (quale challenge sta gestendo nel pannello), che restano due cose separate.
+  const prev={challengeId:currentUser.challengeId,weightStart:currentUser.weightStart,weightCurrent:currentUser.weightCurrent};
+  currentUser.challengeId=ch.id;
   currentUser.weightStart=weight;
   currentUser.weightCurrent=weight;
   localStorage.setItem('c11_user',JSON.stringify(currentUser));
-  if(window._firebaseReady) await window._update(window._ref(window._db,'users/'+currentUser.id),{
-    challengeId:activeChallengeId,weightStart:weight,weightCurrent:weight
-  });
+  if(window._firebaseReady){
+    try{
+      await window._update(window._ref(window._db,'users/'+currentUser.id),{
+        challengeId:ch.id,weightStart:weight,weightCurrent:weight
+      });
+    }catch(e){
+      console.warn('Errore partecipazione',e);
+      Object.assign(currentUser,prev);
+      localStorage.setItem('c11_user',JSON.stringify(currentUser));
+      showToast('⚠️ Partecipazione non salvata — controlla la connessione');
+      updateProfile();
+      return;
+    }
+  }
   showToast('Ora partecipi a "'+ch.name+'"! 💪');
-  await refreshFilteredData();
   updateProfile();
-  renderDayDots();
-  renderPrize();
-  applyRankingMode();
 };
 
 window.adminLeaveChallenge=async function(){
   if(!confirm('Vuoi smettere di partecipare a questa challenge? I tuoi dati come partecipante (peso, punti) resteranno salvati ma non comparirai più come attivo.'))return;
+  const prev={challengeId:currentUser.challengeId,weightStart:currentUser.weightStart,weightCurrent:currentUser.weightCurrent,team:currentUser.team};
   currentUser.challengeId=null;
   currentUser.weightStart=null;
   currentUser.weightCurrent=null;
   currentUser.team=null;
   localStorage.setItem('c11_user',JSON.stringify(currentUser));
-  if(window._firebaseReady) await window._update(window._ref(window._db,'users/'+currentUser.id),{
-    challengeId:null,weightStart:null,weightCurrent:null,team:null
-  });
-  activeChallengeId=null;
-  challengeConfig={};
-  localStorage.removeItem('c11_activeChallenge');
+  if(window._firebaseReady){
+    try{
+      await window._update(window._ref(window._db,'users/'+currentUser.id),{
+        challengeId:null,weightStart:null,weightCurrent:null,team:null
+      });
+    }catch(e){
+      console.warn('Errore uscita partecipazione',e);
+      Object.assign(currentUser,prev);
+      localStorage.setItem('c11_user',JSON.stringify(currentUser));
+      showToast('⚠️ Operazione non salvata — controlla la connessione');
+      updateProfile();
+      return;
+    }
+  }
+  // NON tocca activeChallengeId: la challenge che l'admin sta gestendo nel pannello
+  // resta quella che era, indipendentemente dal fatto che smetta di parteciparvi.
   showToast('Non partecipi più a questa challenge');
-  await refreshFilteredData();
   updateProfile();
-  renderDayDots();
 };
 
 window.handleAvatar=function(input){
@@ -3098,11 +3235,26 @@ function isAdmin(){return currentUser?.role==='admin';}
 window.addTeam=async function(){
   const name=document.getElementById('newTeamName').value.trim();
   if(!name)return;
-  const team={name,challengeId:activeChallengeId||'demo',createdAt:Date.now()};
-  if(window._firebaseReady) await window._push(window._ref(window._db,'teams'),team);
-  else{teams.push({id:'t'+Date.now(),...team});renderAdminTeams();}
+  if(!activeChallengeId){showToast('⚠️ Nessuna challenge selezionata — selezionala in cima alla pagina');return;}
+  const team={name,challengeId:activeChallengeId,createdAt:Date.now()};
+  if(window._firebaseReady){
+    try{
+      const ref=await window._push(window._ref(window._db,'teams'),team);
+      // Aggiorna subito la lista locale, senza aspettare il listener
+      teams.push({id:ref.key,...team});
+      logEvent(`addTeam: creata squadra "${name}" su challenge=${activeChallengeId}`);
+    }catch(e){
+      console.warn('Errore creazione squadra',e);
+      showToast('⚠️ Squadra non salvata — controlla la connessione e riprova');
+      return;
+    }
+  } else {
+    teams.push({id:'t'+Date.now(),...team});
+  }
   document.getElementById('newTeamName').value='';
-  showToast('Squadra aggiunta!');
+  renderAdminTeams();
+  renderAdminUsers();
+  showToast('Squadra "'+name+'" aggiunta! ✓');
 };
 
 function renderAdminTeams(){
@@ -3180,16 +3332,42 @@ function renderAdminUsers(){
 }
 
 window.assignTeam=async function(uid,team){
-  const u=users.find(u=>u.id===uid);if(u)u.team=team;
+  const u=users.find(u=>u.id===uid);
+  const prevTeam=u?.team;
+  if(u)u.team=team;
   if(uid===currentUser?.id){currentUser.team=team;localStorage.setItem('c11_user',JSON.stringify(currentUser));}
-  if(window._firebaseReady) await window._update(window._ref(window._db,'users/'+uid),{team});
-  showToast('Squadra assegnata!');
+  if(window._firebaseReady){
+    try{
+      await window._update(window._ref(window._db,'users/'+uid),{team});
+    }catch(e){
+      console.warn('Errore assegnazione squadra',e);
+      if(u)u.team=prevTeam;
+      if(uid===currentUser?.id){currentUser.team=prevTeam;localStorage.setItem('c11_user',JSON.stringify(currentUser));}
+      renderAdminUsers();
+      showToast('⚠️ Squadra non assegnata — controlla la connessione');
+      return;
+    }
+  }
+  renderAdminTeams();
+  showToast('Squadra assegnata! ✓');
 };
 
 window.assignRole=async function(uid,role){
-  const u=users.find(u=>u.id===uid);if(u)u.role=role;
-  if(window._firebaseReady) await window._update(window._ref(window._db,'users/'+uid),{role});
-  showToast('Ruolo aggiornato!');
+  const u=users.find(u=>u.id===uid);
+  const prevRole=u?.role;
+  if(u)u.role=role;
+  if(window._firebaseReady){
+    try{
+      await window._update(window._ref(window._db,'users/'+uid),{role});
+    }catch(e){
+      console.warn('Errore assegnazione ruolo',e);
+      if(u)u.role=prevRole;
+      renderAdminUsers();
+      showToast('⚠️ Ruolo non aggiornato — controlla la connessione');
+      return;
+    }
+  }
+  showToast('Ruolo aggiornato! ✓');
 };
 
 window.handlePrizePhoto=function(input){
@@ -3309,12 +3487,14 @@ async function executeDeleteChallenge(chId){
       for(const p of postsToDelete){
         await window._remove(window._ref(window._db,'posts/'+p.id));
       }
-      // Elimina tips/regole/video collegati (potrebbero non essere nell'array locale se non è la challenge attiva)
-      const tipsSnap=await window._get(window._ref(window._db,'tips'));
-      const tipsToDelete=[];
-      tipsSnap.forEach(c=>{ if(c.val().challengeId===chId) tipsToDelete.push(c.key); });
-      for(const tId of tipsToDelete){
-        await window._remove(window._ref(window._db,'tips/'+tId));
+      // Elimina consigli/regole/video collegati (nei tre nodi separati)
+      for(const node of ['advice','rules','videos']){
+        const snap=await window._get(window._ref(window._db,node));
+        const toDelete=[];
+        snap.forEach(c=>{ if(c.val().challengeId===chId) toDelete.push(c.key); });
+        for(const id of toDelete){
+          await window._remove(window._ref(window._db,node+'/'+id));
+        }
       }
     }catch(e){
       showToast('Errore durante l\'eliminazione');
