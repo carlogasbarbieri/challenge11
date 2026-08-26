@@ -1137,9 +1137,9 @@ textarea.form-input{resize:vertical;min-height:72px}
       <label class="form-label">Foto</label>
       <div class="upload-area" onclick="document.getElementById('photoInput').click()">
         <img class="upload-preview" id="photoPreview">
-        <div id="uploadPh"><div style="font-size:36px">📷</div><div style="font-size:13px;color:var(--text3);margin-top:4px">Tocca per aggiungere</div></div>
+        <div id="uploadPh"><div style="font-size:36px">📷</div><div style="font-size:13px;color:var(--text3);margin-top:4px">Scatta o scegli dalla galleria</div></div>
       </div>
-      <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(this)">
+      <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handlePhoto(this)">
     </div>
     <div class="form-group">
       <label class="form-label">Descrizione</label>
@@ -1175,9 +1175,9 @@ textarea.form-input{resize:vertical;min-height:72px}
       <label class="form-label">Foto (opzionale)</label>
       <div class="upload-area" onclick="document.getElementById('actPhotoInput').click()">
         <img class="upload-preview" id="actPhotoPreview">
-        <div id="actUploadPh"><div style="font-size:28px">📷</div><div style="font-size:12px;color:var(--text3);margin-top:4px">Tocca per aggiungere una foto</div></div>
+        <div id="actUploadPh"><div style="font-size:28px">📷</div><div style="font-size:12px;color:var(--text3);margin-top:4px">Scatta o scegli dalla galleria</div></div>
       </div>
-      <input type="file" id="actPhotoInput" accept="image/*" capture="environment" style="display:none" onchange="handleActPhoto(this)">
+      <input type="file" id="actPhotoInput" accept="image/*" style="display:none" onchange="handleActPhoto(this)">
     </div>
     <button class="btn btn-primary" onclick="confirmActivity()">Confermo ✓</button>
     <button class="btn" style="background:none;color:var(--text3);margin-top:8px" onclick="closeModal('activityModal')">Annulla</button>
@@ -1923,7 +1923,6 @@ function loadData(){
   loadContent();
 }
 
-// Ricarica consigli, regole e video dai loro nodi separati su Firebase
 // Post: caricamento esplicito (non un listener automatico) — stesso motivo di
 // advice/rules/videos: un ascolto in tempo reale può creare conflitti tra
 // la scrittura appena fatta e una rilettura che arriva con timing sfortunato.
@@ -1933,9 +1932,21 @@ async function loadPosts(){
     const snap=await window._get(window._ref(window._db,'posts'));
     const raw=[];
     snap.forEach(c=>raw.push({id:c.key,...c.val()}));
-    posts=activeChallengeId?raw.filter(p=>p.challengeId===activeChallengeId):[];
-    posts.sort((a,b)=>b.timestamp-a.timestamp);
-    logEvent(`loadPosts: DB totale=${raw.length}, filtrati=${posts.length}`);
+    const fromServer=activeChallengeId?raw.filter(p=>p.challengeId===activeChallengeId):[];
+
+    // FONDAMENTALE: unisci i post del server con quelli già noti localmente,
+    // invece di sostituirli. Un post appena pubblicato può non essere ancora
+    // visibile in lettura sul server per una frazione di secondo: sostituendo
+    // ciecamente, sparirebbe dalla vista subito dopo essere apparso.
+    const serverIds=new Set(fromServer.map(p=>p.id));
+    const localOnly=posts.filter(p=>
+      p.id && !serverIds.has(p.id) && p.challengeId===activeChallengeId
+    );
+    const merged=[...fromServer,...localOnly];
+    merged.sort((a,b)=>b.timestamp-a.timestamp);
+    posts=merged;
+
+    logEvent(`loadPosts: server=${fromServer.length}, locali-non-ancora-sul-server=${localOnly.length}, totale=${posts.length}`);
     renderFeed();
     updateProfile();
   }catch(e){
@@ -1949,10 +1960,19 @@ async function loadPosts(){
 // che il caricamento è esplicito (get) e non un ascolto continuo. Si ferma
 // quando l'app è in background, per non consumare batteria/dati inutilmente.
 let _feedPollTimer=null;
+let _pausePollingUntil=0; // timestamp fino al quale il polling resta fermo
+
+// Chiamata subito dopo una pubblicazione: dà al server il tempo di rendere
+// visibile la scrittura, evitando che un aggiornamento troppo ravvicinato
+// possa far "sparire" il post appena creato.
+function pausePollingBriefly(ms){
+  _pausePollingUntil=Date.now()+(ms||8000);
+}
 
 function startFeedPolling(){
   if(_feedPollTimer) return; // già attivo
   _feedPollTimer=setInterval(()=>{
+    if(Date.now()<_pausePollingUntil) return; // in pausa dopo una pubblicazione
     if(document.visibilityState==='visible' && window._firebaseReady && activeChallengeId){
       loadPosts();
     }
@@ -1961,6 +1981,7 @@ function startFeedPolling(){
 
 document.addEventListener('visibilitychange',()=>{
   // Quando l'app torna in primo piano, aggiorna subito invece di aspettare il prossimo ciclo
+  if(Date.now()<_pausePollingUntil) return;
   if(document.visibilityState==='visible' && window._firebaseReady && activeChallengeId){
     loadPosts();
   }
@@ -2651,6 +2672,7 @@ async function _doSubmitPost(){
       // Uso direttamente il post appena scritto (lo conosco con certezza) invece di
       // aspettare un listener/rilettura — stesso principio già applicato a consigli/regole.
       posts.unshift({id:nr.key,...post});
+      pausePollingBriefly(8000); // il polling non deve toccare il feed subito dopo la pubblicazione
       const newPts=(currentUser.bonusPoints||0)+1;
       currentUser.bonusPoints=newPts;
       localStorage.setItem('c11_user',JSON.stringify(currentUser));
