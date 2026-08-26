@@ -742,6 +742,9 @@ textarea.form-input{resize:vertical;min-height:72px}
 
   <!-- FEED -->
   <div class="page active" id="pageFeed">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+      <button id="feedRefreshBtn" onclick="manualRefreshFeed()" style="background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:5px">🔄 Aggiorna</button>
+    </div>
     <div id="feedTeamFilterRow" class="tab-row" style="display:none">
       <button class="tab-btn active" onclick="setFeedFilter('all',this)">Tutti</button>
       <button class="tab-btn" onclick="setFeedFilter('myteam',this)">👥 La mia squadra</button>
@@ -1893,6 +1896,7 @@ function loadData(){
   if(!window._firebaseReady){loadDemoData();return;}
   loadChallenges();
   loadPosts();
+  startFeedPolling();
   // I listener vanno registrati una sola volta: se già attivi, basta ridisegnare
   if(_listenersActive){
     renderRanking();updateProfile();
@@ -1939,6 +1943,36 @@ async function loadPosts(){
     logEvent(`⚠️ loadPosts ERRORE: ${e.message||e}`);
   }
 }
+
+// Aggiornamento automatico periodico del feed: senza questo, i post di altri
+// partecipanti non compaiono finché non si ricarica manualmente l'app — dato
+// che il caricamento è esplicito (get) e non un ascolto continuo. Si ferma
+// quando l'app è in background, per non consumare batteria/dati inutilmente.
+let _feedPollTimer=null;
+
+function startFeedPolling(){
+  if(_feedPollTimer) return; // già attivo
+  _feedPollTimer=setInterval(()=>{
+    if(document.visibilityState==='visible' && window._firebaseReady && activeChallengeId){
+      loadPosts();
+    }
+  },20000); // ogni 20 secondi
+}
+
+document.addEventListener('visibilitychange',()=>{
+  // Quando l'app torna in primo piano, aggiorna subito invece di aspettare il prossimo ciclo
+  if(document.visibilityState==='visible' && window._firebaseReady && activeChallengeId){
+    loadPosts();
+  }
+});
+
+window.manualRefreshFeed=async function(){
+  const btn=document.getElementById('feedRefreshBtn');
+  if(btn) btn.style.animation='spin 0.6s linear';
+  await loadPosts();
+  if(btn) setTimeout(()=>btn.style.animation='',600);
+  showToast('Feed aggiornato ✓');
+};
 
 async function loadContent(){
   if(!window._firebaseReady){renderTips();updateTipsBadge();renderActivities();return;}
