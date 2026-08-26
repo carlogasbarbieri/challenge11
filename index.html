@@ -1640,7 +1640,7 @@ function loadChallenges(){
   _challengesListenerActive=true;
   window._onValue(window._ref(window._db,'challenges'),snap=>{
     challenges=[];
-    snap.forEach(c=>challenges.push({id:c.key,...c.val()}));
+    snap.forEach(c=>{challenges.push({id:c.key,...c.val()});});
     renderAdminChallenges();
     // Load active challenge config
     if(activeChallengeId){
@@ -1861,26 +1861,26 @@ async function refreshFilteredData(){
       window._get(window._ref(window._db,'videos')),
       window._get(window._ref(window._db,'activities'))
     ]);
-    posts=[];postsSnap.forEach(c=>posts.push({id:c.key,...c.val()}));
+    posts=[];postsSnap.forEach(c=>{posts.push({id:c.key,...c.val()});});
     posts=activeChallengeId?posts.filter(p=>p.challengeId===activeChallengeId):[];
     posts.sort((a,b)=>b.timestamp-a.timestamp);
 
-    users=[];usersSnap.forEach(c=>users.push({id:c.key,...c.val()}));
+    users=[];usersSnap.forEach(c=>{users.push({id:c.key,...c.val()});});
     users=activeChallengeId?users.filter(u=>u.challengeId===activeChallengeId):[];
 
-    teams=[];teamsSnap.forEach(c=>teams.push({id:c.key,...c.val()}));
+    teams=[];teamsSnap.forEach(c=>{teams.push({id:c.key,...c.val()});});
     teams=activeChallengeId?teams.filter(t=>t.challengeId===activeChallengeId):[];
 
-    const rawAdvice=[];adviceSnap.forEach(c=>rawAdvice.push({id:c.key,...c.val()}));
+    const rawAdvice=[];adviceSnap.forEach(c=>{rawAdvice.push({id:c.key,...c.val()});});
     advice=activeChallengeId?rawAdvice.filter(t=>t.challengeId===activeChallengeId):[];
 
-    const rawRules=[];rulesSnap.forEach(c=>rawRules.push({id:c.key,...c.val()}));
+    const rawRules=[];rulesSnap.forEach(c=>{rawRules.push({id:c.key,...c.val()});});
     rules=activeChallengeId?rawRules.filter(t=>t.challengeId===activeChallengeId):[];
 
-    const rawVideos=[];videosSnap.forEach(c=>rawVideos.push({id:c.key,...c.val()}));
+    const rawVideos=[];videosSnap.forEach(c=>{rawVideos.push({id:c.key,...c.val()});});
     videos=activeChallengeId?rawVideos.filter(t=>t.challengeId===activeChallengeId):[];
 
-    const rawActivities=[];activitiesSnap.forEach(c=>rawActivities.push({id:c.key,...c.val()}));
+    const rawActivities=[];activitiesSnap.forEach(c=>{rawActivities.push({id:c.key,...c.val()});});
     activities=activeChallengeId?rawActivities.filter(t=>t.challengeId===activeChallengeId):[];
 
     logEvent(`refreshFilteredData: consigli=${advice.length}/${rawAdvice.length}, regole=${rules.length}/${rawRules.length}, video=${videos.length}/${rawVideos.length}, attività=${activities.length}/${rawActivities.length}`);
@@ -1906,7 +1906,7 @@ function loadData(){
   _listenersActive=true;
   window._onValue(window._ref(window._db,'users'),snap=>{
     users=[];
-    snap.forEach(c=>users.push({id:c.key,...c.val()}));
+    snap.forEach(c=>{users.push({id:c.key,...c.val()});});
     // In classifica: solo utenti della challenge attiva (l'admin stesso non compare se non partecipa)
     users=activeChallengeId?users.filter(u=>u.challengeId===activeChallengeId):[];
     renderRanking();
@@ -1914,7 +1914,7 @@ function loadData(){
   });
   window._onValue(window._ref(window._db,'teams'),snap=>{
     teams=[];
-    snap.forEach(c=>teams.push({id:c.key,...c.val()}));
+    snap.forEach(c=>{teams.push({id:c.key,...c.val()});});
     teams=activeChallengeId?teams.filter(t=>t.challengeId===activeChallengeId):[];
     if(isAdmin())renderAdminTeams();
   });
@@ -1931,7 +1931,7 @@ async function loadPosts(){
   try{
     const snap=await window._get(window._ref(window._db,'posts'));
     const raw=[];
-    snap.forEach(c=>raw.push({id:c.key,...c.val()}));
+    snap.forEach(c=>{raw.push({id:c.key,...c.val()});});
     const fromServer=activeChallengeId?raw.filter(p=>p.challengeId===activeChallengeId):[];
 
     // FONDAMENTALE: unisci i post del server con quelli già noti localmente,
@@ -2004,16 +2004,16 @@ async function loadContent(){
       window._get(window._ref(window._db,'videos')),
       window._get(window._ref(window._db,'activities'))
     ]);
-    const rawAdvice=[];adviceSnap.forEach(c=>rawAdvice.push({id:c.key,...c.val()}));
+    const rawAdvice=[];adviceSnap.forEach(c=>{rawAdvice.push({id:c.key,...c.val()});});
     advice=activeChallengeId?rawAdvice.filter(t=>t.challengeId===activeChallengeId):[];
 
-    const rawRules=[];rulesSnap.forEach(c=>rawRules.push({id:c.key,...c.val()}));
+    const rawRules=[];rulesSnap.forEach(c=>{rawRules.push({id:c.key,...c.val()});});
     rules=activeChallengeId?rawRules.filter(t=>t.challengeId===activeChallengeId):[];
 
-    const rawVideos=[];videosSnap.forEach(c=>rawVideos.push({id:c.key,...c.val()}));
+    const rawVideos=[];videosSnap.forEach(c=>{rawVideos.push({id:c.key,...c.val()});});
     videos=activeChallengeId?rawVideos.filter(t=>t.challengeId===activeChallengeId):[];
 
-    const rawActivities=[];activitiesSnap.forEach(c=>rawActivities.push({id:c.key,...c.val()}));
+    const rawActivities=[];activitiesSnap.forEach(c=>{rawActivities.push({id:c.key,...c.val()});});
     activities=activeChallengeId?rawActivities.filter(t=>t.challengeId===activeChallengeId):[];
 
     logEvent(`loadContent: consigli=${advice.length}/${rawAdvice.length}, regole=${rules.length}/${rawRules.length}, video=${videos.length}/${rawVideos.length}, attività=${activities.length}/${rawActivities.length}`);
@@ -2641,6 +2641,16 @@ async function _doSubmitPost(){
     closeModal('postModal');
     return;
   }
+  // FONDAMENTALE: mai salvare un post senza una challenge attiva certa.
+  // Il vecchio fallback silenzioso a 'demo' faceva sembrare la pubblicazione
+  // riuscita (nessun errore) mentre in realtà il post finiva in un ID che
+  // nessuna schermata avrebbe mai più cercato — sparito per sempre, senza avviso.
+  if(window._firebaseReady && !activeChallengeId){
+    showToast('⚠️ Nessuna challenge attiva rilevata — riapri l\'app e riprova prima di postare');
+    logEvent('⚠️ submitPost BLOCCATO: activeChallengeId assente al momento della pubblicazione');
+    closeModal('postModal');
+    return;
+  }
   const mealType=document.getElementById('postMealType').value;
   const desc=document.getElementById('postDesc').value.trim();
   let compressedPhoto=null;
@@ -2662,7 +2672,7 @@ async function _doSubmitPost(){
   }
   const post={userId:currentUser.id,userName:currentUser.name,team:currentUser.team||'—',
     mealType,desc,timestamp,isLate,reactions:{strong:0,fire:0,heart:0},
-    photoUrl:compressedPhoto,challengeId:activeChallengeId||'demo'};
+    photoUrl:compressedPhoto,challengeId:activeChallengeId};
   closeModal('postModal');
   if(window._firebaseReady){
     try{
@@ -3347,7 +3357,7 @@ window.cleanupOrphanTips=async function(){
       window._get(window._ref(window._db,'challenges'))
     ]);
     const validIds=new Set();
-    challengesSnap.forEach(c=>validIds.add(c.key));
+    challengesSnap.forEach(c=>{validIds.add(c.key);});
     const orphans=[];
     adviceSnap.forEach(c=>{ if(!validIds.has(c.val().challengeId)) orphans.push({node:'advice',id:c.key,text:c.val().text}); });
     rulesSnap.forEach(c=>{ if(!validIds.has(c.val().challengeId)) orphans.push({node:'rules',id:c.key,text:c.val().text}); });
