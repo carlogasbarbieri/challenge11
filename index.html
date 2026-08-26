@@ -978,6 +978,36 @@ textarea.form-input{resize:vertical;min-height:72px}
     </div>
 
     <div class="card">
+      <div class="card-title">⭐ Attività Bonus</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6">
+        Spunta quali attivare per questa challenge. Non sempre serve tutto — es. "Allenamento" solo se lo organizzi davvero.
+      </div>
+      <div id="adminSuggestedActivities" style="margin-bottom:14px"></div>
+
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin:14px 0 8px;border-top:1px solid var(--border);padding-top:12px">Attività personalizzate</div>
+      <div id="adminCustomActivities" style="margin-bottom:10px"></div>
+      <div class="form-group">
+        <label class="form-label">Nome attività</label>
+        <input class="form-input" id="newActivityName" placeholder="Es: Torneo di padel" maxlength="60">
+      </div>
+      <div style="display:flex;gap:8px">
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Icona (emoji)</label>
+          <input class="form-input" id="newActivityIcon" placeholder="🏆" maxlength="4" value="⭐">
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Punti</label>
+          <input class="form-input" id="newActivityPts" type="number" value="5" min="1" max="50">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descrizione</label>
+        <input class="form-input" id="newActivityDesc" placeholder="Cosa deve fare il partecipante" maxlength="150">
+      </div>
+      <button class="btn btn-primary" onclick="addCustomActivity()">➕ Aggiungi attività personalizzata</button>
+    </div>
+
+    <div class="card">
       <button class="btn" style="background:none;color:var(--red);font-size:12px" onclick="cleanupFragmentedTips()">🗑️ Elimina tutti i consigli/regole/video di questa challenge (per ricominciare puliti)</button>
     </div>
 
@@ -1078,12 +1108,11 @@ textarea.form-input{resize:vertical;min-height:72px}
       <label class="form-label">Tipo di pasto</label>
       <select class="form-input" id="postMealType">
         <option value="colazione">🌅 Colazione</option>
-        <option value="spuntino_m">🍎 Spuntino mattina</option>
+        <option value="spuntino">🍎 Spuntino</option>
         <option value="pranzo">☀️ Pranzo</option>
-        <option value="spuntino_p">🥤 Spuntino pomeriggio</option>
         <option value="cena">🌙 Cena</option>
-        <option value="frullato">🥤 Frullato proteico</option>
       </select>
+      <div style="font-size:11px;color:var(--text3);margin-top:5px">💡 Puoi postare più "Spuntino" nello stesso giorno. Frullati e shaker vanno bene a qualsiasi pasto — descrivilo qui sotto.</div>
     </div>
     <div class="form-group">
       <label class="form-label">Quando?</label>
@@ -1187,15 +1216,24 @@ const ADMIN_NAME = 'Carlo Barbieri'; // Nome pubblico dell'admin
 const ADMIN_SECRET = '2291991'; // Codice segreto — cambia questo se vuoi
 const ADMIN_LOGIN_PATTERN = (ADMIN_NAME + ' ' + ADMIN_SECRET).toLowerCase();
 
-const ACTIVITIES = [
-  {id:'detox',   name:'Giornata Detox',  icon:'🌿', pts:5,  desc:'Completa la giornata detox con i prodotti indicati'},
-  {id:'workout', name:'Allenamento',      icon:'💪', pts:3,  desc:'Allenati almeno 30 minuti (qualsiasi attività)'},
-  {id:'hom',     name:'Partecipa HOM',   icon:'🎯', pts:10, desc:'Partecipa all\'Herbalife Opportunity Meeting'},
-  {id:'water',   name:'2L Acqua',         icon:'💧', pts:2,  desc:'Bevi almeno 2 litri d\'acqua oggi'},
-  {id:'allmeals',name:'Tutti i Pasti',    icon:'📸', pts:4,  desc:'Posta tutti e 3 i pasti principali oggi'},
-  {id:'steps',   name:'8.000 Passi',      icon:'🚶', pts:2,  desc:'Raggiungi 8.000 passi oggi'},
+// Catalogo di ATTIVITÀ SUGGERITE — l'admin sceglie quali attivare per ogni
+// challenge (più eventuali attività custom create da zero). Non sono più fisse.
+const SUGGESTED_ACTIVITIES = [
+  {name:'Giornata Detox',      icon:'🌿', pts:5,  desc:'Completa la giornata detox con i prodotti indicati'},
+  {name:'Allenamento',         icon:'💪', pts:3,  desc:'Allenati almeno 30 minuti (qualsiasi attività)'},
+  {name:'Partecipa HOM',       icon:'🎯', pts:10, desc:'Partecipa all\'Herbalife Opportunity Meeting'},
+  {name:'2L Acqua',            icon:'💧', pts:2,  desc:'Bevi almeno 2 litri d\'acqua oggi'},
+  {name:'Tutti i Pasti',       icon:'📸', pts:4,  desc:'Posta tutti i pasti principali oggi'},
+  {name:'8.000 Passi',         icon:'🚶', pts:2,  desc:'Raggiungi 8.000 passi oggi'},
+  {name:'Sorpresa del weekend',icon:'🎉', pts:5,  desc:'Partecipa all\'attività a sorpresa del weekend'},
+  {name:'Fit Dinner',          icon:'🍽️', pts:5,  desc:'Partecipa alla cena fit organizzata dal team'},
+  {name:'Condividi i risultati',icon:'📢', pts:5, desc:'Condividi i tuoi risultati con il gruppo o sui social'},
 ];
-const MEAL_LABELS = {colazione:'🌅 Colazione',spuntino_m:'🍎 Spuntino',pranzo:'☀️ Pranzo',spuntino_p:'🥤 Spuntino pm',cena:'🌙 Cena',frullato:'🥤 Frullato'};
+let activities=[]; // attività bonus REALMENTE attive per la challenge corrente
+
+const MEAL_LABELS = {colazione:'🌅 Colazione',spuntino:'🍎 Spuntino',pranzo:'☀️ Pranzo',cena:'🌙 Cena',
+  // Vecchie etichette mantenute per compatibilità con post creati prima di questa modifica
+  spuntino_m:'🍎 Spuntino',spuntino_p:'🥤 Spuntino',frullato:'🥤 Frullato'};
 
 let currentUser  = JSON.parse(localStorage.getItem('c11_user')||'null');
 let activeChallengeId = localStorage.getItem('c11_activeChallenge')||null;
@@ -1807,13 +1845,14 @@ window.clearEventLog=function(){
 async function refreshFilteredData(){
   if(!window._firebaseReady){loadDemoData();return;}
   try{
-    const [postsSnap,usersSnap,teamsSnap,adviceSnap,rulesSnap,videosSnap]=await Promise.all([
+    const [postsSnap,usersSnap,teamsSnap,adviceSnap,rulesSnap,videosSnap,activitiesSnap]=await Promise.all([
       window._get(window._ref(window._db,'posts')),
       window._get(window._ref(window._db,'users')),
       window._get(window._ref(window._db,'teams')),
       window._get(window._ref(window._db,'advice')),
       window._get(window._ref(window._db,'rules')),
-      window._get(window._ref(window._db,'videos'))
+      window._get(window._ref(window._db,'videos')),
+      window._get(window._ref(window._db,'activities'))
     ]);
     posts=[];postsSnap.forEach(c=>posts.push({id:c.key,...c.val()}));
     posts=activeChallengeId?posts.filter(p=>p.challengeId===activeChallengeId):[];
@@ -1834,10 +1873,13 @@ async function refreshFilteredData(){
     const rawVideos=[];videosSnap.forEach(c=>rawVideos.push({id:c.key,...c.val()}));
     videos=activeChallengeId?rawVideos.filter(t=>t.challengeId===activeChallengeId):[];
 
-    logEvent(`refreshFilteredData: consigli=${advice.length}/${rawAdvice.length}, regole=${rules.length}/${rawRules.length}, video=${videos.length}/${rawVideos.length}`);
+    const rawActivities=[];activitiesSnap.forEach(c=>rawActivities.push({id:c.key,...c.val()}));
+    activities=activeChallengeId?rawActivities.filter(t=>t.challengeId===activeChallengeId):[];
 
-    renderFeed();renderRanking();renderTips();updateProfile();updateTipsBadge();
-    if(isAdmin()){renderAdminUsers();renderActivityMonitor();renderAdminTeams();renderAdminAdvice();renderAdminRules();renderAdminVideos();}
+    logEvent(`refreshFilteredData: consigli=${advice.length}/${rawAdvice.length}, regole=${rules.length}/${rawRules.length}, video=${videos.length}/${rawVideos.length}, attività=${activities.length}/${rawActivities.length}`);
+
+    renderFeed();renderRanking();renderTips();updateProfile();updateTipsBadge();renderActivities();
+    if(isAdmin()){renderAdminUsers();renderActivityMonitor();renderAdminTeams();renderAdminAdvice();renderAdminRules();renderAdminVideos();renderAdminActivities();}
   }catch(e){console.warn('Errore refresh dati',e);}
 }
 
@@ -1846,21 +1888,14 @@ let _listenersActive=false; // impedisce registrazioni duplicate dei listener Fi
 function loadData(){
   if(!window._firebaseReady){loadDemoData();return;}
   loadChallenges();
+  loadPosts();
   // I listener vanno registrati una sola volta: se già attivi, basta ridisegnare
   if(_listenersActive){
-    renderFeed();renderRanking();renderTips();updateProfile();
+    renderRanking();updateProfile();
     if(isAdmin()){renderAdminUsers();renderActivityMonitor();renderAdminTeams();}
     return;
   }
   _listenersActive=true;
-  window._onValue(window._ref(window._db,'posts'),snap=>{
-    posts=[];
-    snap.forEach(c=>posts.push({id:c.key,...c.val()}));
-    // Se non c'è challenge attiva (es. admin non ancora iscritto), non mostrare post
-    posts=activeChallengeId?posts.filter(p=>p.challengeId===activeChallengeId):[];
-    posts.sort((a,b)=>b.timestamp-a.timestamp);
-    renderFeed();updateProfile();
-  });
   window._onValue(window._ref(window._db,'users'),snap=>{
     users=[];
     snap.forEach(c=>users.push({id:c.key,...c.val()}));
@@ -1881,13 +1916,34 @@ function loadData(){
 }
 
 // Ricarica consigli, regole e video dai loro nodi separati su Firebase
-async function loadContent(){
-  if(!window._firebaseReady){renderTips();updateTipsBadge();return;}
+// Post: caricamento esplicito (non un listener automatico) — stesso motivo di
+// advice/rules/videos: un ascolto in tempo reale può creare conflitti tra
+// la scrittura appena fatta e una rilettura che arriva con timing sfortunato.
+async function loadPosts(){
+  if(!window._firebaseReady){renderFeed();return;}
   try{
-    const [adviceSnap,rulesSnap,videosSnap]=await Promise.all([
+    const snap=await window._get(window._ref(window._db,'posts'));
+    const raw=[];
+    snap.forEach(c=>raw.push({id:c.key,...c.val()}));
+    posts=activeChallengeId?raw.filter(p=>p.challengeId===activeChallengeId):[];
+    posts.sort((a,b)=>b.timestamp-a.timestamp);
+    logEvent(`loadPosts: DB totale=${raw.length}, filtrati=${posts.length}`);
+    renderFeed();
+    updateProfile();
+  }catch(e){
+    console.warn('Errore caricamento post',e);
+    logEvent(`⚠️ loadPosts ERRORE: ${e.message||e}`);
+  }
+}
+
+async function loadContent(){
+  if(!window._firebaseReady){renderTips();updateTipsBadge();renderActivities();return;}
+  try{
+    const [adviceSnap,rulesSnap,videosSnap,activitiesSnap]=await Promise.all([
       window._get(window._ref(window._db,'advice')),
       window._get(window._ref(window._db,'rules')),
-      window._get(window._ref(window._db,'videos'))
+      window._get(window._ref(window._db,'videos')),
+      window._get(window._ref(window._db,'activities'))
     ]);
     const rawAdvice=[];adviceSnap.forEach(c=>rawAdvice.push({id:c.key,...c.val()}));
     advice=activeChallengeId?rawAdvice.filter(t=>t.challengeId===activeChallengeId):[];
@@ -1898,11 +1954,15 @@ async function loadContent(){
     const rawVideos=[];videosSnap.forEach(c=>rawVideos.push({id:c.key,...c.val()}));
     videos=activeChallengeId?rawVideos.filter(t=>t.challengeId===activeChallengeId):[];
 
-    logEvent(`loadContent: consigli=${advice.length}/${rawAdvice.length}, regole=${rules.length}/${rawRules.length}, video=${videos.length}/${rawVideos.length}`);
+    const rawActivities=[];activitiesSnap.forEach(c=>rawActivities.push({id:c.key,...c.val()}));
+    activities=activeChallengeId?rawActivities.filter(t=>t.challengeId===activeChallengeId):[];
+
+    logEvent(`loadContent: consigli=${advice.length}/${rawAdvice.length}, regole=${rules.length}/${rawRules.length}, video=${videos.length}/${rawVideos.length}, attività=${activities.length}/${rawActivities.length}`);
 
     renderTips();
     updateTipsBadge();
-    if(isAdmin()){renderAdminAdvice();renderAdminRules();renderAdminVideos();}
+    renderActivities();
+    if(isAdmin()){renderAdminAdvice();renderAdminRules();renderAdminVideos();renderAdminActivities();}
   }catch(e){
     console.warn('Errore caricamento contenuti',e);
     logEvent(`⚠️ loadContent ERRORE: ${e.message||e}`);
@@ -1931,9 +1991,13 @@ function loadDemoData(){
     {id:'r2',text:'Ogni pasto va postato entro 30 minuti dal consumo per essere valido.',challengeId:'demo'},
   ];
   videos=[];
+  activities=[
+    {id:'act1',name:'Giornata Detox',icon:'🌿',pts:5,desc:'Completa la giornata detox con i prodotti indicati',isCustom:false,challengeId:'demo'},
+    {id:'act2',name:'Allenamento',icon:'💪',pts:3,desc:'Allenati almeno 30 minuti',isCustom:false,challengeId:'demo'},
+  ];
   document.getElementById('headerDays').textContent=challengeConfig.duration;
-  renderFeed();renderRanking();renderTips();updateProfile();renderDayDots();renderPrize();
-  if(isAdmin()){renderAdminUsers();renderActivityMonitor();renderAdminTeams();renderAdminAdvice();renderAdminRules();renderAdminVideos();}
+  renderFeed();renderRanking();renderTips();updateProfile();renderDayDots();renderPrize();renderActivities();
+  if(isAdmin()){renderAdminUsers();renderActivityMonitor();renderAdminTeams();renderAdminAdvice();renderAdminRules();renderAdminVideos();renderAdminActivities();}
   updateTipsBadge();
 }
 
@@ -1974,7 +2038,7 @@ window.goToProfile=function(){
       document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
       document.getElementById('pageAdmin').classList.add('active');
       document.getElementById('fabBtn').style.display='none';
-      loadChallenges();renderAdminUsers();renderActivityMonitor();renderAdminTeams();renderAdminAdvice();renderAdminRules();renderAdminVideos();return;
+      loadChallenges();renderAdminUsers();renderActivityMonitor();renderAdminTeams();renderAdminAdvice();renderAdminRules();renderAdminVideos();renderAdminActivities();return;
     }
   }
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -2513,10 +2577,16 @@ async function _doSubmitPost(){
     try{
       const nr=window._push(window._ref(window._db,'posts'));
       await window._set(nr,post);
+      logEvent(`submitPost: salvato "${mealType}" su challenge=${activeChallengeId}, key=${nr.key}`);
+      // Uso direttamente il post appena scritto (lo conosco con certezza) invece di
+      // aspettare un listener/rilettura — stesso principio già applicato a consigli/regole.
+      posts.unshift({id:nr.key,...post});
       const newPts=(currentUser.bonusPoints||0)+1;
       currentUser.bonusPoints=newPts;
       localStorage.setItem('c11_user',JSON.stringify(currentUser));
       await window._update(window._ref(window._db,'users/'+currentUser.id),{bonusPoints:newPts});
+      renderFeed();
+      updateProfile();
       showToast(isLate?'Post recuperato! 📌':'Post inviato! +1 punto 🌿');
     }catch(e){
       console.warn('Errore salvataggio post',e);
@@ -2662,22 +2732,28 @@ function renderActivities(){
   const today=getTodayKey();
   const done=JSON.parse(localStorage.getItem(actKey(today))||'[]');
   const doneCount=done.length;
-  document.getElementById('todayActCount').textContent=doneCount?`${doneCount}/${ACTIVITIES.length} completate`:'';
-  document.getElementById('activityGrid').innerHTML=ACTIVITIES.map(act=>`
-    <div class="act-card ${done.includes(act.id)?'done':''}" onclick="openActivity('${act.id}')">
-      <div class="act-check">✓</div>
-      <span class="act-icon">${act.icon}</span>
-      <div class="act-name">${act.name}</div>
-      <div class="act-pts">+${act.pts} punti</div>
-    </div>`).join('');
+  const grid=document.getElementById('activityGrid');
+  if(!activities.length){
+    document.getElementById('todayActCount').textContent='';
+    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1;padding:20px 0"><div class="empty-icon">⭐</div><div class="empty-text">Il team leader non ha ancora attivato nessuna attività bonus.</div></div>`;
+    document.getElementById('badgeBonus').classList.remove('show');
+  } else {
+    document.getElementById('todayActCount').textContent=doneCount?`${doneCount}/${activities.length} completate`:'';
+    grid.innerHTML=activities.map(act=>`
+      <div class="act-card ${done.includes(act.id)?'done':''}" onclick="openActivity('${act.id}')">
+        <div class="act-check">✓</div>
+        <span class="act-icon">${esc(act.icon)}</span>
+        <div class="act-name">${esc(act.name)}</div>
+        <div class="act-pts">+${act.pts} punti</div>
+      </div>`).join('');
+    const undone=activities.length-doneCount;
+    const badge=document.getElementById('badgeBonus');
+    if(undone>0&&undone<activities.length){badge.textContent=undone;badge.classList.add('show');}
+    else badge.classList.remove('show');
+  }
   const streak=calcStreak();
   document.getElementById('streakNum').textContent=streak;
   document.getElementById('totalPoints').textContent=currentUser?.bonusPoints||0;
-  // Badge bonus
-  const undone=ACTIVITIES.length-doneCount;
-  const badge=document.getElementById('badgeBonus');
-  if(undone>0&&undone<ACTIVITIES.length){badge.textContent=undone;badge.classList.add('show');}
-  else badge.classList.remove('show');
 }
 
 window.openActivity=function(id){
@@ -2688,7 +2764,8 @@ window.openActivity=function(id){
   const today=getTodayKey();
   const done=JSON.parse(localStorage.getItem(actKey(today))||'[]');
   if(done.includes(id)){showToast('Già completata oggi!');return;}
-  const act=ACTIVITIES.find(a=>a.id===id);
+  const act=activities.find(a=>a.id===id);
+  if(!act)return;
   currentActivityId=id;
   document.getElementById('activityModalTitle').textContent=act.icon+' '+act.name;
   document.getElementById('activityModalDesc').textContent=act.desc+` (+${act.pts} punti)`;
@@ -2698,7 +2775,8 @@ window.openActivity=function(id){
 window.confirmActivity=async function(){
   if(!currentActivityId)return;
   const today=getTodayKey();
-  const act=ACTIVITIES.find(a=>a.id===currentActivityId);
+  const act=activities.find(a=>a.id===currentActivityId);
+  if(!act){currentActivityId=null;return;}
   const done=JSON.parse(localStorage.getItem(actKey(today))||'[]');
   const prevPoints=currentUser.bonusPoints||0;
   done.push(currentActivityId);
@@ -2983,6 +3061,124 @@ window.deleteVideoItem=async function(id){
   }
 };
 
+// ============================================================
+// ATTIVITÀ BONUS — configurabili per challenge (suggerite + custom)
+// ============================================================
+function renderAdminActivities(){
+  updateContentDiagnostic();
+
+  // Sezione suggerimenti: checkbox per attivare/disattivare
+  const sc=document.getElementById('adminSuggestedActivities');
+  sc.innerHTML=SUGGESTED_ACTIVITIES.map((s,i)=>{
+    const activeItem=activities.find(a=>a.name===s.name&&!a.isCustom);
+    const isOn=!!activeItem;
+    return `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <input type="checkbox" ${isOn?'checked':''} onchange="toggleSuggestedActivity(${i},this.checked)" style="width:20px;height:20px;flex-shrink:0;accent-color:var(--green)">
+      <span style="font-size:18px">${s.icon}</span>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700">${esc(s.name)}</div>
+        <div style="font-size:11px;color:var(--text3)">${esc(s.desc)} · +${s.pts}pt</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Sezione custom: lista con eliminazione
+  const cc=document.getElementById('adminCustomActivities');
+  const customs=activities.filter(a=>a.isCustom);
+  cc.innerHTML=customs.length ? customs.map(a=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:18px">${esc(a.icon)}</span>
+      <div style="flex:1;font-size:13px;color:var(--text2)">${esc(a.name)} <span style="color:var(--text3)">· +${a.pts}pt</span></div>
+      <button style="border:none;background:none;color:var(--red);font-size:18px;cursor:pointer;padding:0 2px" onclick="deleteActivityItem('${a.id}')">×</button>
+    </div>`).join('') : '<div style="font-size:12px;color:var(--text3)">Nessuna attività personalizzata ancora.</div>';
+}
+
+window.toggleSuggestedActivity=async function(index,shouldBeOn){
+  if(!activeChallengeId){showToast('⚠️ Nessuna challenge selezionata');return;}
+  const s=SUGGESTED_ACTIVITIES[index];
+  const existing=activities.find(a=>a.name===s.name&&!a.isCustom);
+
+  if(shouldBeOn && !existing){
+    const item={name:s.name,icon:s.icon,pts:s.pts,desc:s.desc,isCustom:false,challengeId:activeChallengeId,createdAt:Date.now()};
+    if(window._firebaseReady){
+      try{
+        const ref=await window._push(window._ref(window._db,'activities'),item);
+        activities.push({id:ref.key,...item});
+        logEvent(`toggleSuggestedActivity: attivata "${s.name}"`);
+      }catch(e){
+        console.warn('Errore attivazione',e);
+        showToast('⚠️ Non attivata — controlla la connessione');
+        renderAdminActivities(); // ripristina checkbox
+        return;
+      }
+    } else {
+      activities.push({id:'act'+Date.now(),...item});
+    }
+    showToast('"'+s.name+'" attivata ✓');
+  } else if(!shouldBeOn && existing){
+    if(window._firebaseReady){
+      try{
+        await window._remove(window._ref(window._db,'activities/'+existing.id));
+        logEvent(`toggleSuggestedActivity: disattivata "${s.name}"`);
+      }catch(e){
+        console.warn('Errore disattivazione',e);
+        showToast('⚠️ Non disattivata — controlla la connessione');
+        renderAdminActivities();
+        return;
+      }
+    }
+    activities=activities.filter(a=>a.id!==existing.id);
+    showToast('"'+s.name+'" disattivata');
+  }
+  renderActivities();renderAdminActivities();
+};
+
+window.addCustomActivity=async function(){
+  const name=document.getElementById('newActivityName').value.trim();
+  const icon=document.getElementById('newActivityIcon').value.trim()||'⭐';
+  const pts=parseInt(document.getElementById('newActivityPts').value)||5;
+  const desc=document.getElementById('newActivityDesc').value.trim();
+  if(!name){showToast('Scrivi il nome dell\'attività');return;}
+  if(!activeChallengeId){showToast('⚠️ Nessuna challenge selezionata');return;}
+  const item={name,icon,pts,desc,isCustom:true,challengeId:activeChallengeId,createdAt:Date.now()};
+  if(window._firebaseReady){
+    try{
+      const ref=await window._push(window._ref(window._db,'activities'),item);
+      activities.push({id:ref.key,...item});
+      logEvent(`addCustomActivity: creata "${name}" (+${pts}pt)`);
+    }catch(e){
+      console.warn('Errore creazione attività',e);
+      showToast('⚠️ Non salvata — controlla la connessione');
+      return;
+    }
+  } else {
+    activities.push({id:'act'+Date.now(),...item});
+  }
+  document.getElementById('newActivityName').value='';
+  document.getElementById('newActivityIcon').value='⭐';
+  document.getElementById('newActivityPts').value='5';
+  document.getElementById('newActivityDesc').value='';
+  showToast('Attività "'+name+'" aggiunta ✓');
+  renderActivities();renderAdminActivities();
+};
+
+window.deleteActivityItem=async function(id){
+  if(!confirm('Elimina questa attività?'))return;
+  if(window._firebaseReady){
+    try{
+      await window._remove(window._ref(window._db,'activities/'+id));
+      logEvent(`deleteActivityItem: eliminata id=${id}`);
+    }catch(e){
+      console.warn('Errore eliminazione',e);
+      showToast('⚠️ Eliminazione fallita — riprova');
+      return;
+    }
+  }
+  activities=activities.filter(a=>a.id!==id);
+  renderActivities();renderAdminActivities();
+};
+
 window.cleanupFragmentedTips=async function(){
   if(!activeChallengeId){showToast('Nessuna challenge selezionata');return;}
   const toDeleteAdvice=advice.filter(t=>t.challengeId===activeChallengeId);
@@ -3016,10 +3212,11 @@ window.cleanupOrphanTips=async function(){
   if(!window._firebaseReady){showToast('Funzione disponibile solo online');return;}
   showToast('Ricerca residui orfani...');
   try{
-    const [adviceSnap,rulesSnap,videosSnap,challengesSnap]=await Promise.all([
+    const [adviceSnap,rulesSnap,videosSnap,activitiesSnap,challengesSnap]=await Promise.all([
       window._get(window._ref(window._db,'advice')),
       window._get(window._ref(window._db,'rules')),
       window._get(window._ref(window._db,'videos')),
+      window._get(window._ref(window._db,'activities')),
       window._get(window._ref(window._db,'challenges'))
     ]);
     const validIds=new Set();
@@ -3028,6 +3225,7 @@ window.cleanupOrphanTips=async function(){
     adviceSnap.forEach(c=>{ if(!validIds.has(c.val().challengeId)) orphans.push({node:'advice',id:c.key,text:c.val().text}); });
     rulesSnap.forEach(c=>{ if(!validIds.has(c.val().challengeId)) orphans.push({node:'rules',id:c.key,text:c.val().text}); });
     videosSnap.forEach(c=>{ if(!validIds.has(c.val().challengeId)) orphans.push({node:'videos',id:c.key,text:c.val().text||'(video)'}); });
+    activitiesSnap.forEach(c=>{ if(!validIds.has(c.val().challengeId)) orphans.push({node:'activities',id:c.key,text:c.val().name||'(attività)'}); });
     if(!orphans.length){
       showToast('✅ Nessun residuo orfano trovato, tutto pulito');
       return;
@@ -3487,8 +3685,8 @@ async function executeDeleteChallenge(chId){
       for(const p of postsToDelete){
         await window._remove(window._ref(window._db,'posts/'+p.id));
       }
-      // Elimina consigli/regole/video collegati (nei tre nodi separati)
-      for(const node of ['advice','rules','videos']){
+      // Elimina consigli/regole/video/attività collegati (nei quattro nodi separati)
+      for(const node of ['advice','rules','videos','activities']){
         const snap=await window._get(window._ref(window._db,node));
         const toDelete=[];
         snap.forEach(c=>{ if(c.val().challengeId===chId) toDelete.push(c.key); });
