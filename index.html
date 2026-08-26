@@ -742,6 +742,10 @@ textarea.form-input{resize:vertical;min-height:72px}
 
   <!-- FEED -->
   <div class="page active" id="pageFeed">
+    <div id="feedTeamFilterRow" class="tab-row" style="display:none">
+      <button class="tab-btn active" onclick="setFeedFilter('all',this)">Tutti</button>
+      <button class="tab-btn" onclick="setFeedFilter('myteam',this)">👥 La mia squadra</button>
+    </div>
     <div id="dayOneWelcome"></div>
     <div id="weightReminder"></div>
     <div id="feedReminder"></div>
@@ -1165,12 +1169,12 @@ textarea.form-input{resize:vertical;min-height:72px}
     <div class="modal-title" id="activityModalTitle">Conferma attività</div>
     <div style="font-size:15px;color:var(--text2);margin-bottom:16px" id="activityModalDesc"></div>
     <div class="form-group">
-      <label class="form-label">Prova foto (opzionale)</label>
-      <div class="upload-area" onclick="document.getElementById('actPhotoInput').click()" style="padding:18px">
-        <div style="font-size:24px">📷</div>
-        <div style="font-size:13px;color:var(--text3)">Allega una prova</div>
+      <label class="form-label">Foto (opzionale)</label>
+      <div class="upload-area" onclick="document.getElementById('actPhotoInput').click()">
+        <img class="upload-preview" id="actPhotoPreview">
+        <div id="actUploadPh"><div style="font-size:28px">📷</div><div style="font-size:12px;color:var(--text3);margin-top:4px">Tocca per aggiungere una foto</div></div>
       </div>
-      <input type="file" id="actPhotoInput" accept="image/*" capture="environment" style="display:none">
+      <input type="file" id="actPhotoInput" accept="image/*" capture="environment" style="display:none" onchange="handleActPhoto(this)">
     </div>
     <button class="btn btn-primary" onclick="confirmActivity()">Confermo ✓</button>
     <button class="btn" style="background:none;color:var(--text3);margin-top:8px" onclick="closeModal('activityModal')">Annulla</button>
@@ -2362,6 +2366,16 @@ function daysUntilStart(){
   return Math.max(0,Math.round((start-now)/86400000));
 }
 
+let _feedFilter=localStorage.getItem('c11_feedFilter')||'all'; // 'all' | 'myteam'
+
+window.setFeedFilter=function(mode,btn){
+  _feedFilter=mode;
+  document.querySelectorAll('#feedTeamFilterRow .tab-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  localStorage.setItem('c11_feedFilter',mode);
+  renderFeed();
+};
+
 function renderFeed(){
   renderFeedReminder();
   const fab=document.getElementById('fabBtn');
@@ -2370,12 +2384,34 @@ function renderFeed(){
     fab.style.opacity=locked?'0.5':'1';
     fab.style.filter=locked?'grayscale(1)':'none';
   }
+
+  // Il filtro per squadra ha senso solo nelle challenge a squadre e se l'utente ne ha una
+  const filterRow=document.getElementById('feedTeamFilterRow');
+  const isTeamMode=challengeConfig?.mode!=='individual';
+  if(filterRow){
+    filterRow.style.display=(isTeamMode&&currentUser?.team)?'flex':'none';
+    // Sincronizza lo stato visivo dei pulsanti con la preferenza salvata
+    const btns=filterRow.querySelectorAll('.tab-btn');
+    if(btns.length===2){
+      btns[0].classList.toggle('active',_feedFilter==='all');
+      btns[1].classList.toggle('active',_feedFilter==='myteam');
+    }
+  }
+
+  let visiblePosts=posts;
+  if(isTeamMode && currentUser?.team && _feedFilter==='myteam'){
+    visiblePosts=posts.filter(p=>p.team===currentUser.team);
+  }
+
   const c=document.getElementById('feedContainer');
-  if(!posts.length){
-    c.innerHTML=`<div class="empty-state"><div class="empty-icon" style="animation:bounce 1.5s ease infinite">🌿</div><div class="empty-text">Nessun post ancora.<br>Posta il tuo primo pasto!</div></div>`;
+  if(!visiblePosts.length){
+    const msg=_feedFilter==='myteam'
+      ?'La tua squadra non ha ancora postato nulla oggi.'
+      :'Nessun post ancora.<br>Posta il tuo primo pasto!';
+    c.innerHTML=`<div class="empty-state"><div class="empty-icon" style="animation:bounce 1.5s ease infinite">🌿</div><div class="empty-text">${msg}</div></div>`;
     return;
   }
-  c.innerHTML=posts.map((post,i)=>{
+  c.innerHTML=visiblePosts.map((post,i)=>{
     const u=users.find(u=>u.id===post.userId);
     const isCap=u?.role==='captain';
     return `
@@ -2756,6 +2792,21 @@ function renderActivities(){
   document.getElementById('totalPoints').textContent=currentUser?.bonusPoints||0;
 }
 
+let actPhotoDataUrl=null;
+
+window.handleActPhoto=function(input){
+  const file=input.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    actPhotoDataUrl=e.target.result;
+    const preview=document.getElementById('actPhotoPreview');
+    preview.src=actPhotoDataUrl;
+    preview.style.display='block';
+    document.getElementById('actUploadPh').style.display='none';
+  };
+  r.readAsDataURL(file);
+};
+
 window.openActivity=function(id){
   if(!hasChallengeStarted()){
     showToast('⏳ La challenge non è ancora iniziata');
@@ -2767,6 +2818,9 @@ window.openActivity=function(id){
   const act=activities.find(a=>a.id===id);
   if(!act)return;
   currentActivityId=id;
+  actPhotoDataUrl=null;
+  document.getElementById('actPhotoPreview').style.display='none';
+  document.getElementById('actUploadPh').style.display='block';
   document.getElementById('activityModalTitle').textContent=act.icon+' '+act.name;
   document.getElementById('activityModalDesc').textContent=act.desc+` (+${act.pts} punti)`;
   document.getElementById('activityModal').classList.add('open');
@@ -2784,9 +2838,25 @@ window.confirmActivity=async function(){
   currentUser.bonusPoints=prevPoints+act.pts;
   localStorage.setItem('c11_user',JSON.stringify(currentUser));
   closeModal('activityModal');
+
+  // Comprime la foto se presente (stesso metodo già usato per i pasti)
+  let compressedPhoto=null;
+  if(actPhotoDataUrl){
+    try{ compressedPhoto=await compressImage(actPhotoDataUrl); }
+    catch(e){ compressedPhoto=actPhotoDataUrl; }
+  }
+
   if(window._firebaseReady){
     try{
       await window._update(window._ref(window._db,'users/'+currentUser.id),{bonusPoints:currentUser.bonusPoints});
+      // Salva un log della prova (con o senza foto) — non incide sul flusso principale se fallisce
+      try{
+        await window._set(window._push(window._ref(window._db,'activityLog')),{
+          userId:currentUser.id,userName:currentUser.name,team:currentUser.team||'—',
+          activityId:currentActivityId,activityName:act.name,icon:act.icon,pts:act.pts,
+          photoUrl:compressedPhoto,timestamp:Date.now(),challengeId:activeChallengeId
+        });
+      }catch(logErr){ console.warn('Log attività non salvato (non bloccante)',logErr); }
       showToast(`+${act.pts} punti! ${act.icon}`);
       launchConfetti(6);
     }catch(e){
@@ -2803,6 +2873,7 @@ window.confirmActivity=async function(){
   }
   renderActivities();
   currentActivityId=null;
+  actPhotoDataUrl=null;
 };
 
 // ============================================================
