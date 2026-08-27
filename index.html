@@ -771,6 +771,7 @@ textarea.form-input{resize:vertical;min-height:72px}
     <div id="rankIndividual"></div>
     <div id="rankTeam" style="display:none"></div>
     <div id="prizeClassifica" style="margin-top:8px"></div>
+    <div id="resultsSummarySection" style="display:none;margin-top:16px"></div>
   </div>
 
   <!-- BONUS -->
@@ -1184,6 +1185,32 @@ textarea.form-input{resize:vertical;min-height:72px}
   </div>
 </div>
 
+<!-- CONDIVIDI RISULTATI -->
+<div class="modal-overlay" id="resultsModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📢 Condividi i tuoi risultati</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6">Racconta come è andata! Il tuo peso esatto resta sempre privato — qui condividiamo solo il miglioramento in percentuale.</div>
+
+    <div id="resultsStatsPreview" style="display:flex;gap:10px;margin-bottom:16px"></div>
+
+    <div class="form-group">
+      <label class="form-label">Il tuo racconto</label>
+      <textarea class="form-input" id="resultsText" placeholder="Come ti senti? Cosa hai imparato? Di cosa sei più orgoglioso/a?" rows="4" maxlength="800"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Foto (facoltativa, ma consigliata! 📸)</label>
+      <div class="upload-area" onclick="document.getElementById('resultsPhotoInput').click()">
+        <img class="upload-preview" id="resultsPhotoPreview">
+        <div id="resultsUploadPh"><div style="font-size:28px">📷</div><div style="font-size:12px;color:var(--text3);margin-top:4px">Un prima/dopo, un selfie, quello che preferisci</div></div>
+      </div>
+      <input type="file" id="resultsPhotoInput" accept="image/*" style="display:none" onchange="handleResultsPhoto(this)">
+    </div>
+    <button class="btn btn-primary" onclick="submitResults()">Condividi ✓</button>
+    <button class="btn" style="background:none;color:var(--text3);margin-top:8px" onclick="closeModal('resultsModal')">Annulla</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- FIREBASE -->
@@ -1245,7 +1272,7 @@ const MEAL_LABELS = {colazione:'🌅 Colazione',spuntino:'🍎 Spuntino',pranzo:
 let currentUser  = JSON.parse(localStorage.getItem('c11_user')||'null');
 let activeChallengeId = localStorage.getItem('c11_activeChallenge')||null;
 let challengeConfig = {};
-let posts=[], users=[], teams=[], advice=[], rules=[], videos=[], challenges=[];
+let posts=[], users=[], teams=[], advice=[], rules=[], videos=[], challenges=[], results=[];
 let currentActivityId=null, photoDataUrl=null, prizePhotoDataUrl=null;
 
 // ============================================================
@@ -1852,14 +1879,15 @@ window.clearEventLog=function(){
 async function refreshFilteredData(){
   if(!window._firebaseReady){loadDemoData();return;}
   try{
-    const [postsSnap,usersSnap,teamsSnap,adviceSnap,rulesSnap,videosSnap,activitiesSnap]=await Promise.all([
+    const [postsSnap,usersSnap,teamsSnap,adviceSnap,rulesSnap,videosSnap,activitiesSnap,resultsSnap]=await Promise.all([
       window._get(window._ref(window._db,'posts')),
       window._get(window._ref(window._db,'users')),
       window._get(window._ref(window._db,'teams')),
       window._get(window._ref(window._db,'advice')),
       window._get(window._ref(window._db,'rules')),
       window._get(window._ref(window._db,'videos')),
-      window._get(window._ref(window._db,'activities'))
+      window._get(window._ref(window._db,'activities')),
+      window._get(window._ref(window._db,'results'))
     ]);
     posts=[];postsSnap.forEach(c=>{posts.push({id:c.key,...c.val()});});
     posts=activeChallengeId?posts.filter(p=>p.challengeId===activeChallengeId):[];
@@ -1883,9 +1911,13 @@ async function refreshFilteredData(){
     const rawActivities=[];activitiesSnap.forEach(c=>{rawActivities.push({id:c.key,...c.val()});});
     activities=activeChallengeId?rawActivities.filter(t=>t.challengeId===activeChallengeId):[];
 
-    logEvent(`refreshFilteredData: consigli=${advice.length}/${rawAdvice.length}, regole=${rules.length}/${rawRules.length}, video=${videos.length}/${rawVideos.length}, attività=${activities.length}/${rawActivities.length}`);
+    const rawResults=[];resultsSnap.forEach(c=>{rawResults.push({id:c.key,...c.val()});});
+    results=activeChallengeId?rawResults.filter(t=>t.challengeId===activeChallengeId):[];
+    results.sort((a,b)=>b.timestamp-a.timestamp);
 
-    renderFeed();renderRanking();renderTips();updateProfile();updateTipsBadge();renderActivities();
+    logEvent(`refreshFilteredData: consigli=${advice.length}/${rawAdvice.length}, regole=${rules.length}/${rawRules.length}, video=${videos.length}/${rawVideos.length}, attività=${activities.length}/${rawActivities.length}, risultati=${results.length}/${rawResults.length}`);
+
+    renderFeed();renderRanking();renderTips();updateProfile();updateTipsBadge();renderActivities();renderResultsSummary();
     if(isAdmin()){renderAdminUsers();renderActivityMonitor();renderAdminTeams();renderAdminAdvice();renderAdminRules();renderAdminVideos();renderAdminActivities();}
   }catch(e){console.warn('Errore refresh dati',e);}
 }
@@ -1998,11 +2030,12 @@ window.manualRefreshFeed=async function(){
 async function loadContent(){
   if(!window._firebaseReady){renderTips();updateTipsBadge();renderActivities();return;}
   try{
-    const [adviceSnap,rulesSnap,videosSnap,activitiesSnap]=await Promise.all([
+    const [adviceSnap,rulesSnap,videosSnap,activitiesSnap,resultsSnap]=await Promise.all([
       window._get(window._ref(window._db,'advice')),
       window._get(window._ref(window._db,'rules')),
       window._get(window._ref(window._db,'videos')),
-      window._get(window._ref(window._db,'activities'))
+      window._get(window._ref(window._db,'activities')),
+      window._get(window._ref(window._db,'results'))
     ]);
     const rawAdvice=[];adviceSnap.forEach(c=>{rawAdvice.push({id:c.key,...c.val()});});
     advice=activeChallengeId?rawAdvice.filter(t=>t.challengeId===activeChallengeId):[];
@@ -2016,11 +2049,16 @@ async function loadContent(){
     const rawActivities=[];activitiesSnap.forEach(c=>{rawActivities.push({id:c.key,...c.val()});});
     activities=activeChallengeId?rawActivities.filter(t=>t.challengeId===activeChallengeId):[];
 
-    logEvent(`loadContent: consigli=${advice.length}/${rawAdvice.length}, regole=${rules.length}/${rawRules.length}, video=${videos.length}/${rawVideos.length}, attività=${activities.length}/${rawActivities.length}`);
+    const rawResults=[];resultsSnap.forEach(c=>{rawResults.push({id:c.key,...c.val()});});
+    results=activeChallengeId?rawResults.filter(t=>t.challengeId===activeChallengeId):[];
+    results.sort((a,b)=>b.timestamp-a.timestamp);
+
+    logEvent(`loadContent: consigli=${advice.length}/${rawAdvice.length}, regole=${rules.length}/${rawRules.length}, video=${videos.length}/${rawVideos.length}, attività=${activities.length}/${rawActivities.length}, risultati=${results.length}/${rawResults.length}`);
 
     renderTips();
     updateTipsBadge();
     renderActivities();
+    renderResultsSummary();
     if(isAdmin()){renderAdminAdvice();renderAdminRules();renderAdminVideos();renderAdminActivities();}
   }catch(e){
     console.warn('Errore caricamento contenuti',e);
@@ -2054,8 +2092,9 @@ function loadDemoData(){
     {id:'act1',name:'Giornata Detox',icon:'🌿',pts:5,desc:'Completa la giornata detox con i prodotti indicati',isCustom:false,challengeId:'demo'},
     {id:'act2',name:'Allenamento',icon:'💪',pts:3,desc:'Allenati almeno 30 minuti',isCustom:false,challengeId:'demo'},
   ];
+  results=[];
   document.getElementById('headerDays').textContent=challengeConfig.duration;
-  renderFeed();renderRanking();renderTips();updateProfile();renderDayDots();renderPrize();renderActivities();
+  renderFeed();renderRanking();renderTips();updateProfile();renderDayDots();renderPrize();renderActivities();renderResultsSummary();
   if(isAdmin()){renderAdminUsers();renderActivityMonitor();renderAdminTeams();renderAdminAdvice();renderAdminRules();renderAdminVideos();renderAdminActivities();}
   updateTipsBadge();
 }
@@ -2454,19 +2493,29 @@ function renderFeed(){
   }
 
   let visiblePosts=posts;
+  let visibleResults=results;
   if(isTeamMode && currentUser?.team && _feedFilter==='myteam'){
     visiblePosts=posts.filter(p=>p.team===currentUser.team);
+    visibleResults=results.filter(r=>r.team===currentUser.team);
   }
 
+  // Unisce pasti e risultati condivisi in un unico flusso ordinato per data
+  const feedItems=[
+    ...visiblePosts.map(p=>({...p,_kind:'meal'})),
+    ...visibleResults.map(r=>({...r,_kind:'result'}))
+  ].sort((a,b)=>b.timestamp-a.timestamp);
+
   const c=document.getElementById('feedContainer');
-  if(!visiblePosts.length){
+  if(!feedItems.length){
     const msg=_feedFilter==='myteam'
       ?'La tua squadra non ha ancora postato nulla oggi.'
       :'Nessun post ancora.<br>Posta il tuo primo pasto!';
     c.innerHTML=`<div class="empty-state"><div class="empty-icon" style="animation:bounce 1.5s ease infinite">🌿</div><div class="empty-text">${msg}</div></div>`;
     return;
   }
-  c.innerHTML=visiblePosts.map((post,i)=>{
+  c.innerHTML=feedItems.map((item,i)=>{
+    if(item._kind==='result') return renderResultCard(item,i);
+    const post=item;
     const u=users.find(u=>u.id===post.userId);
     const isCap=u?.role==='captain';
     return `
@@ -2490,6 +2539,62 @@ function renderFeed(){
       </div>
     </div>`;
   }).join('');
+}
+
+// Card speciale per un risultato condiviso, con bordo dorato — mostra solo
+// la percentuale di miglioramento, mai il peso esatto, per nessun imbarazzo.
+function renderResultCard(r,i){
+  const u=users.find(u=>u.id===r.userId);
+  return `
+  <div class="post-card" style="animation-delay:${i*0.06}s;border:2px solid var(--gold);background:linear-gradient(135deg,rgba(255,215,0,0.06),transparent)">
+    <div class="post-header">
+      ${avatarHtml(u||{name:r.userName},38,'')}
+      <div class="post-meta">
+        <div class="post-author">${esc(r.userName)} 🎉</div>
+        <div class="post-info">${challengeConfig?.mode==='individual'?'':(r.team&&r.team!=='—'?r.team+' · ':'')}${formatTime(r.timestamp)}</div>
+      </div>
+      <div class="meal-badge" style="background:var(--gold);color:white">📢 Risultati</div>
+    </div>
+    ${r.photoUrl?`<img class="post-image" src="${r.photoUrl}" loading="lazy" onclick="openLightbox('${r.id}')">`:''}
+    <div class="post-body">
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <div style="flex:1;background:var(--green-light);border-radius:10px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-weight:900;color:var(--green-dark)">${r.pctLoss>0?'-':''}${(r.pctLoss||0).toFixed(1)}%</div>
+          <div style="font-size:10px;color:var(--text3)">miglioramento</div>
+        </div>
+        <div style="flex:1;background:rgba(255,215,0,0.12);border-radius:10px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-weight:900;color:var(--gold-dark,#B8860B)">${r.points||0}</div>
+          <div style="font-size:10px;color:var(--text3)">punti totali</div>
+        </div>
+      </div>
+      ${r.text?`<div class="post-desc">${esc(r.text)}</div>`:''}
+    </div>
+  </div>`;
+}
+
+// Sezione riepilogativa nella pagina Classifica: tutti i risultati condivisi
+// dai partecipanti, in un unico posto facile da consultare.
+function renderResultsSummary(){
+  const section=document.getElementById('resultsSummarySection');
+  if(!section)return;
+  if(!results.length){ section.style.display='none'; return; }
+  section.style.display='block';
+  section.innerHTML=`
+    <div class="card" style="border:2px solid var(--gold);background:linear-gradient(135deg,rgba(255,215,0,0.05),transparent)">
+      <div class="card-title">📢 Risultati condivisi (${results.length})</div>
+      ${results.map(r=>{
+        const u=users.find(u=>u.id===r.userId);
+        return `
+        <div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+          ${avatarHtml(u||{name:r.userName},34,'')}
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700">${esc(r.userName)}${(challengeConfig?.mode!=='individual'&&r.team&&r.team!=='—')?' · '+esc(r.team):''}</div>
+            <div style="font-size:12px;color:var(--green-dark);font-weight:700">${r.pctLoss>0?'-':''}${(r.pctLoss||0).toFixed(1)}% · ${r.points||0}pt</div>
+            ${r.text?`<div style="font-size:12px;color:var(--text2);margin-top:4px">${esc(r.text)}</div>`:''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
 }
 
 // Traccia le reazioni date dall'utente (localStorage: sopravvive ai refresh)
@@ -2690,6 +2795,7 @@ async function _doSubmitPost(){
       renderFeed();
       updateProfile();
       showToast(isLate?'Post recuperato! 📌':'Post inviato! +1 punto 🌿');
+      await checkAllMealsBonus(); // se oggi ha postato tutti i pasti, assegna il bonus da solo
     }catch(e){
       console.warn('Errore salvataggio post',e);
       showToast('⚠️ Post non salvato — controlla la connessione e riprova');
@@ -2700,6 +2806,46 @@ async function _doSubmitPost(){
     showToast(isLate?'Post recuperato! 📌':'Post inviato! +1 punto 🌿');
   }
 };
+
+// Assegna automaticamente il bonus "Tutti i Pasti" quando colazione, pranzo
+// e cena risultano tutti postati oggi dallo stesso utente — non richiede
+// più un click manuale, evitando il rischio di spuntarlo per errore.
+async function checkAllMealsBonus(){
+  const act=activities.find(a=>a.name==='Tutti i Pasti');
+  if(!act || !currentUser) return;
+  const today=getTodayKey();
+  const done=JSON.parse(localStorage.getItem(actKey(today))||'[]');
+  if(done.includes(act.id)) return; // già assegnato oggi
+
+  const todaysMeals=new Set(
+    posts.filter(p=>p.userId===currentUser.id && getTodayKey(new Date(p.timestamp))===today)
+         .map(p=>p.mealType)
+  );
+  const required=['colazione','pranzo','cena'];
+  const hasAll=required.every(m=>todaysMeals.has(m));
+  if(!hasAll) return;
+
+  done.push(act.id);
+  localStorage.setItem(actKey(today),JSON.stringify(done));
+  const prevPoints=currentUser.bonusPoints||0;
+  currentUser.bonusPoints=prevPoints+act.pts;
+  localStorage.setItem('c11_user',JSON.stringify(currentUser));
+  if(window._firebaseReady){
+    try{
+      await window._update(window._ref(window._db,'users/'+currentUser.id),{bonusPoints:currentUser.bonusPoints});
+      logEvent(`checkAllMealsBonus: assegnato automaticamente "Tutti i Pasti" (+${act.pts}pt)`);
+      showToast(`🎉 Tutti i pasti di oggi! +${act.pts} punti bonus`);
+      launchConfetti(8);
+    }catch(e){
+      console.warn('Errore assegnazione bonus automatico',e);
+      currentUser.bonusPoints=prevPoints;
+      localStorage.setItem('c11_user',JSON.stringify(currentUser));
+      localStorage.setItem(actKey(today),JSON.stringify(done.filter(d=>d!==act.id)));
+    }
+  }
+  renderActivities();
+  updateProfile();
+}
 
 // ============================================================
 // CLASSIFICA
@@ -2873,16 +3019,134 @@ window.handleActPhoto=function(input){
   r.readAsDataURL(file);
 };
 
+// ============================================================
+// CONDIVIDI RISULTATI — flusso dedicato, una volta per challenge
+// ============================================================
+let resultsPhotoDataUrl=null;
+let _resultsAct=null; // l'attività (punti/id) collegata, per assegnare il bonus al submit
+
+function openResultsShare(act){
+  // A differenza delle altre attività (giornaliere), condividere i risultati
+  // ha senso una sola volta per l'intera challenge, non ogni giorno.
+  const already=results.find(r=>r.userId===currentUser.id && r.challengeId===activeChallengeId);
+  if(already){
+    showToast('Hai già condiviso i tuoi risultati per questa challenge! 🎉');
+    return;
+  }
+  _resultsAct=act;
+  resultsPhotoDataUrl=null;
+  document.getElementById('resultsText').value='';
+  document.getElementById('resultsPhotoPreview').style.display='none';
+  document.getElementById('resultsUploadPh').style.display='block';
+
+  // Mostra subito la percentuale di miglioramento (mai il peso esatto) e i punti attuali
+  const pct=calcLoss(currentUser);
+  const preview=document.getElementById('resultsStatsPreview');
+  preview.innerHTML=`
+    <div style="flex:1;background:var(--green-light);border-radius:12px;padding:12px;text-align:center">
+      <div style="font-size:22px;font-weight:900;color:var(--green-dark)">${pct>0?'-':''}${pct.toFixed(1)}%</div>
+      <div style="font-size:11px;color:var(--text3)">miglioramento</div>
+    </div>
+    <div style="flex:1;background:var(--gold-light,#FFF8E1);border-radius:12px;padding:12px;text-align:center">
+      <div style="font-size:22px;font-weight:900;color:var(--gold-dark,#B8860B)">${currentUser.bonusPoints||0}</div>
+      <div style="font-size:11px;color:var(--text3)">punti totali</div>
+    </div>`;
+
+  document.getElementById('resultsModal').classList.add('open');
+}
+
+window.handleResultsPhoto=function(input){
+  const file=input.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    resultsPhotoDataUrl=e.target.result;
+    const preview=document.getElementById('resultsPhotoPreview');
+    preview.src=resultsPhotoDataUrl;
+    preview.style.display='block';
+    document.getElementById('resultsUploadPh').style.display='none';
+  };
+  r.readAsDataURL(file);
+};
+
+window.submitResults=async function(){
+  const text=document.getElementById('resultsText').value.trim();
+  if(!text && !resultsPhotoDataUrl){
+    showToast('Scrivi qualcosa o allega una foto — anche solo poche righe!');
+    return;
+  }
+  if(!activeChallengeId){showToast('⚠️ Nessuna challenge attiva');return;}
+
+  let compressedPhoto=null;
+  if(resultsPhotoDataUrl){
+    try{ compressedPhoto=await compressImage(resultsPhotoDataUrl); }
+    catch(e){ compressedPhoto=resultsPhotoDataUrl; }
+  }
+
+  const pct=calcLoss(currentUser);
+  const item={
+    userId:currentUser.id,userName:currentUser.name,team:currentUser.team||'—',
+    text,photoUrl:compressedPhoto,pctLoss:pct,points:currentUser.bonusPoints||0,
+    timestamp:Date.now(),challengeId:activeChallengeId
+  };
+  closeModal('resultsModal');
+
+  if(window._firebaseReady){
+    try{
+      const ref=window._push(window._ref(window._db,'results'));
+      await window._set(ref,item);
+      logEvent(`submitResults: condiviso risultato su challenge=${activeChallengeId}, key=${ref.key}`);
+      results.unshift({id:ref.key,...item});
+
+      // Se c'è un'attività "Condividi i risultati" attiva, assegna anche i suoi punti
+      if(_resultsAct){
+        const today=getTodayKey();
+        const done=JSON.parse(localStorage.getItem(actKey(today))||'[]');
+        if(!done.includes(_resultsAct.id)){
+          done.push(_resultsAct.id);
+          localStorage.setItem(actKey(today),JSON.stringify(done));
+          const newPts=(currentUser.bonusPoints||0)+_resultsAct.pts;
+          currentUser.bonusPoints=newPts;
+          localStorage.setItem('c11_user',JSON.stringify(currentUser));
+          await window._update(window._ref(window._db,'users/'+currentUser.id),{bonusPoints:newPts});
+        }
+      }
+      renderFeed();
+      renderActivities();
+      renderResultsSummary();
+      updateProfile();
+      showToast('Risultati condivisi! Grazie per l\'ispirazione 🎉');
+      launchConfetti(10);
+    }catch(e){
+      console.warn('Errore condivisione risultati',e);
+      showToast('⚠️ Non condiviso — controlla la connessione e riprova');
+    }
+  } else {
+    item.id='res_'+Date.now();
+    results.unshift(item);
+    renderFeed();renderResultsSummary();
+    showToast('Risultati condivisi! 🎉');
+  }
+  _resultsAct=null;
+};
+
 window.openActivity=function(id){
   if(!hasChallengeStarted()){
     showToast('⏳ La challenge non è ancora iniziata');
     return;
   }
+  const act=activities.find(a=>a.id===id);
+  if(!act)return;
+
+  // "Condividi i risultati" ha un flusso dedicato più ricco (testo + foto +
+  // percentuale calcolata automaticamente), non il semplice conferma standard.
+  if(act.name==='Condividi i risultati'){
+    openResultsShare(act);
+    return;
+  }
+
   const today=getTodayKey();
   const done=JSON.parse(localStorage.getItem(actKey(today))||'[]');
   if(done.includes(id)){showToast('Già completata oggi!');return;}
-  const act=activities.find(a=>a.id===id);
-  if(!act)return;
   currentActivityId=id;
   actPhotoDataUrl=null;
   document.getElementById('actPhotoPreview').style.display='none';
@@ -3823,7 +4087,7 @@ async function executeDeleteChallenge(chId){
         await window._remove(window._ref(window._db,'posts/'+p.id));
       }
       // Elimina consigli/regole/video/attività collegati (nei quattro nodi separati)
-      for(const node of ['advice','rules','videos','activities']){
+      for(const node of ['advice','rules','videos','activities','results']){
         const snap=await window._get(window._ref(window._db,node));
         const toDelete=[];
         snap.forEach(c=>{ if(c.val().challengeId===chId) toDelete.push(c.key); });
@@ -3900,7 +4164,7 @@ function actKey(dateStr){
   return 'c11_act_'+(activeChallengeId||'none')+'_'+dateStr;
 }
 
-function getTodayKey(){return new Date().toISOString().split('T')[0];}
+function getTodayKey(d){return (d||new Date()).toISOString().split('T')[0];}
 
 function calcStreak(){
   let s=0;const today=new Date();
