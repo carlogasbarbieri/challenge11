@@ -602,6 +602,11 @@ textarea.form-input{resize:vertical;min-height:72px}
 }
 .podium-spot.first .podium-base{animation-delay:0.15s}
 @keyframes podiumRise{from{height:0!important;opacity:0}to{opacity:1}}
+@keyframes podiumReveal{
+  0%{opacity:0;transform:translateY(40px) scale(0.6)}
+  60%{opacity:1;transform:translateY(-6px) scale(1.08)}
+  100%{opacity:1;transform:translateY(0) scale(1)}
+}
 .podium-pos-num{font-size:24px;font-weight:900;color:rgba(255,255,255,0.9)}
 
 /* OVERTAKE BANNER */
@@ -1918,6 +1923,7 @@ async function refreshFilteredData(){
     logEvent(`refreshFilteredData: consigli=${advice.length}/${rawAdvice.length}, regole=${rules.length}/${rawRules.length}, video=${videos.length}/${rawVideos.length}, attività=${activities.length}/${rawActivities.length}, risultati=${results.length}/${rawResults.length}`);
 
     renderFeed();renderRanking();renderTips();updateProfile();updateTipsBadge();renderActivities();renderResultsSummary();
+    maybeAutoShowPodium();
     if(isAdmin()){renderAdminUsers();renderActivityMonitor();renderAdminTeams();renderAdminAdvice();renderAdminRules();renderAdminVideos();renderAdminActivities();}
   }catch(e){console.warn('Errore refresh dati',e);}
 }
@@ -2059,6 +2065,7 @@ async function loadContent(){
     updateTipsBadge();
     renderActivities();
     renderResultsSummary();
+    maybeAutoShowPodium();
     if(isAdmin()){renderAdminAdvice();renderAdminRules();renderAdminVideos();renderAdminActivities();}
   }catch(e){
     console.warn('Errore caricamento contenuti',e);
@@ -2110,7 +2117,8 @@ window.showPage=function(name,btn){
   const fab=document.getElementById('fabBtn');
   fab.style.display=(name==='Feed')?'flex':'none';
   if(name==='Feed'){
-    const locked=!hasChallengeStarted();
+    // Grigio sia prima dell'inizio, sia dopo la chiusura della finestra di recupero
+    const locked=!hasChallengeStarted() || (isChallengeOver() && !canStillRecoverMeals());
     fab.style.opacity=locked?'0.5':'1';
     fab.style.filter=locked?'grayscale(1)':'none';
   }
@@ -2381,6 +2389,44 @@ function renderFeedReminder(){
     return;
   }
 
+  // Challenge conclusa: banner dedicato con conto alla rovescia, priorità massima
+  if(isChallengeOver()){
+    const h=hoursSinceEnd();
+    const weighedAfterEnd=currentUser.lastWeightDate &&
+      new Date(currentUser.lastWeightDate).getTime()>=challengeEndTime().getTime();
+
+    if(h<RECOVERY_WINDOW_H){
+      const hoursLeft=Math.max(0,RECOVERY_WINDOW_H-h);
+      const urgent=h>=REMINDER_AT_H;
+      const timeLeftStr=hoursLeft>=1
+        ? Math.floor(hoursLeft)+(Math.floor(hoursLeft)===1?' ora':' ore')
+        : Math.max(1,Math.round(hoursLeft*60))+' minuti';
+      el.innerHTML=`<div class="reminder-card ${urgent?'warning':'countdown'}">
+        <div class="reminder-icon">${urgent?'⚠️':'🏁'}</div>
+        <div class="reminder-body">
+          <div class="reminder-title">${urgent?'Ultime ore!':'Challenge conclusa! 🎉'}</div>
+          <div class="reminder-text">
+            Hai ancora <strong>${timeLeftStr}</strong> per recuperare eventuali pasti mancanti.
+            ${weighedAfterEnd?'La tua pesata finale è registrata ✓':'<strong>Non dimenticare la pesata finale!</strong> Vai su Profilo → Aggiorna peso.'}
+          </div>
+        </div>
+      </div>`;
+    } else {
+      el.innerHTML=`<div class="reminder-card ${weighedAfterEnd?'countdown':'warning'}">
+        <div class="reminder-icon">${weighedAfterEnd?'🏆':'⚖️'}</div>
+        <div class="reminder-body">
+          <div class="reminder-title">Challenge terminata</div>
+          <div class="reminder-text">
+            ${weighedAfterEnd
+              ? 'Pesata registrata! Il podio finale sta per essere svelato 🎉'
+              : '<strong>Manca solo la tua pesata finale!</strong> Vai su Profilo → Aggiorna peso per comparire in classifica.'}
+          </div>
+        </div>
+      </div>`;
+    }
+    return;
+  }
+
   const now=new Date();
   const hour=now.getHours();
   const today=now.toDateString();
@@ -2460,6 +2506,66 @@ function daysUntilStart(){
   return Math.max(0,Math.round((start-now)/86400000));
 }
 
+// ============================================================
+// FASI FINALI DELLA CHALLENGE
+// Timeline dalla mezzanotte successiva all'ultimo giorno (T+0):
+//   T+0   → challenge conclusa, banner di avviso
+//   T+10h → promemoria "ultime 2 ore per recuperare i pasti"
+//   T+12h → chiude il recupero pasti, resta solo la pesata finale
+//   T+16h → podio automatico (o prima, se tutti hanno gia inserito la pesata)
+// ============================================================
+const RECOVERY_WINDOW_H=12;   // ore dopo la fine in cui si possono ancora recuperare pasti
+const REMINDER_AT_H=10;       // ora in cui scatta il promemoria "ultime 2 ore"
+const PODIUM_DEADLINE_H=16;   // ora limite oltre la quale il podio parte comunque
+
+// Momento esatto in cui la challenge si conclude (mezzanotte dopo l'ultimo giorno)
+function challengeEndTime(){
+  if(!challengeConfig?.startDate) return null;
+  const dur=parseInt(challengeConfig.duration)||11;
+  const end=new Date(challengeConfig.startDate);
+  end.setHours(0,0,0,0);
+  end.setDate(end.getDate()+dur); // giorno successivo all'ultimo giorno utile
+  return end;
+}
+
+// Ore trascorse dalla fine (negativo se la challenge e ancora in corso)
+function hoursSinceEnd(){
+  const end=challengeEndTime();
+  if(!end) return -1;
+  return (Date.now()-end.getTime())/3600000;
+}
+
+function isChallengeOver(){
+  return hoursSinceEnd()>=0;
+}
+
+// Si possono ancora recuperare pasti nelle prime 12 ore dopo la fine
+function canStillRecoverMeals(){
+  const h=hoursSinceEnd();
+  return h>=0 && h<RECOVERY_WINDOW_H;
+}
+
+// Tutti i partecipanti hanno registrato la pesata finale?
+function allParticipantsWeighed(){
+  const parts=users.filter(u=>u.challengeId===activeChallengeId);
+  if(!parts.length) return false;
+  const end=challengeEndTime();
+  if(!end) return false;
+  // Considera "pesato" chi ha aggiornato il peso dopo la fine della challenge
+  return parts.every(u=>{
+    if(!u.weightCurrent) return false;
+    if(!u.lastWeightDate) return false;
+    return new Date(u.lastWeightDate).getTime()>=end.getTime();
+  });
+}
+
+// Il podio finale deve essere mostrato?
+function shouldShowFinalPodium(){
+  if(!isChallengeOver()) return false;
+  if(hoursSinceEnd()>=PODIUM_DEADLINE_H) return true; // scadenza raggiunta
+  return allParticipantsWeighed();                     // oppure tutti hanno pesato
+}
+
 let _feedFilter=localStorage.getItem('c11_feedFilter')||'all'; // 'all' | 'myteam'
 
 window.setFeedFilter=function(mode,btn){
@@ -2474,7 +2580,8 @@ function renderFeed(){
   renderFeedReminder();
   const fab=document.getElementById('fabBtn');
   if(fab){
-    const locked=!hasChallengeStarted();
+    // Grigio sia prima dell'inizio, sia dopo la chiusura della finestra di recupero
+    const locked=!hasChallengeStarted() || (isChallengeOver() && !canStillRecoverMeals());
     fab.style.opacity=locked?'0.5':'1';
     fab.style.filter=locked?'grayscale(1)':'none';
   }
@@ -2665,6 +2772,11 @@ window.openPostModal=function(){
       : `⏳ La challenge inizia il ${dateStr} — mancano ${days} giorni`);
     return;
   }
+  // Dopo la finestra di recupero (12h dalla fine) non si possono più aggiungere pasti
+  if(isChallengeOver() && !canStillRecoverMeals()){
+    showToast('🏁 La challenge è conclusa — non è più possibile aggiungere pasti');
+    return;
+  }
   photoDataUrl=null;
   postIsLate=false;
   document.getElementById('photoPreview').style.display='none';
@@ -2743,6 +2855,11 @@ async function _doSubmitPost(){
   if(!currentUser)return;
   if(!hasChallengeStarted()){
     showToast('⏳ La challenge non è ancora iniziata');
+    closeModal('postModal');
+    return;
+  }
+  if(isChallengeOver() && !canStillRecoverMeals()){
+    showToast('🏁 La challenge è conclusa — non è più possibile aggiungere pasti');
     closeModal('postModal');
     return;
   }
@@ -3139,8 +3256,15 @@ window.openActivity=function(id){
 
   // "Condividi i risultati" ha un flusso dedicato più ricco (testo + foto +
   // percentuale calcolata automaticamente), non il semplice conferma standard.
+  // Resta disponibile anche dopo la fine: è pensato proprio per il giorno dopo.
   if(act.name==='Condividi i risultati'){
     openResultsShare(act);
+    return;
+  }
+
+  // Le altre attività bonus si chiudono con la fine della challenge
+  if(isChallengeOver()){
+    showToast('🏁 La challenge è conclusa — le attività bonus sono chiuse');
     return;
   }
 
@@ -4115,27 +4239,67 @@ window.showEndChallenge=function(){
   const sorted=[...users].filter(u=>u.role!=='admin'||calcLoss(u)!==0).sort((a,b)=>calcScore(b)-calcScore(a));
   const winner=sorted[0];
   if(!winner){showToast('Nessun partecipante');return;}
-  // Podio fotografico top 3
   const top3=sorted.slice(0,3);
   const medals=['🥇','🥈','🥉'];
-  document.getElementById('endPodium').innerHTML=`<div style="display:flex;justify-content:center;gap:16px;align-items:flex-end">
-    ${top3.map((u,i)=>`
-      <div style="text-align:center;animation:fadeInUp 0.5s ease both;animation-delay:${i*0.15}s">
-        <div style="position:relative;display:inline-block">
-          ${avatarHtml(u,i===0?70:54)}
-          <div style="position:absolute;bottom:-6px;right:-6px;font-size:${i===0?26:20}px">${medals[i]}</div>
-        </div>
-        <div style="color:white;font-size:13px;font-weight:700;margin-top:8px">${u.name.split(' ')[0]}</div>
-        <div style="color:var(--green);font-size:12px;font-weight:800">-${calcLoss(u).toFixed(1)}%</div>
-      </div>`).join('')}
-  </div>`;
-  document.getElementById('endWinner').textContent='🎉 '+winner.name;
-  document.getElementById('endWinnerScore').textContent='-'+calcLoss(winner).toFixed(2)+'% perso · '+winner.bonusPoints+' punti bonus';
-  const prize=challengeConfig?.prize;
-  document.getElementById('endPrize').innerHTML=prize?.title?`🎁 <strong>${esc(prize.title)}</strong><br><span style="font-size:13px">${esc(prize.desc||'')}</span>`:'';
+
+  // Parte vuoto: i posti vengono svelati uno alla volta, dal 3° al 1°
+  const podiumEl=document.getElementById('endPodium');
+  podiumEl.innerHTML='<div style="display:flex;justify-content:center;gap:16px;align-items:flex-end;min-height:170px" id="podiumRow"></div>';
+  document.getElementById('endWinner').textContent='';
+  document.getElementById('endWinnerScore').textContent='';
+  document.getElementById('endPrize').innerHTML='';
   document.getElementById('endOverlay').classList.add('show');
-  launchConfetti(40);
+
+  const spotHtml=(u,pos)=>`
+    <div style="text-align:center;animation:podiumReveal 0.7s cubic-bezier(.34,1.56,.64,1) both;order:${pos===1?2:(pos===2?1:3)}">
+      <div style="position:relative;display:inline-block">
+        ${avatarHtml(u,pos===1?76:56)}
+        <div style="position:absolute;bottom:-6px;right:-6px;font-size:${pos===1?28:21}px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))">${medals[pos-1]}</div>
+      </div>
+      <div style="color:white;font-size:${pos===1?15:13}px;font-weight:${pos===1?900:700};margin-top:8px">${esc(u.name.split(' ')[0])}</div>
+      <div style="color:var(--green);font-size:12px;font-weight:800">-${calcLoss(u).toFixed(1)}%</div>
+      <div style="color:rgba(255,255,255,.55);font-size:11px">${u.bonusPoints||0} punti</div>
+    </div>`;
+
+  const row=document.getElementById('podiumRow');
+  const reveals=[];
+  if(top3[2]) reveals.push({u:top3[2],pos:3,label:'🥉 Terzo posto'});
+  if(top3[1]) reveals.push({u:top3[1],pos:2,label:'🥈 Secondo posto'});
+  if(top3[0]) reveals.push({u:top3[0],pos:1,label:'🥇 E il vincitore è...'});
+
+  let step=0;
+  const revealNext=()=>{
+    if(step>=reveals.length){
+      // Finito: mostra nome vincitore, punteggio e premio
+      document.getElementById('endWinner').textContent='🎉 '+winner.name;
+      document.getElementById('endWinnerScore').textContent='-'+calcLoss(winner).toFixed(2)+'% perso · '+(winner.bonusPoints||0)+' punti bonus';
+      const prize=challengeConfig?.prize;
+      document.getElementById('endPrize').innerHTML=prize?.title?`🎁 <strong>${esc(prize.title)}</strong><br><span style="font-size:13px">${esc(prize.desc||'')}</span>`:'';
+      launchConfetti(50);
+      return;
+    }
+    const r=reveals[step];
+    document.getElementById('endWinner').textContent=r.label;
+    row.insertAdjacentHTML('beforeend',spotHtml(r.u,r.pos));
+    launchConfetti(r.pos===1?25:10);
+    step++;
+    setTimeout(revealNext, r.pos===1?1400:1600);
+  };
+  setTimeout(revealNext,700);
 };
+
+// Mostra il podio automaticamente quando le condizioni sono soddisfatte
+// (tutti hanno pesato, oppure sono passate 16 ore dalla fine).
+// Una sola volta per challenge e per dispositivo, per non essere invadente.
+function maybeAutoShowPodium(){
+  if(!activeChallengeId) return;
+  if(!shouldShowFinalPodium()) return;
+  const key='c11_podiumShown_'+activeChallengeId;
+  if(localStorage.getItem(key)) return;
+  localStorage.setItem(key,'1');
+  logEvent(`maybeAutoShowPodium: podio finale mostrato automaticamente (${hoursSinceEnd().toFixed(1)}h dalla fine)`);
+  setTimeout(()=>showEndChallenge(),1200); // piccolo ritardo, così l'app finisce di caricare
+}
 
 // ============================================================
 // UTILS
