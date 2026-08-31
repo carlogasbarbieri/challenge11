@@ -1216,6 +1216,20 @@ textarea.form-input{resize:vertical;min-height:72px}
   </div>
 </div>
 
+<!-- COMMENTI -->
+<div class="modal-overlay" id="commentsModal">
+  <div class="modal" style="display:flex;flex-direction:column;max-height:80vh">
+    <div class="modal-handle"></div>
+    <div class="modal-title">💬 Commenti</div>
+    <div id="commentsList" style="flex:1;overflow-y:auto;margin-bottom:12px;min-height:80px"></div>
+    <div style="display:flex;gap:8px;align-items:flex-end;border-top:1px solid var(--border);padding-top:12px">
+      <textarea class="form-input" id="newCommentText" placeholder="Scrivi un commento..." rows="1" maxlength="300" style="flex:1;resize:none"></textarea>
+      <button class="btn btn-primary" style="padding:10px 16px;flex-shrink:0" onclick="submitComment()">Invia</button>
+    </div>
+    <button class="btn" style="background:none;color:var(--text3);margin-top:8px" onclick="closeModal('commentsModal')">Chiudi</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- FIREBASE -->
@@ -1277,7 +1291,7 @@ const MEAL_LABELS = {colazione:'🌅 Colazione',spuntino:'🍎 Spuntino',pranzo:
 let currentUser  = JSON.parse(localStorage.getItem('c11_user')||'null');
 let activeChallengeId = localStorage.getItem('c11_activeChallenge')||null;
 let challengeConfig = {};
-let posts=[], users=[], teams=[], advice=[], rules=[], videos=[], challenges=[], results=[];
+let posts=[], users=[], teams=[], advice=[], rules=[], videos=[], challenges=[], results=[], comments=[];
 let currentActivityId=null, photoDataUrl=null, prizePhotoDataUrl=null;
 
 // ============================================================
@@ -1884,7 +1898,7 @@ window.clearEventLog=function(){
 async function refreshFilteredData(){
   if(!window._firebaseReady){loadDemoData();return;}
   try{
-    const [postsSnap,usersSnap,teamsSnap,adviceSnap,rulesSnap,videosSnap,activitiesSnap,resultsSnap]=await Promise.all([
+    const [postsSnap,usersSnap,teamsSnap,adviceSnap,rulesSnap,videosSnap,activitiesSnap,resultsSnap,commentsSnap]=await Promise.all([
       window._get(window._ref(window._db,'posts')),
       window._get(window._ref(window._db,'users')),
       window._get(window._ref(window._db,'teams')),
@@ -1892,7 +1906,8 @@ async function refreshFilteredData(){
       window._get(window._ref(window._db,'rules')),
       window._get(window._ref(window._db,'videos')),
       window._get(window._ref(window._db,'activities')),
-      window._get(window._ref(window._db,'results'))
+      window._get(window._ref(window._db,'results')),
+      window._get(window._ref(window._db,'comments'))
     ]);
     posts=[];postsSnap.forEach(c=>{posts.push({id:c.key,...c.val()});});
     posts=activeChallengeId?posts.filter(p=>p.challengeId===activeChallengeId):[];
@@ -1920,7 +1935,10 @@ async function refreshFilteredData(){
     results=activeChallengeId?rawResults.filter(t=>t.challengeId===activeChallengeId):[];
     results.sort((a,b)=>b.timestamp-a.timestamp);
 
-    logEvent(`refreshFilteredData: consigli=${advice.length}/${rawAdvice.length}, regole=${rules.length}/${rawRules.length}, video=${videos.length}/${rawVideos.length}, attività=${activities.length}/${rawActivities.length}, risultati=${results.length}/${rawResults.length}`);
+    const rawComments=[];commentsSnap.forEach(c=>{rawComments.push({id:c.key,...c.val()});});
+    comments=activeChallengeId?rawComments.filter(c=>c.challengeId===activeChallengeId):[];
+
+    logEvent(`refreshFilteredData: consigli=${advice.length}/${rawAdvice.length}, regole=${rules.length}/${rawRules.length}, video=${videos.length}/${rawVideos.length}, attività=${activities.length}/${rawActivities.length}, risultati=${results.length}/${rawResults.length}, commenti=${comments.length}`);
 
     renderFeed();renderRanking();renderTips();updateProfile();updateTipsBadge();renderActivities();renderResultsSummary();
     maybeAutoShowPodium();
@@ -1967,9 +1985,12 @@ function loadData(){
 async function loadPosts(){
   if(!window._firebaseReady){renderFeed();return;}
   try{
-    const snap=await window._get(window._ref(window._db,'posts'));
+    const [postsSnap,commentsSnap]=await Promise.all([
+      window._get(window._ref(window._db,'posts')),
+      window._get(window._ref(window._db,'comments'))
+    ]);
     const raw=[];
-    snap.forEach(c=>{raw.push({id:c.key,...c.val()});});
+    postsSnap.forEach(c=>{raw.push({id:c.key,...c.val()});});
     const fromServer=activeChallengeId?raw.filter(p=>p.challengeId===activeChallengeId):[];
 
     // FONDAMENTALE: unisci i post del server con quelli già noti localmente,
@@ -1984,7 +2005,17 @@ async function loadPosts(){
     merged.sort((a,b)=>b.timestamp-a.timestamp);
     posts=merged;
 
-    logEvent(`loadPosts: server=${fromServer.length}, locali-non-ancora-sul-server=${localOnly.length}, totale=${posts.length}`);
+    // Stesso principio di unione sicura per i commenti
+    const rawComments=[];
+    commentsSnap.forEach(c=>{rawComments.push({id:c.key,...c.val()});});
+    const commentsFromServer=activeChallengeId?rawComments.filter(c=>c.challengeId===activeChallengeId):[];
+    const commentServerIds=new Set(commentsFromServer.map(c=>c.id));
+    const commentsLocalOnly=comments.filter(c=>
+      c.id && !commentServerIds.has(c.id) && c.challengeId===activeChallengeId
+    );
+    comments=[...commentsFromServer,...commentsLocalOnly];
+
+    logEvent(`loadPosts: server=${fromServer.length}, locali-non-ancora-sul-server=${localOnly.length}, totale=${posts.length}, commenti=${comments.length}`);
     renderFeed();
     updateProfile();
   }catch(e){
@@ -2100,6 +2131,7 @@ function loadDemoData(){
     {id:'act2',name:'Allenamento',icon:'💪',pts:3,desc:'Allenati almeno 30 minuti',isCustom:false,challengeId:'demo'},
   ];
   results=[];
+  comments=[];
   document.getElementById('headerDays').textContent=challengeConfig.duration;
   renderFeed();renderRanking();renderTips();updateProfile();renderDayDots();renderPrize();renderActivities();renderResultsSummary();
   if(isAdmin()){renderAdminUsers();renderActivityMonitor();renderAdminTeams();renderAdminAdvice();renderAdminRules();renderAdminVideos();renderAdminActivities();}
@@ -2642,6 +2674,7 @@ function renderFeed(){
           <button class="react-btn${hasReacted(post.id,'strong')?' reacted':''}" onclick="react('${post.id}','strong')"><span class="react-emoji">💪</span> <span id="r_${post.id}_strong">${post.reactions?.strong||0}</span></button>
           <button class="react-btn${hasReacted(post.id,'fire')?' reacted':''}" onclick="react('${post.id}','fire')"><span class="react-emoji">🔥</span> <span id="r_${post.id}_fire">${post.reactions?.fire||0}</span></button>
           <button class="react-btn${hasReacted(post.id,'heart')?' reacted':''}" onclick="react('${post.id}','heart')"><span class="react-emoji">❤️</span> <span id="r_${post.id}_heart">${post.reactions?.heart||0}</span></button>
+          <button class="react-btn" onclick="openComments('${post.id}')"><span class="react-emoji">💬</span> <span>${commentCount(post.id)}</span></button>
         </div>
       </div>
     </div>`;
@@ -2752,6 +2785,88 @@ window.react=async function(postId,key){
 };
 
 // ============================================================
+// COMMENTI — modal dedicato, non nel flusso di render del Feed,
+// così un aggiornamento in background (polling) non cancella mai
+// un commento che l'utente sta scrivendo.
+// ============================================================
+function commentCount(postId){
+  return comments.filter(c=>c.postId===postId).length;
+}
+
+let _currentCommentsPostId=null;
+
+window.openComments=function(postId){
+  _currentCommentsPostId=postId;
+  document.getElementById('newCommentText').value='';
+  renderCommentsList();
+  document.getElementById('commentsModal').classList.add('open');
+};
+
+function renderCommentsList(){
+  const list=document.getElementById('commentsList');
+  const mine=comments.filter(c=>c.postId===_currentCommentsPostId).sort((a,b)=>a.timestamp-b.timestamp);
+  if(!mine.length){
+    list.innerHTML='<div style="text-align:center;color:var(--text3);font-size:13px;padding:20px 0">Nessun commento ancora — scrivi il primo!</div>';
+    return;
+  }
+  list.innerHTML=mine.map(c=>{
+    const canDelete=c.userId===currentUser?.id || isAdmin();
+    return `
+    <div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+      ${avatarHtml({name:c.userName},30)}
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:700">${esc(c.userName)} <span style="font-weight:400;color:var(--text3);font-size:11px">${formatTime(c.timestamp)}</span></div>
+        <div style="font-size:13px;color:var(--text2);word-break:break-word">${esc(c.text)}</div>
+      </div>
+      ${canDelete?`<button style="border:none;background:none;color:var(--text3);font-size:16px;cursor:pointer;padding:0 2px;flex-shrink:0" onclick="deleteComment('${c.id}')">×</button>`:''}
+    </div>`;
+  }).join('');
+}
+
+window.submitComment=async function(){
+  const text=document.getElementById('newCommentText').value.trim();
+  if(!text)return;
+  if(!activeChallengeId){showToast('⚠️ Nessuna challenge attiva');return;}
+  if(!_currentCommentsPostId)return;
+  const item={postId:_currentCommentsPostId,userId:currentUser.id,userName:currentUser.name,
+    text,timestamp:Date.now(),challengeId:activeChallengeId};
+  document.getElementById('newCommentText').value=''; // pulisce subito, sensazione reattiva
+  if(window._firebaseReady){
+    try{
+      const ref=window._push(window._ref(window._db,'comments'));
+      await window._set(ref,item);
+      comments.push({id:ref.key,...item});
+      logEvent(`submitComment: commento aggiunto su post=${_currentCommentsPostId}`);
+    }catch(e){
+      console.warn('Errore salvataggio commento',e);
+      showToast('⚠️ Commento non salvato — controlla la connessione');
+      document.getElementById('newCommentText').value=text; // ripristina il testo se fallisce
+      return;
+    }
+  } else {
+    comments.push({id:'cm'+Date.now(),...item});
+  }
+  renderCommentsList();
+  renderFeed(); // aggiorna il conteggio visibile sotto il post
+};
+
+window.deleteComment=async function(id){
+  if(!confirm('Eliminare questo commento?'))return;
+  if(window._firebaseReady){
+    try{
+      await window._remove(window._ref(window._db,'comments/'+id));
+    }catch(e){
+      console.warn('Errore eliminazione commento',e);
+      showToast('⚠️ Eliminazione fallita — riprova');
+      return;
+    }
+  }
+  comments=comments.filter(c=>c.id!==id);
+  renderCommentsList();
+  renderFeed();
+};
+
+// ============================================================
 // POST PASTO
 // ============================================================
 let postIsLate = false;
@@ -2804,7 +2919,11 @@ window.handlePhoto=function(input){
 };
 
 // Comprime immagine via Canvas → base64 JPEG piccolo (~50KB max)
-async function compressImage(dataUrl, maxW=900, quality=0.72){
+// Compressione foto: 700px e qualità 0.6 dimezzano il peso rispetto ai
+// precedenti 900px/0.72, con differenza visiva quasi impercettibile su schermo
+// di telefono. Riduce circa alla metà l'occupazione del database e il traffico
+// dati — importante perché le foto sono salvate dentro il database stesso.
+async function compressImage(dataUrl, maxW=700, quality=0.6){
   return new Promise(resolve=>{
     const img=new Image();
     img.onload=()=>{
@@ -4097,7 +4216,7 @@ window.handlePrizePhoto=function(input){
   const file=input.files[0];if(!file)return;
   const r=new FileReader();
   r.onload=async e=>{
-    try{ prizePhotoDataUrl=await compressImage(e.target.result,800,0.65); }
+    try{ prizePhotoDataUrl=await compressImage(e.target.result,700,0.6); }
     catch(err){ prizePhotoDataUrl=e.target.result; }
     document.getElementById('prizeUploadArea').innerHTML=`<img src="${prizePhotoDataUrl}" style="width:100%;border-radius:var(--radius-sm);max-height:180px;object-fit:cover">`;
   };
@@ -4210,8 +4329,8 @@ async function executeDeleteChallenge(chId){
       for(const p of postsToDelete){
         await window._remove(window._ref(window._db,'posts/'+p.id));
       }
-      // Elimina consigli/regole/video/attività collegati (nei quattro nodi separati)
-      for(const node of ['advice','rules','videos','activities','results']){
+      // Elimina consigli/regole/video/attività/risultati/commenti collegati
+      for(const node of ['advice','rules','videos','activities','results','comments']){
         const snap=await window._get(window._ref(window._db,node));
         const toDelete=[];
         snap.forEach(c=>{ if(c.val().challengeId===chId) toDelete.push(c.key); });
