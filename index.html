@@ -711,6 +711,9 @@ textarea.form-input{resize:vertical;min-height:72px}
       Già registrato? <span style="color:var(--green);cursor:pointer;font-weight:700" onclick="doLoginExisting()">Accedi</span>
     </p>
   </div>
+  <div style="text-align:center;font-size:11px;color:#999;margin-top:16px">
+    Challenge App <span class="app-version-label">—</span>
+  </div>
 </div>
 
 <!-- MAIN APP -->
@@ -755,6 +758,7 @@ textarea.form-input{resize:vertical;min-height:72px}
       <button class="tab-btn" onclick="setFeedFilter('myteam',this)">👥 La mia squadra</button>
     </div>
     <div id="dayOneWelcome"></div>
+    <div id="newVideoBanner"></div>
     <div id="weightReminder"></div>
     <div id="feedReminder"></div>
     <div id="prizePreview"></div>
@@ -800,8 +804,11 @@ textarea.form-input{resize:vertical;min-height:72px}
       <div class="card-title">Come si vince</div>
       <div style="font-size:13px;color:var(--text2);line-height:1.8">
         <div>📊 <strong>Classifica:</strong> % perdita peso (Day 1 → Day finale)</div>
-        <div>🏅 <strong>Punti bonus:</strong> moltiplicatore sulla classifica finale</div>
-        <div>📸 <strong>Ogni pasto postato:</strong> +1 punto</div>
+        <div>🤝 <strong>Punteggio partecipazione:</strong> fino a 10 punti che si sommano alla percentuale</div>
+        <div>📸 <strong>Ogni post:</strong> +1 punto (max 5 al giorno)</div>
+        <div>💬 <strong>Commenti ai post degli altri:</strong> +1 punto (max 5 al giorno)</div>
+        <div>❤️ <strong>Reazioni ai post degli altri:</strong> +0,5 punti (max 10 al giorno)</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:6px">Chi partecipa alla vita del gruppo scala la classifica anche a parità di peso perso.</div>
       </div>
     </div>
   </div>
@@ -809,11 +816,13 @@ textarea.form-input{resize:vertical;min-height:72px}
   <!-- TIPS -->
   <div class="page" id="pageTips">
     <div class="tab-row" id="tipsTabRow">
-      <button class="tab-btn active" onclick="switchTipsTab('tips',this)">Consigli</button>
-      <button class="tab-btn" onclick="switchTipsTab('rules',this)">Regole</button>
+      <button class="tab-btn active" onclick="switchTipsTab('rules',this)">📋 Regole</button>
+      <button class="tab-btn" onclick="switchTipsTab('tips',this)">💡 Consigli</button>
+      <button class="tab-btn" onclick="switchTipsTab('videos',this)">🎬 Video <span id="videoTabDot" style="display:none;color:var(--coral,#FF6B4A)">●</span></button>
     </div>
-    <div id="tipsList"></div>
-    <div id="rulesList" style="display:none"></div>
+    <div id="rulesList"></div>
+    <div id="tipsList" style="display:none"></div>
+    <div id="videosList" style="display:none"></div>
     <div id="tipsDiagnostic" style="margin-top:20px;padding:12px;background:var(--surface2);border-radius:10px;font-size:11px;color:var(--text3);font-family:monospace;word-break:break-all;display:none"></div>
   </div>
 
@@ -879,6 +888,9 @@ textarea.form-input{resize:vertical;min-height:72px}
       <button class="btn btn-outline" onclick="copyRecoveryCode()">📋 Copia il codice</button>
     </div>
     <button class="btn" style="background:var(--surface2);color:var(--text2);border:1px solid var(--border);margin-bottom:8px" onclick="doLogout()">Esci dall'account</button>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:10px;padding-bottom:6px">
+      Challenge App <span class="app-version-label">—</span>
+    </div>
   </div>
 
   <!-- ADMIN -->
@@ -1145,14 +1157,15 @@ textarea.form-input{resize:vertical;min-height:72px}
     <div class="modal-handle"></div>
     <div class="modal-title">📸 Posta il tuo pasto</div>
     <div class="form-group">
-      <label class="form-label">Tipo di pasto</label>
+      <label class="form-label">Tipo di post</label>
       <select class="form-input" id="postMealType">
         <option value="colazione">🌅 Colazione</option>
         <option value="spuntino">🍎 Spuntino</option>
         <option value="pranzo">☀️ Pranzo</option>
         <option value="cena">🌙 Cena</option>
+        <option value="movimento">🚶 Movimento</option>
       </select>
-      <div style="font-size:11px;color:var(--text3);margin-top:5px">💡 Puoi postare più "Spuntino" nello stesso giorno. Frullati e shaker vanno bene a qualsiasi pasto — descrivilo qui sotto.</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:5px">💡 Puoi postare più "Spuntino" nello stesso giorno. Frullati e shaker vanno bene a qualsiasi pasto — descrivilo qui sotto.<br>🚶 Usa <strong>Movimento</strong> per camminate, passi e allenamenti.</div>
     </div>
     <div class="form-group">
       <label class="form-label">Quando?</label>
@@ -1161,9 +1174,11 @@ textarea.form-input{resize:vertical;min-height:72px}
         <button id="postTimeLate" class="btn btn-outline btn-sm" style="flex:1" onclick="setPostTime('late')">Recupero pasto</button>
       </div>
       <div id="lateTimeRow" style="display:none;margin-top:10px">
+        <label class="form-label">Giorno del pasto</label>
+        <input class="form-input" id="postLateDate" type="date" style="margin-bottom:10px">
         <label class="form-label">Orario del pasto</label>
         <input class="form-input" id="postLateTime" type="time">
-        <div style="font-size:11px;color:var(--text3);margin-top:4px">📌 Apparirà come "post recuperato" nel feed</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">📌 Apparirà come "post recuperato" nel feed. Puoi recuperare anche un giorno precedente della challenge.</div>
       </div>
     </div>
     <div class="form-group">
@@ -1328,9 +1343,22 @@ const SUGGESTED_ACTIVITIES = [
 ];
 let activities=[]; // attività bonus REALMENTE attive per la challenge corrente
 
+// ============================================================
+// VERSIONE APP — aggiornare qui a ogni rilascio.
+// Appare in fondo alla pagina di login e al profilo.
+// ============================================================
+const APP_VERSION = '2.0.0';
+
 const MEAL_LABELS = {colazione:'🌅 Colazione',spuntino:'🍎 Spuntino',pranzo:'☀️ Pranzo',cena:'🌙 Cena',
+  movimento:'🚶 Movimento',
   // Vecchie etichette mantenute per compatibilità con post creati prima di questa modifica
   spuntino_m:'🍎 Spuntino',spuntino_p:'🥤 Spuntino',frullato:'🥤 Frullato'};
+
+// Tetto giornaliero di punti guadagnabili pubblicando post: evita che chi
+// pubblica moltissime foto in un giorno gonfi il punteggio rispetto a chi
+// partecipa in modo normale. I post oltre il tetto restano pubblicati, ma
+// non assegnano più punti per quella giornata.
+const MAX_POST_POINTS_PER_DAY = 5;
 
 let currentUser  = JSON.parse(localStorage.getItem('c11_user')||'null');
 let activeChallengeId = localStorage.getItem('c11_activeChallenge')||null;
@@ -2743,6 +2771,7 @@ window.setFeedFilter=function(mode,btn){
 
 function renderFeed(){
   renderFeedReminder();
+  renderNewVideoBanner();
   const fab=document.getElementById('fabBtn');
   if(fab){
     // Grigio sia prima dell'inizio, sia dopo la chiusura della finestra di recupero
@@ -2800,7 +2829,7 @@ function renderFeed(){
         </div>
         <div class="meal-badge">${MEAL_LABELS[post.mealType]||post.mealType}</div>
       </div>
-      ${post.photoUrl?`<img class="post-image" src="${post.photoUrl}" loading="lazy" onclick="openLightbox('${post.id}')">`:`<div class="post-image-ph">${post.mealType==='frullato'?'🥤':'🍽️'}</div>`}
+      ${post.photoUrl?`<img class="post-image" src="${post.photoUrl}" loading="lazy" onclick="openLightbox('${post.id}')">`:`<div class="post-image-ph">${post.mealType==='frullato'?'🥤':(post.mealType==='movimento'?'🚶':'🍽️')}</div>`}
       <div class="post-body">
         ${post.desc?`<div class="post-desc">${esc(post.desc)}</div>`:''}
         <div class="reactions">
@@ -2884,6 +2913,10 @@ window.react=async function(postId,key){
   const post=posts.find(p=>p.id===postId);
   if(!post)return;
   if(!post.reactions)post.reactions={};
+  // reactedBy traccia CHI ha dato quale reazione — serve per il punteggio
+  // community (commenti/reazioni verso GLI ALTRI). I conteggi aggregati in
+  // `reactions` restano per la UI, questo campo in più è solo per lo scoring.
+  if(!post.reactedBy)post.reactedBy={};
 
   const mine=myReactions();
   if(!mine[postId])mine[postId]={};
@@ -2893,9 +2926,12 @@ window.react=async function(postId,key){
   if(already){
     post.reactions[key]=Math.max(0,(post.reactions[key]||0)-1);
     delete mine[postId][key];
+    if(post.reactedBy[currentUser.id]) delete post.reactedBy[currentUser.id][key];
   } else {
     post.reactions[key]=(post.reactions[key]||0)+1;
     mine[postId][key]=true;
+    if(!post.reactedBy[currentUser.id])post.reactedBy[currentUser.id]={};
+    post.reactedBy[currentUser.id][key]=true;
   }
   localStorage.setItem('c11_myReactions',JSON.stringify(mine));
 
@@ -2912,7 +2948,7 @@ window.react=async function(postId,key){
   }
 
   if(window._firebaseReady){
-    try{ await window._update(window._ref(window._db,'posts/'+postId+'/reactions'),post.reactions); }
+    try{ await window._update(window._ref(window._db,'posts/'+postId),{reactions:post.reactions,reactedBy:post.reactedBy}); }
     catch(e){ console.warn('Errore salvataggio reazione',e); }
   }
 };
@@ -3009,7 +3045,23 @@ window.setPostTime=function(mode){
   document.getElementById('postTimeNow').className='btn btn-sm '+(postIsLate?'btn-outline':'btn-primary');
   document.getElementById('postTimeLate').className='btn btn-sm '+(postIsLate?'btn-primary':'btn-outline');
   document.getElementById('lateTimeRow').style.display=postIsLate?'block':'none';
+  if(postIsLate)prepareLateDateField();
 };
+
+// Prepara il selettore del giorno per il recupero: si può scegliere solo un
+// giorno compreso tra l'inizio della challenge e oggi — mai nel futuro.
+function prepareLateDateField(){
+  const el=document.getElementById('postLateDate');
+  if(!el)return;
+  const today=getTodayKey();
+  el.max=today;
+  if(challengeConfig&&challengeConfig.startDate){
+    el.min=getTodayKey(new Date(challengeConfig.startDate));
+  } else {
+    el.removeAttribute('min');
+  }
+  if(!el.value)el.value=today; // per default il giorno corrente
+}
 
 window.openPostModal=function(){
   if(!hasChallengeStarted()){
@@ -3137,13 +3189,37 @@ async function _doSubmitPost(){
   let isLate=false;
   if(postIsLate){
     const lateTime=document.getElementById('postLateTime').value;
+    const lateDate=document.getElementById('postLateDate')?.value;
     if(lateTime){
       const [h,m]=lateTime.split(':');
-      const d=new Date();d.setHours(parseInt(h),parseInt(m),0,0);
+      // Il giorno scelto (se indicato) sostituisce quello odierno: così si può
+      // recuperare un pasto di un giorno precedente della challenge.
+      const d=lateDate?new Date(lateDate+'T00:00:00'):new Date();
+      d.setHours(parseInt(h),parseInt(m),0,0);
+      if(d.getTime()>Date.now()){
+        showToast('⚠️ Non puoi recuperare un pasto nel futuro');
+        return;
+      }
+      if(challengeConfig&&challengeConfig.startDate){
+        const start=new Date(challengeConfig.startDate);start.setHours(0,0,0,0);
+        if(d.getTime()<start.getTime()){
+          showToast('⚠️ Quel giorno è precedente all\'inizio della challenge');
+          return;
+        }
+      }
       timestamp=d.getTime();
       isLate=true;
     }
   }
+
+  // Tetto giornaliero ai punti da post: si contano i post già pubblicati
+  // dall'utente nello stesso giorno del post che sta inviando. Oltre il tetto
+  // il post viene comunque pubblicato, ma non assegna punti.
+  const postDayKey=getTodayKey(new Date(timestamp));
+  const alreadyThatDay=posts.filter(p=>
+    p.userId===currentUser.id && getTodayKey(new Date(p.timestamp))===postDayKey
+  ).length;
+  const earnsPoint = alreadyThatDay < MAX_POST_POINTS_PER_DAY;
   const post={userId:currentUser.id,userName:currentUser.name,team:currentUser.team||'—',
     mealType,desc,timestamp,isLate,reactions:{strong:0,fire:0,heart:0},
     photoUrl:compressedPhoto,challengeId:activeChallengeId};
@@ -3157,13 +3233,19 @@ async function _doSubmitPost(){
       // aspettare un listener/rilettura — stesso principio già applicato a consigli/regole.
       posts.unshift({id:nr.key,...post});
       pausePollingBriefly(8000); // il polling non deve toccare il feed subito dopo la pubblicazione
-      const newPts=(currentUser.bonusPoints||0)+1;
-      currentUser.bonusPoints=newPts;
-      localStorage.setItem('c11_user',JSON.stringify(currentUser));
-      await window._update(window._ref(window._db,'users/'+currentUser.id),{bonusPoints:newPts});
+      if(earnsPoint){
+        const newPts=(currentUser.bonusPoints||0)+1;
+        currentUser.bonusPoints=newPts;
+        localStorage.setItem('c11_user',JSON.stringify(currentUser));
+        await window._update(window._ref(window._db,'users/'+currentUser.id),{bonusPoints:newPts});
+      }
       renderFeed();
       updateProfile();
-      showToast(isLate?'Post recuperato! 📌':'Post inviato! +1 punto 🌿');
+      showToast(
+        !earnsPoint
+          ? `Post pubblicato ✓ — hai già raggiunto i ${MAX_POST_POINTS_PER_DAY} punti da post per quel giorno`
+          : (isLate?'Post recuperato! 📌':'Post inviato! +1 punto 🌿')
+      );
       await checkAllMealsBonus(); // se oggi ha postato tutti i pasti, assegna il bonus da solo
     }catch(e){
       console.warn('Errore salvataggio post',e);
@@ -3172,7 +3254,11 @@ async function _doSubmitPost(){
   } else {
     post.id='demo_'+Date.now();
     posts.unshift(post);renderFeed();
-    showToast(isLate?'Post recuperato! 📌':'Post inviato! +1 punto 🌿');
+    showToast(
+      !earnsPoint
+        ? `Post pubblicato ✓ — hai già raggiunto i ${MAX_POST_POINTS_PER_DAY} punti da post per quel giorno`
+        : (isLate?'Post recuperato! 📌':'Post inviato! +1 punto 🌿')
+    );
   }
 };
 
@@ -3223,7 +3309,67 @@ function calcLoss(u){
   if(!u.weightStart||!u.weightCurrent)return 0;
   return((u.weightStart-u.weightCurrent)/u.weightStart*100);
 }
-function calcScore(u){return calcLoss(u)+(u.bonusPoints||0)*0.1;}
+
+// ============================================================
+// PUNTEGGIO COMMUNITY — quanto una persona partecipa e interagisce,
+// non solo quanto pesa meno. Va a sommarsi (non moltiplicarsi) alla
+// percentuale di peso perso, sulla stessa scala di grandezza.
+// ============================================================
+const COMMUNITY_PTS_COMMENT=1;      // commentare il post di un altro
+const COMMUNITY_PTS_REACTION=0.5;   // reagire al post di un altro
+const COMMUNITY_MAX_COMMENTS_PER_DAY=5;
+const COMMUNITY_MAX_REACTIONS_PER_DAY=10;
+const COMMUNITY_TARGET_PTS_PER_DAY=3;
+const COMMUNITY_MAX_SCORE=10;
+
+function dayKeyOf(ts){return new Date(ts).toDateString();}
+
+function communityCommentPoints(userId){
+  const byDay={};
+  comments.forEach(c=>{
+    if(c.userId!==userId)return;
+    const post=posts.find(p=>p.id===c.postId);
+    if(!post||post.userId===userId)return;
+    const k=dayKeyOf(c.timestamp);
+    byDay[k]=(byDay[k]||0)+1;
+  });
+  let total=0;
+  Object.values(byDay).forEach(n=>{ total+=Math.min(n,COMMUNITY_MAX_COMMENTS_PER_DAY); });
+  return total*COMMUNITY_PTS_COMMENT;
+}
+
+function communityReactionPoints(userId){
+  const byDay={};
+  posts.forEach(post=>{
+    if(post.userId===userId)return;
+    const given=post.reactedBy&&post.reactedBy[userId];
+    if(!given)return;
+    const k=dayKeyOf(post.timestamp);
+    const n=Object.keys(given).length;
+    byDay[k]=(byDay[k]||0)+n;
+  });
+  let total=0;
+  Object.values(byDay).forEach(n=>{ total+=Math.min(n,COMMUNITY_MAX_REACTIONS_PER_DAY); });
+  return total*COMMUNITY_PTS_REACTION;
+}
+
+function communityRawPoints(u){
+  return (u.bonusPoints||0) + communityCommentPoints(u.id) + communityReactionPoints(u.id);
+}
+
+function communityScore(u){
+  const dur=parseInt(challengeConfig?.duration)||11;
+  const target=dur*COMMUNITY_TARGET_PTS_PER_DAY;
+  if(target<=0)return 0;
+  return Math.min(COMMUNITY_MAX_SCORE, communityRawPoints(u)/target*COMMUNITY_MAX_SCORE);
+}
+
+// ATTIVA dalla v2.0.0 — formula community: alla % di peso perso si somma un
+// punteggio di partecipazione (max 10 punti) che premia chi posta, commenta e
+// reagisce ai post degli altri, con tetti giornalieri anti-spam.
+function calcScore(u){return calcLoss(u)+communityScore(u);}
+// Formula storica, tenuta qui come riferimento in caso servisse tornare indietro:
+// function calcScore(u){return calcLoss(u)+(u.bonusPoints||0)*0.1;}
 
 let _lastRankOrder = []; // per rilevare i sorpassi
 
@@ -3592,7 +3738,7 @@ function getYouTubeId(url){
 }
 
 function renderTips(){
-  const renderCard=(t,icon,label,extraClass)=>{
+  const renderCard=(t,icon,label,extraClass,isNew)=>{
     const ytId=t.videoUrl?getYouTubeId(t.videoUrl):null;
     const videoHtml=ytId?`
       <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px;margin-top:10px">
@@ -3600,8 +3746,9 @@ function renderTips(){
           style="position:absolute;top:0;left:0;width:100%;height:100%;border-radius:8px"></iframe>
       </div>`:
       (t.videoUrl?`<a href="${t.videoUrl}" target="_blank" style="display:block;margin-top:8px;color:var(--green);font-size:13px;font-weight:700">▶ Guarda il video →</a>`:'');
+    const newBadge=isNew?`<span style="background:#FF6B4A;color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:10px;margin-left:8px;vertical-align:middle">NUOVO 🎬</span>`:'';
     return `<div class="tip-card ${extraClass||''}">
-      <div class="tip-category">${icon} ${label}</div>
+      <div class="tip-category">${icon} ${label}${newBadge}</div>
       ${t.text?`<div class="tip-text">${esc(t.text)}</div>`:''}
       ${videoHtml}
     </div>`;
@@ -3609,17 +3756,22 @@ function renderTips(){
 
   const emptyState=`<div class="empty-state" style="padding:30px 0"><div class="empty-icon">📭</div><div class="empty-text">Nessun contenuto ancora.</div></div>`;
 
-  // Tab "Consigli" mostra consigli + video insieme
-  const adviceAndVideos=[
-    ...advice.map(t=>renderCard(t,'💡','Consiglio')),
-    ...videos.map(t=>renderCard(t,'🎬','Video'))
-  ];
-  document.getElementById('tipsList').innerHTML=adviceAndVideos.length?adviceAndVideos.join(''):emptyState;
-
-  // Tab "Regole" mostra solo le regole
+  // Tre sezioni completamente separate: Regole, Consigli, Video
   document.getElementById('rulesList').innerHTML=rules.length
     ?rules.map(t=>renderCard(t,'📋','Regola','rule')).join('')
     :emptyState;
+
+  document.getElementById('tipsList').innerHTML=advice.length
+    ?advice.map(t=>renderCard(t,'💡','Consiglio')).join('')
+    :emptyState;
+
+  // I video più recenti vengono evidenziati come "NUOVO" per le prime ore
+  const videosSorted=[...videos].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  document.getElementById('videosList').innerHTML=videosSorted.length
+    ?videosSorted.map(t=>renderCard(t,'🎬','Video',null,isRecentVideo(t))).join('')
+    :emptyState;
+
+  updateVideoTabDot();
 
   // Pannello diagnostico: appare solo se non c'è nulla da mostrare in nessuna delle tre categorie
   const diag=document.getElementById('tipsDiagnostic');
@@ -3636,9 +3788,72 @@ function renderTips(){
 
 window.switchTipsTab=function(tab,btn){
   document.querySelectorAll('#tipsTabRow .tab-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('tipsList').style.display=tab==='tips'?'block':'none';
+  if(btn)btn.classList.add('active');
   document.getElementById('rulesList').style.display=tab==='rules'?'block':'none';
+  document.getElementById('tipsList').style.display=tab==='tips'?'block':'none';
+  document.getElementById('videosList').style.display=tab==='videos'?'block':'none';
+  if(tab==='videos')markVideosSeen();
+};
+
+// ============================================================
+// SEGNALAZIONE NUOVI VIDEO
+// Un video è "nuovo" per NEW_VIDEO_HOURS ore dalla pubblicazione.
+// Il banner nel Feed e il pallino sulla tab spariscono una volta
+// che l'utente ha aperto la sezione Video.
+// ============================================================
+const NEW_VIDEO_HOURS=48;
+
+function isRecentVideo(v){
+  if(!v||!v.createdAt)return false;
+  return (Date.now()-v.createdAt) < NEW_VIDEO_HOURS*3600000;
+}
+
+function recentVideos(){
+  return videos.filter(isRecentVideo);
+}
+
+// Video recenti che l'utente non ha ancora visto (confronto sul più recente)
+function hasUnseenVideos(){
+  const recent=recentVideos();
+  if(!recent.length)return false;
+  const newest=Math.max(...recent.map(v=>v.createdAt||0));
+  const seen=parseInt(localStorage.getItem('c11_videosSeenAt')||'0');
+  return newest>seen;
+}
+
+function markVideosSeen(){
+  localStorage.setItem('c11_videosSeenAt',Date.now().toString());
+  updateVideoTabDot();
+  renderNewVideoBanner();
+}
+
+function updateVideoTabDot(){
+  const dot=document.getElementById('videoTabDot');
+  if(dot)dot.style.display=hasUnseenVideos()?'inline':'none';
+}
+
+// Banner cliccabile nel Feed che porta direttamente ai Video
+function renderNewVideoBanner(){
+  const el=document.getElementById('newVideoBanner');
+  if(!el)return;
+  if(!hasUnseenVideos()){el.innerHTML='';return;}
+  const n=recentVideos().length;
+  el.innerHTML=`<div onclick="goToVideos()" style="cursor:pointer;background:linear-gradient(135deg,#FF6B4A,#ff8b6a);color:#fff;border-radius:12px;padding:12px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(255,107,74,0.3)">
+    <div style="font-size:22px">🎬</div>
+    <div style="flex:1">
+      <div style="font-weight:800;font-size:14px">${n>1?'Nuovi video disponibili!':'Nuovo video disponibile!'}</div>
+      <div style="font-size:12px;opacity:0.9">Tocca per guardarlo nella sezione Video</div>
+    </div>
+    <div style="font-size:18px">→</div>
+  </div>`;
+}
+
+window.goToVideos=function(){
+  // Usa lo stesso pulsante della barra di navigazione, così lo stato visivo resta coerente
+  const navBtn=document.querySelector('.nav-item[onclick*="\'Tips\'"]');
+  if(navBtn) showPage('Tips',navBtn);
+  const btns=document.querySelectorAll('#tipsTabRow .tab-btn');
+  if(btns.length>=3) switchTipsTab('videos',btns[2]);
 };
 
 function updateTipsBadge(){
@@ -4103,15 +4318,19 @@ window.adminJoinChallenge=async function(){
   if(!ch){showToast('Codice challenge non valido');return;}
   // Aggiorna SOLO la partecipazione dell'admin — non tocca activeChallengeId
   // (quale challenge sta gestendo nel pannello), che restano due cose separate.
-  const prev={challengeId:currentUser.challengeId,weightStart:currentUser.weightStart,weightCurrent:currentUser.weightCurrent};
+  // I punti bonus vanno azzerati: appartengono alla challenge precedente.
+  // Senza questo azzeramento si trascinavano nella nuova, falsando la classifica.
+  const prev={challengeId:currentUser.challengeId,weightStart:currentUser.weightStart,
+    weightCurrent:currentUser.weightCurrent,bonusPoints:currentUser.bonusPoints};
   currentUser.challengeId=ch.id;
   currentUser.weightStart=weight;
   currentUser.weightCurrent=weight;
+  currentUser.bonusPoints=0;
   localStorage.setItem('c11_user',JSON.stringify(currentUser));
   if(window._firebaseReady){
     try{
       await window._update(window._ref(window._db,'users/'+currentUser.id),{
-        challengeId:ch.id,weightStart:weight,weightCurrent:weight
+        challengeId:ch.id,weightStart:weight,weightCurrent:weight,bonusPoints:0
       });
     }catch(e){
       console.warn('Errore partecipazione',e);
@@ -4757,6 +4976,12 @@ function actKey(dateStr){
 }
 
 function getTodayKey(d){return (d||new Date()).toISOString().split('T')[0];}
+
+// Scrive il numero di versione in ogni punto dell'app che lo mostra
+function renderAppVersion(){
+  document.querySelectorAll('.app-version-label').forEach(el=>{el.textContent='v'+APP_VERSION;});
+}
+document.addEventListener('DOMContentLoaded',renderAppVersion);
 
 function calcStreak(){
   let s=0;const today=new Date();
